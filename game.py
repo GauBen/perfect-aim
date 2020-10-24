@@ -72,7 +72,13 @@ class Game:
         elif action in (MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT):
             x, y = move((player.x, player.y), action)
             try:
-                if self.grid[y][x] in (WALL, PLAYER_RED, PLAYER_BLUE):
+                if self.grid[y][x] in (
+                    WALL,
+                    PLAYER_RED,
+                    PLAYER_BLUE,
+                    PLAYER_YELLOW,
+                    PLAYER_GREEN,
+                ):
                     raise CantMoveThereException()
             except IndexError:
                 return False

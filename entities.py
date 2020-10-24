@@ -256,12 +256,13 @@ class Arrow(MovingEntity):
     Une flèche, qui tue les joueurs qu'elle traverse.
     """
 
-    def __init__(self, x, y, direction):
+    def __init__(self, x, y, direction, player: Player):
         """
         Initialise une flèche, qui se déplace à 4.0 case / seconde.
         """
         super().__init__(x, y, 4.0)
         self.action = direction
+        self.player = player
 
     def update(self, game, dt: float):
         """

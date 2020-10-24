@@ -38,11 +38,18 @@ class Game:
         self.arrows: set[Arrow] = set()
         self.t = 0
         self.update_grid()
+        self.over = False
+        self.winner = None
 
     def update(self, elapsed_time: float):
         """
         Calcule toutes les updates du jeu qui ont eu lieu en `elapsed_time` secondes.
         """
+
+        # Si la partie est finie, pas besoin d'update
+        if self.over:
+            return
+
         # Temps jusqu'à la prochaine update
         dt = min(
             [player.next_update_in(elapsed_time) for player in self.players]
@@ -66,12 +73,20 @@ class Game:
             if self.grid[arrow.y][arrow.x] == WALL:
                 self.arrows.remove(arrow)
 
-            # Suppression des joueurs contre la flèche
+            # Suppression des joueurs transpercés par la flèche
             for player in self.players.copy():
                 if player.x == arrow.x and player.y == arrow.y:
+                    print(f"Joueur {player.color} éliminé par {arrow.player.color}")
                     self.players.remove(player)
 
             self.update_grid()
+
+        if len(self.players) == 1:
+            winner = self.players.pop()
+            self.players.add(winner)
+            print(f"Victoire du joueur {winner.color}")
+            self.over = True
+            self.winner = winner
 
         # Si dt < elapsed_time, il reste des updates à traiter
         if elapsed_time - dt > 0:
@@ -116,7 +131,9 @@ class Game:
 
         # Un tir d'arc est possible s'il n'est pas fait contre un mur
         elif action in (ATTACK_UP, ATTACK_DOWN, ATTACK_LEFT, ATTACK_RIGHT):
-            (x, y, _) = place_arrow((player.x, player.y), action)
+            if not self.can_player_attack(player):
+                return False
+            x, y, _ = place_arrow((player.x, player.y), action)
             try:
                 if self.grid[y][x] == WALL:
                     raise CantMoveThereException()
@@ -134,5 +151,8 @@ class Game:
         Lance une flèche pour le joueur `player`.
         """
         x, y, direction = place_arrow((player.x, player.y), action)
-        arrow = Arrow(x, y, direction)
+        arrow = Arrow(x, y, direction, player)
         self.arrows.add(arrow)
+
+    def can_player_attack(self, player):
+        return not any(arrow.player == player for arrow in self.arrows)

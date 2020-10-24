@@ -12,7 +12,7 @@ ARROW = 31
 
 class Map:
     def __init__(self):
-        self.size = 11
+        self.size = 5
         self.grid = self.create_map(self.size)
         # self.grid = [[WALL] * self.size]
         # for i in range(self.size - 2):

@@ -2,7 +2,7 @@ from tkinter import Canvas as tkCanvas, PhotoImage, DoubleVar, NW, HORIZONTAL
 
 from tkinter.ttk import Scale, Label
 
-from map import WALL
+from map import WALL, PLAYER_RED
 
 
 class Gui:
@@ -59,48 +59,48 @@ class Gui:
                     x * self.TILE_SIZE, y * self.TILE_SIZE, image=image, anchor=NW
                 )
 
-    def draw_players(self):
-        self.players = [
-            self.canvas.create_image(
+    def draw_players(self, game):
+        self.players = {}
+        self.player_hitboxes = {}
+        for p in game.players:
+            self.players[p] = (
+                self.canvas.create_image(
+                    self.TILE_SIZE,
+                    self.TILE_SIZE,
+                    image=self.assets[
+                        "player_red" if p.color == PLAYER_RED else "player_blue"
+                    ],
+                    anchor=NW,
+                ),
+            )
+            self.player_hitboxes[p] = self.canvas.create_image(
                 self.TILE_SIZE,
                 self.TILE_SIZE,
-                image=self.assets["player_red"],
+                image=self.assets[
+                    "hitbox_red" if p.color == PLAYER_RED else "hitbox_blue"
+                ],
                 anchor=NW,
-            ),
-            self.canvas.create_image(
-                self.TILE_SIZE,
-                self.TILE_SIZE,
-                image=self.assets["player_blue"],
-                anchor=NW,
-            ),
-        ]
-        self.player_hitboxes = [
-            self.canvas.create_image(
-                self.TILE_SIZE,
-                self.TILE_SIZE,
-                image=self.assets["hitbox_red"],
-                anchor=NW,
-            ),
-            self.canvas.create_image(
-                self.TILE_SIZE,
-                self.TILE_SIZE,
-                image=self.assets["hitbox_blue"],
-                anchor=NW,
-            ),
-        ]
+            )
 
     def update(self, game):
-        for i in range(len(game.players)):
+        diff = set(self.players.values())
+        diff_hitboxes = set(self.player_hitboxes.values())
+        for p in game.players:
             self.canvas.moveto(
-                self.players[i],
-                int(game.players[i].get_visual_x() * 32),
-                int(game.players[i].get_visual_y() * 32),
+                self.players[p],
+                int(p.get_visual_x() * 32),
+                int(p.get_visual_y() * 32),
             )
             self.canvas.moveto(
-                self.player_hitboxes[i],
-                int(game.players[i].x * 32),
-                int(game.players[i].y * 32),
+                self.player_hitboxes[p],
+                int(p.x * 32),
+                int(p.y * 32),
             )
+            diff.remove(self.players[p])
+            diff_hitboxes.remove(self.player_hitboxes[p])
+
+        self.canvas.delete(*diff)
+        self.canvas.delete(*diff_hitboxes)
 
         diff = set(self.arrows.values())
         diff_hitboxes = set(self.arrow_hitboxes.values())

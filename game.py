@@ -22,16 +22,20 @@ from map import WALL, PLAYER_BLUE, PLAYER_RED, ARROW, Map
 class Game:
     def __init__(self):
         self.map = Map()
-        self.players = [
+        self.players = {
             Player(1, 1, 1.0, PLAYER_RED),
             Player(self.map.size - 2, self.map.size - 2, 1.5, PLAYER_BLUE),
-        ]
-        self.arrows = set()
+        }
+        self.arrows: set[Arrow] = set()
         self.t = 0
         self.grid = deepcopy(self.map.grid)
 
     def update(self, remaining: float):
-        dt = min([p.next_update_in(remaining) for p in self.players] + [remaining])
+        dt = min(
+            [p.next_update_in(remaining) for p in self.players]
+            + [a.next_update_in(remaining) for a in self.arrows]
+            + [remaining]
+        )
         self.t += dt
 
         for p in self.players:
@@ -40,6 +44,12 @@ class Game:
 
         for a in self.arrows.copy():
             a.update(self, dt)
+            if self.grid[a.y][a.x] == WALL:
+                self.arrows.remove(a)
+                continue
+            for p in self.players.copy():
+                if p.x == a.x and p.y == a.y:
+                    self.players.remove(p)
             self.update_grid()
 
         if remaining - dt > 0:
@@ -47,9 +57,11 @@ class Game:
 
     def update_grid(self):
         self.grid = deepcopy(self.map.grid)
+
         for a in self.players:
             self.grid[a.y][a.x] = a.color
-        for a in self.arrows:
+
+        for a in self.arrows.copy():
             self.grid[a.y][a.x] = ARROW
 
     def is_valid_action(self, player, action):
@@ -81,10 +93,3 @@ class Game:
         x, y, direction = place_arrow((player.x, player.y), action)
         arrow = Arrow(x, y, direction)
         self.arrows.add(arrow)
-
-    def check_arrow(self, arrow):
-        x, y = move((arrow.x, arrow.y), arrow.action)
-        if self.grid[y][x] == WALL:
-            self.arrows.remove(arrow)
-            return False
-        return True

@@ -195,11 +195,11 @@ class Arrow(MovingEntity):
             self.in_action_for < 0.5 / self.speed
             and self.in_action_for + dt >= 0.5 / self.speed
         ):
-            if game.check_arrow(self):
-                self.x, self.y = move((self.x, self.y), self.action)
-                self.in_action_for = 0.5 / self.speed
-            else:
-                pass  # La flèche a été supprimée
+            # if game.check_arrow(self):
+            self.x, self.y = move((self.x, self.y), self.action)
+            self.in_action_for = 0.5 / self.speed
+        # else:
+        # pass  # La flèche a été supprimée
 
         elif self.in_action_for + dt >= 1 / self.speed:
             self.in_action_for = 0

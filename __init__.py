@@ -24,7 +24,7 @@ if __name__ == "__main__":
     g = Game()
     canvas = Gui(root)
     canvas.draw_map(g.map)
-    canvas.draw_players()
+    canvas.draw_players(g)
 
     def update():
         dt = delta() * canvas.slider_var.get()

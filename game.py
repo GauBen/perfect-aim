@@ -98,9 +98,9 @@ class Game:
                     self.collectibles.remove(entity)
                     self.entity_grid[player.y][player.x].remove(entity)
 
-            self.update_grid(old_x, old_y)
+            self.update_grid(player.x, player.y)
             if player.x != old_x or player.y != old_y:
-                self.update_grid(player.x, player.y)
+                self.update_grid(old_x, old_y)
 
         for arrow in self.arrows.copy():
 
@@ -124,13 +124,12 @@ class Game:
                     self.players.remove(entity)
                     self.entity_grid[arrow.y][arrow.x].remove(entity)
 
-            self.update_grid(old_x, old_y)
+            self.update_grid(arrow.x, arrow.y)
             if arrow.x != old_x or arrow.y != old_y:
-                self.update_grid(arrow.x, arrow.y)
+                self.update_grid(old_x, old_y)
 
         if len(self.players) == 1:
-            winner = self.players.pop()
-            self.players.add(winner)
+            winner = list(self.players)[0]
             print(f"Victoire du joueur {winner.color}")
             self.over = True
             self.winner = winner
@@ -143,8 +142,7 @@ class Game:
         if len(self.entity_grid[y][x]) == 0:
             self.grid[y][x] = self.map.grid[y][x]
         else:
-            top = list(self.entity_grid[y][x])[0]
-            self.grid[y][x] = top.grid_id
+            self.grid[y][x] = max(entity.grid_id for entity in self.entity_grid[y][x])
 
     def is_valid_action(self, player, action):
         """

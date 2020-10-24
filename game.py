@@ -1,5 +1,5 @@
-from map import EMPTY, WALL, PLAYER_RED, PLAYER_BLUE, Map
-from player import (
+from map import EMPTY, PLAYER_RED, PLAYER_BLUE, Map
+from entities import (
     MOVE_DOWN,
     MOVE_LEFT,
     MOVE_RIGHT,
@@ -13,17 +13,20 @@ from copy import deepcopy
 
 class Game:
     def __init__(self):
-        self.players = [Player(PLAYER_RED), Player(PLAYER_BLUE, 2, 2, 1.5)]
-        self.t = 0
         self.map = Map()
+        self.players = [
+            Player(1, 1, 1.0, PLAYER_RED),
+            Player(self.map.size - 2, self.map.size - 2, 1.5, PLAYER_BLUE),
+        ]
+        self.t = 0
         self.grid = deepcopy(self.map.grid)
 
     def update(self, remaining: float):
         dt = min([p.next_update_in(remaining) for p in self.players] + [remaining])
+        self.t += dt
         for p in self.players:
             p.update(self, dt)
             self.update_grid()
-        self.t += dt
         if remaining - dt > 0:
             self.update(remaining - dt)
 
@@ -50,9 +53,7 @@ class Game:
                 if self.grid[new_y][new_x] != EMPTY:
                     raise CantMoveThereException()
             except IndexError:
-                # print("Coordonnées invalides")
                 return False
             except CantMoveThereException:
-                # print("Case occupée")
                 return False
             return True

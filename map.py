@@ -1,11 +1,13 @@
 from random import choice
 
-EMPTY = 0
-WALL = 1
-UNEXPLORED = -1
+EMPTY = 10
+WALL = 11
+UNEXPLORED = 19
 
-PLAYER_RED = 10
-PLAYER_BLUE = 11
+PLAYER_RED = 21
+PLAYER_BLUE = 22
+
+ARROW = 31
 
 
 class Map:

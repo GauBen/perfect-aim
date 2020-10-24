@@ -98,6 +98,8 @@ class Gui:
                 int(game.players[i].y * 32),
             )
 
+        diff = set(self.arrows.values())
+        diff_hitboxes = set(self.arrow_hitboxes.values())
         for arrow in game.arrows:
             if arrow not in self.arrows:
                 self.arrows[arrow] = (
@@ -116,6 +118,9 @@ class Gui:
                         anchor=NW,
                     ),
                 )
+            else:
+                diff.remove(self.arrows[arrow])
+                diff_hitboxes.remove(self.arrow_hitboxes[arrow])
             self.canvas.moveto(
                 self.arrows[arrow],
                 int(arrow.get_visual_x() * 32),
@@ -126,3 +131,6 @@ class Gui:
                 int(arrow.x * 32),
                 int(arrow.y * 32),
             )
+
+        self.canvas.delete(*diff)
+        self.canvas.delete(*diff_hitboxes)

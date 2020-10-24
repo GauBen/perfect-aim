@@ -11,6 +11,56 @@ ATTACK_LEFT = 13
 ATTACK_RIGHT = 14
 
 
+def move(coords, action):
+    x, y = coords
+    if action == MOVE_UP:
+        y -= 1
+    elif action == MOVE_DOWN:
+        y += 1
+    elif action == MOVE_LEFT:
+        x -= 1
+    elif action == MOVE_RIGHT:
+        x += 1
+    return (x, y)
+
+
+def place_arrow(coords, action):
+    x, y = coords
+    direction = MOVE_UP
+    if action == ATTACK_UP:
+        y -= 1
+    elif action == ATTACK_DOWN:
+        y += 1
+        direction = MOVE_DOWN
+    elif action == ATTACK_LEFT:
+        x -= 1
+        direction = MOVE_LEFT
+    elif action == ATTACK_RIGHT:
+        x += 1
+        direction = MOVE_RIGHT
+    return (x, y, direction)
+
+
+def swap_direction(action):
+    if action == MOVE_UP:
+        return MOVE_DOWN
+    elif action == MOVE_DOWN:
+        return MOVE_UP
+    elif action == MOVE_LEFT:
+        return MOVE_RIGHT
+    elif action == MOVE_RIGHT:
+        return MOVE_LEFT
+    elif action == ATTACK_UP:
+        return ATTACK_DOWN
+    elif action == ATTACK_DOWN:
+        return ATTACK_UP
+    elif action == ATTACK_LEFT:
+        return ATTACK_RIGHT
+    elif action == ATTACK_RIGHT:
+        return ATTACK_LEFT
+    return WAIT
+
+
 class CantMoveThereException(Exception):
     pass
 
@@ -73,13 +123,14 @@ class MovingEntity(Entity):
 
 
 class Player(MovingEntity):
-    name = "PlayerOne"
-
     def __init__(self, x, y, speed, color):
         super(Player, self).__init__(x, y, speed)
         self.color = color
 
     def play(self, game):
+        from pprint import pprint
+
+        pprint(game.grid)
         c = choice(
             [
                 MOVE_UP,
@@ -114,22 +165,11 @@ class Player(MovingEntity):
             and self.in_action_for < 0.5 / self.speed
             and self.in_action_for + dt >= 0.5 / self.speed
         ):
-            new_x = self.x
-            new_y = self.y
-            if self.action == MOVE_UP:
-                new_y -= 1
-            elif self.action == MOVE_DOWN:
-                new_y += 1
-            elif self.action == MOVE_LEFT:
-                new_x -= 1
-            elif self.action == MOVE_RIGHT:
-                new_x += 1
             if game.is_valid_action(self, self.action):
-                self.x = new_x
-                self.y = new_y
+                self.x, self.y = move((self.x, self.y), self.action)
             else:
-                # me am smart
-                self.action = self.action + (self.action % 2) - ((self.action + 1) % 2)
+                self.action = swap_direction(self.action)
+
             self.in_action_for = 0.5 / self.speed
 
         elif self.in_action_for + dt >= 1 / self.speed:
@@ -142,7 +182,7 @@ class Player(MovingEntity):
                     game.player_attacks(self, self.action)
             else:
                 self.action = WAIT
-                print("Action invalide pour le joueur " + self.name)
+                print("Action invalide pour le joueur " + self.color)
 
         else:
             self.in_action_for += dt
@@ -158,19 +198,11 @@ class Arrow(MovingEntity):
             self.in_action_for < 0.5 / self.speed
             and self.in_action_for + dt >= 0.5 / self.speed
         ):
-            new_x = self.x
-            new_y = self.y
-            if self.action == MOVE_UP:
-                new_y -= 1
-            elif self.action == MOVE_DOWN:
-                new_y += 1
-            elif self.action == MOVE_LEFT:
-                new_x -= 1
-            elif self.action == MOVE_RIGHT:
-                new_x += 1
-            self.x = new_x
-            self.y = new_y
-            self.in_action_for = 0.5 / self.speed
+            if game.check_arrow(self):
+                self.x, self.y = move((self.x, self.y), self.action)
+                self.in_action_for = 0.5 / self.speed
+            else:
+                pass  # La flèche a été supprimée
 
         elif self.in_action_for + dt >= 1 / self.speed:
             self.in_action_for = 0

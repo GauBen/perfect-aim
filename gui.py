@@ -30,6 +30,9 @@ class Gui:
         self.slider.pack()
         self.label.pack()
 
+        self.arrows = {}
+        self.arrow_hitboxes = {}
+
         self.assets = {}
         self.assets["empty"] = PhotoImage(file="./assets/empty.png")
         self.assets["wall"] = PhotoImage(file="./assets/wall.png")
@@ -37,6 +40,8 @@ class Gui:
         self.assets["player_blue"] = PhotoImage(file="./assets/player_blue.png")
         self.assets["hitbox_red"] = PhotoImage(file="./assets/hitbox_red.png")
         self.assets["hitbox_blue"] = PhotoImage(file="./assets/hitbox_blue.png")
+        self.assets["arrow"] = PhotoImage(file="./assets/arrow.png")
+        self.assets["hitbox_arrow"] = PhotoImage(file="./assets/hitbox_arrow.png")
 
     def draw_map(self, map):
         size = self.TILE_SIZE * map.size
@@ -65,7 +70,7 @@ class Gui:
                 anchor=NW,
             ),
         ]
-        self.player_hitbox = [
+        self.player_hitboxes = [
             self.canvas.create_image(
                 self.TILE_SIZE,
                 self.TILE_SIZE,
@@ -88,7 +93,36 @@ class Gui:
                 int(game.players[i].get_visual_y() * 32),
             )
             self.canvas.moveto(
-                self.player_hitbox[i],
+                self.player_hitboxes[i],
                 int(game.players[i].x * 32),
                 int(game.players[i].y * 32),
+            )
+
+        for arrow in game.arrows:
+            if arrow not in self.arrows:
+                self.arrows[arrow] = (
+                    self.canvas.create_image(
+                        self.TILE_SIZE,
+                        self.TILE_SIZE,
+                        image=self.assets["arrow"],
+                        anchor=NW,
+                    ),
+                )
+                self.arrow_hitboxes[arrow] = (
+                    self.canvas.create_image(
+                        self.TILE_SIZE,
+                        self.TILE_SIZE,
+                        image=self.assets["hitbox_arrow"],
+                        anchor=NW,
+                    ),
+                )
+            self.canvas.moveto(
+                self.arrows[arrow],
+                int(arrow.get_visual_x() * 32),
+                int(arrow.get_visual_y() * 32),
+            )
+            self.canvas.moveto(
+                self.arrow_hitboxes[arrow],
+                int(arrow.x * 32),
+                int(arrow.y * 32),
             )

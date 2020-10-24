@@ -2,7 +2,6 @@ from time import monotonic
 from tkinter import Tk
 
 from gui import Gui
-from map import Map
 from game import Game
 
 
@@ -21,11 +20,10 @@ delta = Delta().delta
 
 
 if __name__ == "__main__":
-    my_map = Map()
     root = Tk()
     g = Game()
     canvas = Gui(root)
-    canvas.draw_map(my_map)
+    canvas.draw_map(g.map)
     canvas.draw_players()
 
     def update():

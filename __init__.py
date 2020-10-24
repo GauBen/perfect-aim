@@ -31,7 +31,7 @@ if __name__ == "__main__":
         if dt > 0:
             g.update(dt)
         canvas.update(g)
-        root.after(16, update)
+        root.after(1000 // 60, update)
 
     delta()
     update()

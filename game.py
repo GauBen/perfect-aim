@@ -12,11 +12,22 @@ from entities import (
     WAIT,
     Arrow,
     CantMoveThereException,
+    CollectableEntity,
     Player,
+    SpeedBoost,
     move,
     place_arrow,
 )
-from map import ARROW, PLAYER_BLUE, PLAYER_GREEN, PLAYER_RED, PLAYER_YELLOW, WALL, Map
+from map import (
+    ARROW,
+    EMPTY,
+    PLAYER_BLUE,
+    PLAYER_GREEN,
+    PLAYER_RED,
+    PLAYER_YELLOW,
+    WALL,
+    Map,
+)
 
 
 class Game:
@@ -36,10 +47,20 @@ class Game:
             Player(self.map.size - 2, 1, 1, PLAYER_YELLOW),
         }
         self.arrows: set[Arrow] = set()
+        self.collectibles: set[CollectableEntity] = {
+            SpeedBoost(self.map.size // 2, self.map.size // 2)
+        }
         self.t = 0
-        self.update_grid()
         self.over = False
         self.winner = None
+        self.grid = deepcopy(self.map.grid)
+        self.entity_grid = [
+            [set() for x in range(self.map.size)] for y in range(self.map.size)
+        ]
+        for entity in self.collectibles | self.players | self.arrows:
+            self.grid[entity.y][entity.x] = entity.grid_id
+            self.entity_grid[entity.y][entity.x].add(entity)
+        self.update(0.0)
 
     def update(self, elapsed_time: float):
         """
@@ -61,25 +82,51 @@ class Game:
 
         # Mise à jour des joueurs
         for player in self.players:
+
+            old_x, old_y = player.x, player.y
             player.update(self, dt)
-            self.update_grid()
+
+            # Une mise à jour des coordonnées entraine une mise à jour de la grille
+            if player.x != old_x or player.y != old_y:
+                self.entity_grid[old_y][old_x].remove(player)
+                self.entity_grid[player.y][player.x].add(player)
 
             # Un item à ramasser ?
+            for entity in self.entity_grid[player.y][player.x].copy():
+                if isinstance(entity, CollectableEntity):
+                    entity.collect(self, player)
+                    self.collectibles.remove(entity)
+                    self.entity_grid[player.y][player.x].remove(entity)
+
+            self.update_grid(old_x, old_y)
+            if player.x != old_x or player.y != old_y:
+                self.update_grid(player.x, player.y)
 
         for arrow in self.arrows.copy():
+
+            old_x, old_y = arrow.x, arrow.y
             arrow.update(self, dt)
+
+            # Une mise à jour des coordonnées entraine une mise à jour de la grille
+            if arrow.x != old_x or arrow.y != old_y:
+                self.entity_grid[old_y][old_x].remove(arrow)
+                self.entity_grid[arrow.y][arrow.x].add(arrow)
 
             # Suppression de la flèche si elle tape un mur
             if self.grid[arrow.y][arrow.x] == WALL:
                 self.arrows.remove(arrow)
+                self.entity_grid[arrow.y][arrow.x].remove(arrow)
 
             # Suppression des joueurs transpercés par la flèche
-            for player in self.players.copy():
-                if player.x == arrow.x and player.y == arrow.y:
-                    print(f"Joueur {player.color} éliminé par {arrow.player.color}")
-                    self.players.remove(player)
+            for entity in self.entity_grid[arrow.y][arrow.x].copy():
+                if isinstance(entity, Player):
+                    print(f"Joueur {entity.color} éliminé par {arrow.player.color}")
+                    self.players.remove(entity)
+                    self.entity_grid[arrow.y][arrow.x].remove(entity)
 
-            self.update_grid()
+            self.update_grid(old_x, old_y)
+            if arrow.x != old_x or arrow.y != old_y:
+                self.update_grid(arrow.x, arrow.y)
 
         if len(self.players) == 1:
             winner = self.players.pop()
@@ -92,17 +139,12 @@ class Game:
         if elapsed_time - dt > 0:
             self.update(elapsed_time - dt)
 
-    def update_grid(self):
-        """
-        Crée une grille avec les murs, les joueurs, les flèches et les items.
-        """
-        self.grid = deepcopy(self.map.grid)
-
-        for a in self.players:
-            self.grid[a.y][a.x] = a.color
-
-        for a in self.arrows.copy():
-            self.grid[a.y][a.x] = ARROW
+    def update_grid(self, x, y):
+        if len(self.entity_grid[y][x]) == 0:
+            self.grid[y][x] = self.map.grid[y][x]
+        else:
+            top = list(self.entity_grid[y][x])[0]
+            self.grid[y][x] = top.grid_id
 
     def is_valid_action(self, player, action):
         """
@@ -153,6 +195,7 @@ class Game:
         x, y, direction = place_arrow((player.x, player.y), action)
         arrow = Arrow(x, y, direction, player)
         self.arrows.add(arrow)
+        self.entity_grid[arrow.y][arrow.x].add(arrow)
 
     def can_player_attack(self, player):
         """

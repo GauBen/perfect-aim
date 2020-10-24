@@ -11,6 +11,8 @@ PLAYER_GREEN = 24
 
 ARROW = 31
 
+SPEEDBOOST = 41
+
 
 class Map:
     """

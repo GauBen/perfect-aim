@@ -10,6 +10,8 @@ ATTACK_DOWN = 12
 ATTACK_LEFT = 13
 ATTACK_RIGHT = 14
 
+from map import ARROW, SPEEDBOOST
+
 
 def move(coords, action):
     """
@@ -83,6 +85,8 @@ class Entity:
     Une entité de la zone de jeu.
     """
 
+    grid_id = 0
+
     def __init__(self, x: int, y: int):
         """
         Entité placée initialement en `(x, y)`
@@ -103,7 +107,7 @@ class MovingEntity(Entity):
         super().__init__(x, y)
         self.speed = speed
         self.action = WAIT
-        self.in_action_for = 0.0
+        self.action_progress = 0.0
 
     def next_update_in(self, dt):
         """
@@ -111,27 +115,19 @@ class MovingEntity(Entity):
         """
 
         # Update à la moitié de l'action
-        if 0.5 / self.speed > self.in_action_for:
-            return 0.5 / self.speed - self.in_action_for
+        if 0.5 < self.action_progress:
+            return 0.5 / self.speed
 
-        return 1 / self.speed - self.in_action_for
+        return 1 / self.speed
 
     def get_visual_x(self):
         """
         Position x affichée de l'entité, utilisée pour les animations.
         """
         if self.action == MOVE_LEFT:
-            return (
-                self.x
-                + int(self.in_action_for >= 0.5 / self.speed)
-                - self.in_action_for * self.speed
-            )
+            return self.x + int(self.action_progress >= 0.5) - self.action_progress
         elif self.action == MOVE_RIGHT:
-            return (
-                self.x
-                - int(self.in_action_for >= 0.5 / self.speed)
-                + self.in_action_for * self.speed
-            )
+            return self.x - int(self.action_progress >= 0.5) + self.action_progress
         return self.x
 
     def get_visual_y(self):
@@ -139,24 +135,10 @@ class MovingEntity(Entity):
         Position y affichée de l'entité, utilisée pour les animations.
         """
         if self.action == MOVE_UP:
-            return (
-                self.y
-                + int(self.in_action_for >= 0.5 / self.speed)
-                - self.in_action_for * self.speed
-            )
+            return self.y + int(self.action_progress >= 0.5) - self.action_progress
         elif self.action == MOVE_DOWN:
-            return (
-                self.y
-                - int(self.in_action_for >= 0.5 / self.speed)
-                + self.in_action_for * self.speed
-            )
+            return self.y - int(self.action_progress >= 0.5) + self.action_progress
         return self.y
-
-    def action_progress(self):
-        """
-        Valeur entre 0 et 1 correspondant à l'avancement de l'action.
-        """
-        return self.in_action_for * self.speed
 
 
 class Player(MovingEntity):
@@ -172,6 +154,9 @@ class Player(MovingEntity):
         """
         super(Player, self).__init__(x, y, speed)
         self.color = color
+        self.grid_id = self.color
+        self.shield = False
+        self.coins = 0
 
     def play(self, game):
         """
@@ -193,7 +178,6 @@ class Player(MovingEntity):
         while not game.is_valid_action(self, c):
             c = choice(
                 [
-                    WAIT,
                     MOVE_UP,
                     MOVE_DOWN,
                     MOVE_LEFT,
@@ -212,14 +196,11 @@ class Player(MovingEntity):
         """
 
         # Fin d'une action, choix de la prochaine action
-        if (
-            self.in_action_for < 1.0 / self.speed
-            and self.in_action_for + dt >= 1.0 / self.speed
-        ):
+        if self.action_progress < 1.0 and self.action_progress + dt * self.speed >= 1.0:
 
             # Choix de la prochaine action
             action = self.play(game)
-            self.in_action_for = 0
+            self.action_progress = 0
 
             # Si l'action est valide, on la joue
             if game.is_valid_action(self, action):
@@ -233,8 +214,8 @@ class Player(MovingEntity):
         # À la moitié du déplacement on met à jour les coordonnées du joueur
         elif (
             self.action in (MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT)
-            and self.in_action_for < 0.5 / self.speed
-            and self.in_action_for + dt >= 0.5 / self.speed
+            and self.action_progress < 0.5
+            and self.action_progress + dt * self.speed >= 0.5
         ):
             # Si le déplacement est toujours valide, il est effectué
             if game.is_valid_action(self, self.action):
@@ -244,17 +225,19 @@ class Player(MovingEntity):
             else:
                 self.action = swap_direction(self.action)
 
-            self.in_action_for = 0.5 / self.speed
+            self.action_progress = 0.5
 
         # Rien de spécial, on avance dans l'action
         else:
-            self.in_action_for += dt
+            self.action_progress += dt * self.speed
 
 
 class Arrow(MovingEntity):
     """
     Une flèche, qui tue les joueurs qu'elle traverse.
     """
+
+    grid_id = ARROW
 
     def __init__(self, x, y, direction, player: Player):
         """
@@ -270,20 +253,50 @@ class Arrow(MovingEntity):
         """
 
         # On recommence la même action
-        if (
-            self.in_action_for < 1.0 / self.speed
-            and self.in_action_for + dt >= 1.0 / self.speed
-        ):
-            self.in_action_for = 0
+        if self.action_progress < 1.0 and self.action_progress + dt * self.speed >= 1.0:
+            self.action_progress = 0
 
         # À la moitié de l'action on déplace la flèche
         elif (
-            self.in_action_for < 0.5 / self.speed
-            and self.in_action_for + dt >= 0.5 / self.speed
+            self.action_progress < 0.5 and self.action_progress + dt * self.speed >= 0.5
         ):
             self.x, self.y = move((self.x, self.y), self.action)
-            self.in_action_for = 0.5 / self.speed
+            self.action_progress = 0.5
 
         # Rien de spécial
         else:
-            self.in_action_for += dt
+            self.action_progress += dt * self.speed
+
+
+class CollectableEntity(Entity):
+    """
+    Une entité ramassable de la zone de jeu.
+    """
+
+    def collect(self, game, player):
+        """
+        Le joueur `player` ramasse l'entité.
+        """
+        pass
+
+
+class Coin(CollectableEntity):
+    def collect(self, game, player):
+        player.coins += 1
+
+
+class SpeedBoost(CollectableEntity):
+    grid_id = SPEEDBOOST
+
+    def collect(self, game, player):
+        player.speed += 2
+
+
+class SpeedPenalty(CollectableEntity):
+    def collect(self, game, player):
+        player.speed -= 0.25
+
+
+class Shield(CollectableEntity):
+    def collect(self, game, player):
+        player.shield = True

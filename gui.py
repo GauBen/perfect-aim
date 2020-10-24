@@ -57,6 +57,8 @@ class Gui:
         self.arrows = {}
         self.arrow_hitboxes = {}
 
+        self.collectibles = {}
+
         self.assets = {}
         self.assets["empty"] = PhotoImage(file="./assets/empty.png")
         self.assets["wall"] = PhotoImage(file="./assets/wall.png")
@@ -70,6 +72,7 @@ class Gui:
         self.assets["hitbox_green"] = PhotoImage(file="./assets/hitbox_green.png")
         self.assets["arrow"] = PhotoImage(file="./assets/arrow.png")
         self.assets["hitbox_arrow"] = PhotoImage(file="./assets/hitbox_arrow.png")
+        self.assets["speedboost"] = PhotoImage(file="./assets/speedboost.png")
 
     def draw_map(self, map):
         """
@@ -114,6 +117,27 @@ class Gui:
         """
         Met à jour la zone de jeu.
         """
+        diff = set(self.collectibles.values())
+        for collectible in game.collectibles:
+            if collectible not in self.collectibles:
+                self.collectibles[collectible] = (
+                    self.canvas.create_image(
+                        self.TILE_SIZE,
+                        self.TILE_SIZE,
+                        image=self.assets["speedboost"],
+                        anchor=NW,
+                    ),
+                )
+                self.canvas.moveto(
+                    self.collectibles[collectible],
+                    int(collectible.x * 32),
+                    int(collectible.y * 32),
+                )
+            else:
+                diff.remove(self.collectibles[collectible])
+
+        self.canvas.delete(*diff)
+
         diff = set(self.players.values())
         diff_hitboxes = set(self.player_hitboxes.values())
         for p in game.players:

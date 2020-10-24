@@ -155,4 +155,7 @@ class Game:
         self.arrows.add(arrow)
 
     def can_player_attack(self, player):
+        """
+        Renvoie `True` si le joueur a une flèche disponible.
+        """
         return not any(arrow.player == player for arrow in self.arrows)

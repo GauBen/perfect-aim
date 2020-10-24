@@ -2,7 +2,19 @@ from tkinter import Canvas as tkCanvas, PhotoImage, DoubleVar, NW, HORIZONTAL
 
 from tkinter.ttk import Scale, Label
 
-from map import WALL, PLAYER_RED
+from map import WALL, PLAYER_RED, PLAYER_BLUE, PLAYER_YELLOW, PLAYER_GREEN
+
+
+def player_const_to_str(p):
+    if p == PLAYER_RED:
+        return "red"
+    elif p == PLAYER_BLUE:
+        return "blue"
+    elif p == PLAYER_YELLOW:
+        return "yellow"
+    elif p == PLAYER_GREEN:
+        return "green"
+    raise KeyError("Constante inconnue")
 
 
 class Gui:
@@ -40,8 +52,12 @@ class Gui:
         self.assets["wall"] = PhotoImage(file="./assets/wall.png")
         self.assets["player_red"] = PhotoImage(file="./assets/player_red.png")
         self.assets["player_blue"] = PhotoImage(file="./assets/player_blue.png")
+        self.assets["player_yellow"] = PhotoImage(file="./assets/player_yellow.png")
+        self.assets["player_green"] = PhotoImage(file="./assets/player_green.png")
         self.assets["hitbox_red"] = PhotoImage(file="./assets/hitbox_red.png")
         self.assets["hitbox_blue"] = PhotoImage(file="./assets/hitbox_blue.png")
+        self.assets["hitbox_yellow"] = PhotoImage(file="./assets/hitbox_yellow.png")
+        self.assets["hitbox_green"] = PhotoImage(file="./assets/hitbox_green.png")
         self.assets["arrow"] = PhotoImage(file="./assets/arrow.png")
         self.assets["hitbox_arrow"] = PhotoImage(file="./assets/hitbox_arrow.png")
 
@@ -67,18 +83,14 @@ class Gui:
                 self.canvas.create_image(
                     self.TILE_SIZE,
                     self.TILE_SIZE,
-                    image=self.assets[
-                        "player_red" if p.color == PLAYER_RED else "player_blue"
-                    ],
+                    image=self.assets["player_" + player_const_to_str(p.color)],
                     anchor=NW,
                 ),
             )
             self.player_hitboxes[p] = self.canvas.create_image(
                 self.TILE_SIZE,
                 self.TILE_SIZE,
-                image=self.assets[
-                    "hitbox_red" if p.color == PLAYER_RED else "hitbox_blue"
-                ],
+                image=self.assets["hitbox_" + player_const_to_str(p.color)],
                 anchor=NW,
             )
 

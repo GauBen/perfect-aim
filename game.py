@@ -16,7 +16,7 @@ from entities import (
     move,
     place_arrow,
 )
-from map import WALL, PLAYER_BLUE, PLAYER_RED, ARROW, Map
+from map import WALL, PLAYER_BLUE, PLAYER_RED, ARROW, Map, PLAYER_GREEN, PLAYER_YELLOW
 
 
 class Game:
@@ -25,6 +25,8 @@ class Game:
         self.players = {
             Player(1, 1, 1.0, PLAYER_RED),
             Player(self.map.size - 2, self.map.size - 2, 1.5, PLAYER_BLUE),
+            Player(1, self.map.size - 2, 1, PLAYER_GREEN),
+            Player(self.map.size - 2, 1, 1, PLAYER_YELLOW),
         }
         self.arrows: set[Arrow] = set()
         self.t = 0

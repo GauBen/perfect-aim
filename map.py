@@ -6,13 +6,15 @@ UNEXPLORED = 19
 
 PLAYER_RED = 21
 PLAYER_BLUE = 22
+PLAYER_YELLOW = 23
+PLAYER_GREEN = 24
 
 ARROW = 31
 
 
 class Map:
     def __init__(self):
-        self.size = 5
+        self.size = 7
         self.grid = self.create_map(self.size)
         # self.grid = [[WALL] * self.size]
         # for i in range(self.size - 2):

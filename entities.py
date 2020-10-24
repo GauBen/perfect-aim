@@ -128,9 +128,6 @@ class Player(MovingEntity):
         self.color = color
 
     def play(self, game):
-        from pprint import pprint
-
-        pprint(game.grid)
         c = choice(
             [
                 MOVE_UP,

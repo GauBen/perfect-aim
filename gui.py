@@ -2,6 +2,8 @@ from tkinter import Canvas as tkCanvas, PhotoImage, DoubleVar, NW, HORIZONTAL
 
 from tkinter.ttk import Scale, Label
 
+from map import WALL
+
 
 class Gui:
     def __init__(self, master):
@@ -49,7 +51,9 @@ class Gui:
         for y in range(map.size):
             for x in range(map.size):
                 image = (
-                    self.assets["wall"] if map.grid[y][x] == 1 else self.assets["empty"]
+                    self.assets["wall"]
+                    if map.grid[y][x] == WALL
+                    else self.assets["empty"]
                 )
                 self.canvas.create_image(
                     x * self.TILE_SIZE, y * self.TILE_SIZE, image=image, anchor=NW

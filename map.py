@@ -13,7 +13,14 @@ ARROW = 31
 
 
 class Map:
+    """
+    Représente une carte du jeu.
+    """
+
     def __init__(self):
+        """
+        Génère une carte.
+        """
         self.size = 7
         self.grid = self.create_map(self.size)
         # self.grid = [[WALL] * self.size]
@@ -23,6 +30,10 @@ class Map:
 
     @staticmethod
     def create_map(size):
+        """
+        Génération d'une carte labyrinthe.
+        """
+
         grid = [[WALL] * size]
         for i in range(size - 2):
             grid.append(

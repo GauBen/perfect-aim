@@ -6,6 +6,9 @@ from map import WALL, PLAYER_RED, PLAYER_BLUE, PLAYER_YELLOW, PLAYER_GREEN
 
 
 def player_const_to_str(p):
+    """
+    Transforme un constante `PLAYER_*` en `"*"`.
+    """
     if p == PLAYER_RED:
         return "red"
     elif p == PLAYER_BLUE:
@@ -18,7 +21,14 @@ def player_const_to_str(p):
 
 
 class Gui:
+    """
+    Gestion de l'affichage de Perfect Aim.
+    """
+
     def __init__(self, master):
+        """
+        Initialise la fenêtre tkinter.
+        """
         self.TILE_SIZE = 32
 
         self.master = master
@@ -62,6 +72,9 @@ class Gui:
         self.assets["hitbox_arrow"] = PhotoImage(file="./assets/hitbox_arrow.png")
 
     def draw_map(self, map):
+        """
+        Affiche le fond de la zone de jeu.
+        """
         size = self.TILE_SIZE * map.size
         self.canvas.config(width=size, height=size)
         for y in range(map.size):
@@ -76,6 +89,9 @@ class Gui:
                 )
 
     def draw_players(self, game):
+        """
+        Dessine les joueurs.
+        """
         self.players = {}
         self.player_hitboxes = {}
         for p in game.players:
@@ -95,6 +111,9 @@ class Gui:
             )
 
     def update(self, game):
+        """
+        Met à jour la zone de jeu.
+        """
         diff = set(self.players.values())
         diff_hitboxes = set(self.player_hitboxes.values())
         for p in game.players:

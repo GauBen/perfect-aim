@@ -29,9 +29,9 @@ if __name__ == "__main__":
     canvas.draw_players()
 
     def update():
-        time_scale = canvas.slider_var.get()
-        if time_scale > 0:
-            g.update(delta() * time_scale)
+        dt = delta() * canvas.slider_var.get()
+        if dt > 0:
+            g.update(dt)
         canvas.update(g)
         root.after(16, update)
 

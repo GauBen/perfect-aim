@@ -124,6 +124,12 @@ class Entity:
         """
         return self.y
 
+    def update(self, game, dt: float):
+        pass
+
+    def next_update_in(self, dt: float):
+        return float("inf")
+
 
 class MovingEntity(Entity):
     """

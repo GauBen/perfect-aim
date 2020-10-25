@@ -57,22 +57,22 @@ class Game:
         ]
         colors = [PLAYER_GREEN, PLAYER_YELLOW, PLAYER_BLUE, PLAYER_RED]
         self.grid = deepcopy(self.map.grid)
+        self.entities = set()
         self.entity_grid = [
             [set() for x in range(self.map.size)] for y in range(self.map.size)
         ]
 
         for player in players:
             x, y = coords.pop()
-            self.players.add(player(x, y, 1.0, colors.pop()))
+            self.entities.add(player(x, y, 1.0, colors.pop()))
 
-        self.arrows: set[Arrow] = set()
-        self.collectibles: set[CollectableEntity] = {
-            SpeedBoost(self.map.size // 2 - 1, self.map.size // 2 - 1)
-        }
+        # self.arrows: set[Arrow] = set()
+        self.entities.add(SpeedBoost(self.map.size // 2 - 1, self.map.size // 2 - 1))
 
-        for entity in self.collectibles | self.players | self.arrows:
+        for entity in self.entities:
             self.entity_grid[entity.y][entity.x].add(entity)
             self.update_grid(entity.x, entity.y)
+            self.entities.add(entity)
 
         self.update(0.0)
 
@@ -87,35 +87,37 @@ class Game:
 
         # Temps jusqu'à la prochaine update
         dt = min(
-            [player.next_update_in(elapsed_time) for player in self.players]
-            + [arrow.next_update_in(elapsed_time) for arrow in self.arrows]
+            [entity.next_update_in(elapsed_time) for entity in self.entities]
             + [elapsed_time]
         )
         # dt vaut la plus petite durée avant un évènement (changement de case par exemple)
         self.t += dt
 
-        # Mise à jour des entités mobiles
-        for entity in self.players | self.arrows:
-            entity.update(self, dt)
+        # Mise à jour des entités
+        for entity in self.entities.copy():
+            if entity in self.entities:
+                entity.update(self, dt)
             self.update_grid(entity.x, entity.y)
 
+        players = list(filter(lambda e: isinstance(e, Player), self.entities))
+
         # Il ne reste qu'un joueur en vie ?
-        if len(self.players) == 1:
-            winner = list(self.players)[0]
+        if len(players) == 1:
+            winner = players[0]
             print(f"Victoire du joueur {winner.color}")
             self.over = True
             self.winner = winner
+        elif len(players) == 0:
+            print("Match nul")
+            self.over = True
 
         # Génération des items
-        if (
-            len(list(filter(lambda e: isinstance(e, SpeedBoost), self.collectibles)))
-            == 0
-        ):
+        if len(list(filter(lambda e: isinstance(e, SpeedBoost), self.entities))) == 0:
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
                 if self.grid[y][x] == EMPTY:
                     collectible = SpeedBoost(x, y)
-                    self.collectibles.add(collectible)
+                    self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
                     self.update_grid(collectible.x, collectible.y)
                     break
@@ -123,7 +125,7 @@ class Game:
                 x, y = randrange(self.map.size), randrange(self.map.size)
                 if self.grid[y][x] == EMPTY:
                     collectible = SpeedPenalty(x, y)
-                    self.collectibles.add(collectible)
+                    self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
                     self.update_grid(collectible.x, collectible.y)
                     break
@@ -186,7 +188,7 @@ class Game:
         """
         x, y, direction = place_arrow((player.x, player.y), action)
         arrow = Arrow(x, y, direction, player)
-        self.arrows.add(arrow)
+        self.entities.add(arrow)
         self.entity_grid[arrow.y][arrow.x].add(arrow)
 
         arrow.update(self, 0.0)
@@ -197,28 +199,31 @@ class Game:
         """
         Renvoie `True` si le joueur a une flèche disponible.
         """
-        return not any(arrow.player == player for arrow in self.arrows)
+        for entity in self.entities:
+            if isinstance(entity, Arrow) and entity.player == player:
+                return False
+        return True
 
     def collect(self, player: Player, collectible: CollectableEntity):
         """
         Ramasse l'object `collectible` pour le joueur `player`.
         """
         collectible.collect(self, player)
-        self.collectibles.remove(collectible)
+        self.entities.remove(collectible)
         self.entity_grid[collectible.y][collectible.x].remove(collectible)
 
     def remove_arrow(self, arrow: Arrow):
         """
         Supprime une flèche.
         """
-        self.arrows.remove(arrow)
+        self.entities.remove(arrow)
         self.entity_grid[arrow.y][arrow.x].remove(arrow)
 
     def remove_player(self, player: Player):
         """
         Supprime un joueur.
         """
-        self.players.remove(player)
+        self.entities.remove(player)
         self.entity_grid[player.y][player.x].remove(player)
 
     def move_entity(self, entity: MovingEntity, old_x: int, old_y: int):

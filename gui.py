@@ -12,6 +12,8 @@ from map import (
     SPEEDPENALTY,
 )
 
+from entities import Player, Arrow, CollectableEntity
+
 
 def player_const_to_str(p):
     """
@@ -114,7 +116,7 @@ class Gui:
         """
         self.players = {}
         self.player_hitboxes = {}
-        for p in game.players:
+        for p in filter(lambda e: isinstance(e, Player), game.entities):
             self.players[p] = (
                 self.canvas.create_image(
                     self.TILE_SIZE,
@@ -135,7 +137,9 @@ class Gui:
         Met à jour la zone de jeu.
         """
         diff = set(self.collectibles.values())
-        for collectible in game.collectibles:
+        for collectible in filter(
+            lambda e: isinstance(e, CollectableEntity), game.entities
+        ):
             if collectible not in self.collectibles:
                 self.collectibles[collectible] = (
                     self.canvas.create_image(
@@ -159,7 +163,7 @@ class Gui:
 
         diff = set(self.players.values())
         diff_hitboxes = set(self.player_hitboxes.values())
-        for p in game.players:
+        for p in filter(lambda e: isinstance(e, Player), game.entities):
             self.canvas.moveto(
                 self.players[p],
                 int(p.get_visual_x() * 32),
@@ -178,7 +182,7 @@ class Gui:
 
         diff = set(self.arrows.values())
         diff_hitboxes = set(self.arrow_hitboxes.values())
-        for arrow in game.arrows:
+        for arrow in filter(lambda e: isinstance(e, Arrow), game.entities):
             if arrow not in self.arrows:
                 self.arrows[arrow] = (
                     self.canvas.create_image(

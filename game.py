@@ -95,7 +95,7 @@ class Game:
         self.t += dt
 
         # Mise à jour des joueurs
-        for player in self.players:
+        for player in self.players.copy():
 
             old_x, old_y = player.x, player.y
             player.update(self, dt)

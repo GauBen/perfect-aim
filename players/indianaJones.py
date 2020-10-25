@@ -13,7 +13,6 @@ from entities import (
 )
 from game import Game
 from map import WALL, SPEEDBOOST
-from pprint import pprint
 
 
 class IndianaJones(Player):

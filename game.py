@@ -17,6 +17,7 @@ from entities import (
     SpeedBoost,
     move,
     place_arrow,
+    SpeedPenalty,
 )
 from map import (
     ARROW,
@@ -144,11 +145,22 @@ class Game:
             self.winner = winner
 
         # Génération des items
-        if len(self.collectibles) == 0:
+        if (
+            len(list(filter(lambda e: isinstance(e, SpeedBoost), self.collectibles)))
+            == 0
+        ):
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
                 if self.grid[y][x] == EMPTY:
                     collectible = SpeedBoost(x, y)
+                    self.collectibles.add(collectible)
+                    self.grid[y][x] = collectible.grid_id
+                    self.entity_grid[y][x].add(collectible)
+                    break
+            for _ in range(10):
+                x, y = randrange(self.map.size), randrange(self.map.size)
+                if self.grid[y][x] == EMPTY:
+                    collectible = SpeedPenalty(x, y)
                     self.collectibles.add(collectible)
                     self.grid[y][x] = collectible.grid_id
                     self.entity_grid[y][x].add(collectible)

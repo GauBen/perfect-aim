@@ -1,10 +1,11 @@
-from random import choice
+from random import shuffle, random
 
 EMPTY = 10
 WALL = 11
 UNEXPLORED = 19
 
 SPEEDBOOST = 21
+SPEEDPENALTY = 22
 
 PLAYER_RED = 31
 PLAYER_BLUE = 32
@@ -23,7 +24,7 @@ class Map:
         """
         Génère une carte.
         """
-        self.size = 15
+        self.size = 19
         self.grid = self.create_map(self.size)
         # self.grid = [[WALL] * self.size]
         # for i in range(self.size - 2):
@@ -60,8 +61,15 @@ class Map:
             if len(possible_directions) == 0:
                 backtrack.pop()
             else:
-                (new_x, new_y) = choice(possible_directions)
+                shuffle(possible_directions)
+                new_x, new_y = possible_directions.pop()
                 grid[(y + new_y) // 2][(x + new_x) // 2] = EMPTY
+
+                # Dig other ways
+                if len(possible_directions) > 0 and random() < 0.2:
+                    other_x, other_y = possible_directions.pop()
+                    grid[(y + other_y) // 2][(x + other_x) // 2] = EMPTY
+
                 backtrack.append((new_x, new_y))
 
         return grid

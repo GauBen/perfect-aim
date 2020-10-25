@@ -1,4 +1,4 @@
-from map import ARROW, SPEEDBOOST
+from map import ARROW, SPEEDBOOST, SPEEDPENALTY
 
 WAIT = 0
 MOVE_UP = 1
@@ -273,12 +273,15 @@ class SpeedBoost(CollectableEntity):
     grid_id = SPEEDBOOST
 
     def collect(self, game, player):
-        player.speed += 2
+        player.speed += 0.25
 
 
 class SpeedPenalty(CollectableEntity):
+    grid_id = SPEEDPENALTY
+
     def collect(self, game, player):
-        player.speed -= 0.25
+        if player.speed >= 0.75:
+            player.speed -= 0.25
 
 
 class Shield(CollectableEntity):

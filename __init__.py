@@ -3,7 +3,8 @@ from tkinter import Tk
 
 from gui import Gui
 from game import Game
-from players.randomPlayer import RandomPlayer
+
+# from players.randomPlayer import RandomPlayer
 from players.indianaJones import IndianaJones
 
 

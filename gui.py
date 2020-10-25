@@ -2,7 +2,15 @@ from tkinter import Canvas as tkCanvas, PhotoImage, DoubleVar, NW, HORIZONTAL
 
 from tkinter.ttk import Scale, Label
 
-from map import WALL, PLAYER_RED, PLAYER_BLUE, PLAYER_YELLOW, PLAYER_GREEN
+from map import (
+    WALL,
+    PLAYER_RED,
+    PLAYER_BLUE,
+    PLAYER_YELLOW,
+    PLAYER_GREEN,
+    SPEEDBOOST,
+    SPEEDPENALTY,
+)
 
 
 def player_const_to_str(p):
@@ -17,6 +25,14 @@ def player_const_to_str(p):
         return "yellow"
     elif p == PLAYER_GREEN:
         return "green"
+    raise KeyError("Constante inconnue")
+
+
+def collectible_const_to_str(c):
+    if c == SPEEDBOOST:
+        return "speedboost"
+    elif c == SPEEDPENALTY:
+        return "speedpenalty"
     raise KeyError("Constante inconnue")
 
 
@@ -73,6 +89,7 @@ class Gui:
         self.assets["arrow"] = PhotoImage(file="./assets/arrow.png")
         self.assets["hitbox_arrow"] = PhotoImage(file="./assets/hitbox_arrow.png")
         self.assets["speedboost"] = PhotoImage(file="./assets/speedboost.png")
+        self.assets["speedpenalty"] = PhotoImage(file="./assets/hourglass.png")
 
     def draw_map(self, map):
         """
@@ -124,7 +141,9 @@ class Gui:
                     self.canvas.create_image(
                         self.TILE_SIZE,
                         self.TILE_SIZE,
-                        image=self.assets["speedboost"],
+                        image=self.assets[
+                            collectible_const_to_str(collectible.grid_id)
+                        ],
                         anchor=NW,
                     ),
                 )

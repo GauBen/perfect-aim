@@ -17,9 +17,11 @@ from map import WALL, SPEEDBOOST
 
 class IndianaJones(Player):
     def play(self, game: Game):
+
         explored = [[False for x in range(game.map.size)] for y in range(game.map.size)]
         explored[self.y][self.x] = True
         tracks = []
+
         for direction in (MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT):
             if game.is_valid_action(self, direction):
                 x, y = move((self.x, self.y), direction)

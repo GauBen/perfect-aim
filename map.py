@@ -22,6 +22,27 @@ def rotate(m):
     return [list(i) for i in zip(*m[::-1])]
 
 
+def rotate2(m):
+    """
+    Double rotation.
+    """
+    return [i[::-1] for i in m][::-1]
+
+
+def vmirror(m):
+    """
+    Reflet vertical d'une matrice.
+    """
+    return m[::-1]
+
+
+def hmirror(m):
+    """
+    Reflet horizontal d'une matrice.
+    """
+    return [i[::-1] for i in m]
+
+
 def vstack(m, n):
     """
     Empile verticalement deux matrices.
@@ -94,15 +115,23 @@ class Map:
                 backtrack.append((new_x, new_y))
 
         grid.pop()
+        for row in grid:
+            row.pop()
+
         wall = [
             [WALL, EMPTY]
             + [WALL if i % 2 == 0 or random() < 0.5 else EMPTY for i in range(size - 3)]
         ]
         wallr = rotate(wall)
-        for row in grid:
-            row.pop()
 
-        top = hstack(grid, hstack(wallr, rotate(grid)))
+        op1 = rotate
+        op2 = rotate2
+
+        if random() < 0.5:
+            op1 = hmirror
+            op2 = vmirror
+
+        top = hstack(grid, hstack(wallr, op1(grid)))
 
         return vstack(
             top,
@@ -111,7 +140,7 @@ class Map:
                     wall,
                     hstack([[WALL]], rotate(wallr)),
                 ),
-                rotate(rotate(top)),
+                op2(top),
             ),
         )
 

@@ -1,4 +1,5 @@
 from random import choice
+from map import ARROW, SPEEDBOOST
 
 WAIT = 0
 MOVE_UP = 1
@@ -9,8 +10,6 @@ ATTACK_UP = 11
 ATTACK_DOWN = 12
 ATTACK_LEFT = 13
 ATTACK_RIGHT = 14
-
-from map import ARROW, SPEEDBOOST
 
 
 def move(coords, action):
@@ -93,6 +92,18 @@ class Entity:
         """
         self.x = x
         self.y = y
+
+    def get_visual_x(self):
+        """
+        Position x affichée de l'entité, utilisée pour les animations.
+        """
+        return self.x
+
+    def get_visual_y(self):
+        """
+        Position y affichée de l'entité, utilisée pour les animations.
+        """
+        return self.y
 
 
 class MovingEntity(Entity):

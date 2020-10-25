@@ -1,4 +1,4 @@
-from map import ARROW, SPEEDBOOST, SPEEDPENALTY, WALL
+from map import ARROW, SPEEDBOOST, SPEEDPENALTY, WALL, COIN
 
 WAIT = 0
 MOVE_UP = 1
@@ -239,16 +239,16 @@ class Player(MovingEntity):
             else:
                 self.action = swap_direction(self.action)
 
-            # Un item à ramasser ?
-            for entity in game.entity_grid[self.y][self.x].copy():
-                if isinstance(entity, CollectableEntity):
-                    game.collect(self, entity)
-
             self.action_progress = 0.5
 
         # Rien de spécial, on avance dans l'action
         else:
             self.action_progress += dt * self.speed
+
+        # Un item à ramasser ?
+        for entity in game.entity_grid[self.y][self.x].copy():
+            if isinstance(entity, CollectableEntity):
+                game.collect(self, entity)
 
 
 class Arrow(MovingEntity):
@@ -313,6 +313,8 @@ class CollectableEntity(Entity):
 
 
 class Coin(CollectableEntity):
+    grid_id = COIN
+
     def collect(self, game, player):
         player.coins += 1
 

@@ -6,6 +6,7 @@ UNEXPLORED = 19
 
 SPEEDBOOST = 21
 SPEEDPENALTY = 22
+COIN = 23
 
 PLAYER_RED = 31
 PLAYER_BLUE = 32
@@ -114,6 +115,20 @@ class Map:
 
                 backtrack.append((new_x, new_y))
 
+        # On ajoute des items
+        coords = [
+            (x, y) for x in range(1, size) for y in range(1, size) if x != 1 and y != 1
+        ]
+        shuffle(coords)
+        items = [SPEEDBOOST, SPEEDPENALTY, COIN]
+        while len(coords) > 0:
+            x, y = coords.pop()
+            if grid[y][x] == EMPTY:
+                grid[y][x] = items.pop()
+            if len(items) == 0:
+                break
+
+        # On fait une belle grille symétrique
         grid.pop()
         for row in grid:
             row.pop()

@@ -19,6 +19,7 @@ from entities import (
     place_arrow,
     SpeedPenalty,
     MovingEntity,
+    Coin,
 )
 from map import (
     EMPTY,
@@ -26,6 +27,9 @@ from map import (
     PLAYER_GREEN,
     PLAYER_RED,
     PLAYER_YELLOW,
+    COIN,
+    SPEEDBOOST,
+    SPEEDPENALTY,
     WALL,
     Map,
 )
@@ -66,8 +70,14 @@ class Game:
             x, y = coords.pop()
             self.entities.add(player(x, y, 1.0, colors.pop()))
 
-        # self.arrows: set[Arrow] = set()
-        self.entities.add(SpeedBoost(self.map.size // 2 - 1, self.map.size // 2 - 1))
+        for y in range(self.map.size):
+            for x in range(self.map.size):
+                if self.grid[y][x] == COIN:
+                    self.entities.add(Coin(x, y))
+                elif self.grid[y][x] == SPEEDBOOST:
+                    self.entities.add(SpeedBoost(x, y))
+                elif self.grid[y][x] == SPEEDPENALTY:
+                    self.entities.add(SpeedPenalty(x, y))
 
         for entity in self.entities:
             self.entity_grid[entity.y][entity.x].add(entity)
@@ -124,6 +134,14 @@ class Game:
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
                 if self.grid[y][x] == EMPTY:
+                    collectible = Coin(x, y)
+                    self.entities.add(collectible)
+                    self.entity_grid[y][x].add(collectible)
+                    self.update_grid(collectible.x, collectible.y)
+                    break
+            for _ in range(10):
+                x, y = randrange(self.map.size), randrange(self.map.size)
+                if self.grid[y][x] == EMPTY:
                     collectible = SpeedPenalty(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
@@ -136,11 +154,11 @@ class Game:
 
     def update_grid(self, x, y):
         if len(self.entity_grid[y][x]) == 0:
-            self.grid[y][x] = self.map.grid[y][x]
+            self.grid[y][x] = WALL if self.map.grid[y][x] == WALL else EMPTY
         else:
             self.grid[y][x] = max(entity.grid_id for entity in self.entity_grid[y][x])
 
-    def is_valid_action(self, player, action):
+    def is_valid_action(self, player: Player, action):
         """
         Renvoie `True` si l'action `action` est jouable par le joueur `player`.
         """
@@ -182,7 +200,7 @@ class Game:
         # Dans le doute c'est pas possible
         return False
 
-    def player_attacks(self, player, action):
+    def player_attacks(self, player: Player, action):
         """
         Lance une flèche pour le joueur `player`.
         """
@@ -211,6 +229,7 @@ class Game:
         collectible.collect(self, player)
         self.entities.remove(collectible)
         self.entity_grid[collectible.y][collectible.x].remove(collectible)
+        self.update_grid(collectible.x, collectible.y)
 
     def remove_arrow(self, arrow: Arrow):
         """
@@ -218,6 +237,7 @@ class Game:
         """
         self.entities.remove(arrow)
         self.entity_grid[arrow.y][arrow.x].remove(arrow)
+        self.update_grid(arrow.x, arrow.y)
 
     def remove_player(self, player: Player):
         """
@@ -225,6 +245,7 @@ class Game:
         """
         self.entities.remove(player)
         self.entity_grid[player.y][player.x].remove(player)
+        self.update_grid(player.x, player.y)
 
     def move_entity(self, entity: MovingEntity, old_x: int, old_y: int):
         """

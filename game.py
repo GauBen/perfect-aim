@@ -56,7 +56,7 @@ class Game:
             self.players.add(player(x, y, 1.0, colors.pop()))
         self.arrows: set[Arrow] = set()
         self.collectibles: set[CollectableEntity] = {
-            SpeedBoost(self.map.size // 2, self.map.size // 2)
+            SpeedBoost(self.map.size // 2 - 1, self.map.size // 2 - 1)
         }
         self.t = 0
         self.over = False

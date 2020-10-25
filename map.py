@@ -1,7 +1,7 @@
 from random import shuffle, random
 
-EMPTY = 10
-WALL = 11
+EMPTY = 0
+WALL = 1
 UNEXPLORED = 19
 
 SPEEDBOOST = 21
@@ -15,6 +15,27 @@ PLAYER_GREEN = 34
 ARROW = 41
 
 
+def rotate(m):
+    """
+    Solution trouvée ici https://stackoverflow.com/questions/8421337/rotating-a-two-dimensional-array-in-python.
+    """
+    return [list(i) for i in zip(*m[::-1])]
+
+
+def vstack(m, n):
+    """
+    Empile verticalement deux matrices.
+    """
+    return m + n
+
+
+def hstack(m, n):
+    """
+    Concatène horizontalement deux matrices.
+    """
+    return [m[i] + n[i] for i in range(len(m))]
+
+
 class Map:
     """
     Représente une carte du jeu.
@@ -24,7 +45,7 @@ class Map:
         """
         Génère une carte.
         """
-        self.size = 19
+        self.size = 21
         self.grid = self.create_map(self.size)
         # self.grid = [[WALL] * self.size]
         # for i in range(self.size - 2):
@@ -36,7 +57,7 @@ class Map:
         """
         Génération d'une carte labyrinthe.
         """
-
+        size = size // 2 + 1
         grid = [[WALL] * size]
         for i in range(size - 2):
             grid.append(
@@ -65,14 +86,34 @@ class Map:
                 new_x, new_y = possible_directions.pop()
                 grid[(y + new_y) // 2][(x + new_x) // 2] = EMPTY
 
-                # Dig other ways
+                # On ajoute quelques chemins de traverse
                 if len(possible_directions) > 0 and random() < 0.2:
                     other_x, other_y = possible_directions.pop()
                     grid[(y + other_y) // 2][(x + other_x) // 2] = EMPTY
 
                 backtrack.append((new_x, new_y))
 
-        return grid
+        grid.pop()
+        wall = [
+            [WALL, EMPTY]
+            + [WALL if i % 2 == 0 or random() < 0.5 else EMPTY for i in range(size - 3)]
+        ]
+        wallr = rotate(wall)
+        for row in grid:
+            row.pop()
+
+        top = hstack(grid, hstack(wallr, rotate(grid)))
+
+        return vstack(
+            top,
+            vstack(
+                hstack(
+                    wall,
+                    hstack([[WALL]], rotate(wallr)),
+                ),
+                rotate(rotate(top)),
+            ),
+        )
 
 
 if __name__ == "__main__":

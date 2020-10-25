@@ -18,9 +18,9 @@ from entities import (
     move,
     place_arrow,
     SpeedPenalty,
+    MovingEntity,
 )
 from map import (
-    ARROW,
     EMPTY,
     PLAYER_BLUE,
     PLAYER_GREEN,
@@ -94,54 +94,10 @@ class Game:
         # dt vaut la plus petite durée avant un évènement (changement de case par exemple)
         self.t += dt
 
-        # Mise à jour des joueurs
-        for player in self.players.copy():
-
-            old_x, old_y = player.x, player.y
-            player.update(self, dt)
-
-            # Une mise à jour des coordonnées entraine une mise à jour de la grille
-            if player.x != old_x or player.y != old_y:
-                self.entity_grid[old_y][old_x].remove(player)
-                self.entity_grid[player.y][player.x].add(player)
-
-            # Un item à ramasser ?
-            for entity in self.entity_grid[player.y][player.x].copy():
-                if isinstance(entity, CollectableEntity):
-                    entity.collect(self, player)
-                    self.collectibles.remove(entity)
-                    self.entity_grid[player.y][player.x].remove(entity)
-
-            self.update_grid(player.x, player.y)
-            if player.x != old_x or player.y != old_y:
-                self.update_grid(old_x, old_y)
-
-        # Mise à jour des flèches
-        for arrow in self.arrows.copy():
-
-            old_x, old_y = arrow.x, arrow.y
-            arrow.update(self, dt)
-
-            # Une mise à jour des coordonnées entraine une mise à jour de la grille
-            if arrow.x != old_x or arrow.y != old_y:
-                self.entity_grid[old_y][old_x].remove(arrow)
-                self.entity_grid[arrow.y][arrow.x].add(arrow)
-
-            # Suppression de la flèche si elle tape un mur
-            if self.grid[arrow.y][arrow.x] == WALL:
-                self.arrows.remove(arrow)
-                self.entity_grid[arrow.y][arrow.x].remove(arrow)
-
-            # Suppression des joueurs transpercés par la flèche
-            for entity in self.entity_grid[arrow.y][arrow.x].copy():
-                if isinstance(entity, Player):
-                    print(f"Joueur {entity.color} éliminé par {arrow.player.color}")
-                    self.players.remove(entity)
-                    self.entity_grid[arrow.y][arrow.x].remove(entity)
-
-            self.update_grid(arrow.x, arrow.y)
-            if arrow.x != old_x or arrow.y != old_y:
-                self.update_grid(old_x, old_y)
+        # Mise à jour des entités mobiles
+        for entity in self.players | self.arrows:
+            entity.update(self, dt)
+            self.update_grid(entity.x, entity.y)
 
         # Il ne reste qu'un joueur en vie ?
         if len(self.players) == 1:
@@ -233,17 +189,42 @@ class Game:
         self.arrows.add(arrow)
         self.entity_grid[arrow.y][arrow.x].add(arrow)
 
-        # Suppression des joueurs transpercés par la flèche
-        for entity in self.entity_grid[arrow.y][arrow.x].copy():
-            if isinstance(entity, Player):
-                print(f"Joueur {entity.color} éliminé par {arrow.player.color}")
-                self.players.remove(entity)
-                self.entity_grid[arrow.y][arrow.x].remove(entity)
+        arrow.update(self, 0.0)
 
         self.update_grid(arrow.x, arrow.y)
 
-    def can_player_attack(self, player):
+    def can_player_attack(self, player: Player):
         """
         Renvoie `True` si le joueur a une flèche disponible.
         """
         return not any(arrow.player == player for arrow in self.arrows)
+
+    def collect(self, player: Player, collectible: CollectableEntity):
+        """
+        Ramasse l'object `collectible` pour le joueur `player`.
+        """
+        collectible.collect(self, player)
+        self.collectibles.remove(collectible)
+        self.entity_grid[collectible.y][collectible.x].remove(collectible)
+
+    def remove_arrow(self, arrow: Arrow):
+        """
+        Supprime une flèche.
+        """
+        self.arrows.remove(arrow)
+        self.entity_grid[arrow.y][arrow.x].remove(arrow)
+
+    def remove_player(self, player: Player):
+        """
+        Supprime un joueur.
+        """
+        self.players.remove(player)
+        self.entity_grid[player.y][player.x].remove(player)
+
+    def move_entity(self, entity: MovingEntity, old_x: int, old_y: int):
+        """
+        Déplace l'entité sur la grille des entités `entity_grid`.
+        """
+        self.entity_grid[old_y][old_x].remove(entity)
+        self.entity_grid[entity.y][entity.x].add(entity)
+        self.update_grid(old_x, old_y)

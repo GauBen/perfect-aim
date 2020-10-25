@@ -5,10 +5,6 @@ from entities import (
     MOVE_DOWN,
     MOVE_LEFT,
     MOVE_RIGHT,
-    ATTACK_UP,
-    ATTACK_DOWN,
-    ATTACK_LEFT,
-    ATTACK_RIGHT,
     move,
     swap_type,
 )

@@ -1,4 +1,4 @@
-from map import ARROW, SPEEDBOOST, SPEEDPENALTY
+from map import ARROW, SPEEDBOOST, SPEEDPENALTY, WALL
 
 WAIT = 0
 MOVE_UP = 1
@@ -209,8 +209,10 @@ class Player(MovingEntity):
             # Si l'action est valide, on la joue
             if game.is_valid_action(self, action):
                 self.action = action
+
                 if self.action in (ATTACK_UP, ATTACK_DOWN, ATTACK_LEFT, ATTACK_RIGHT):
                     game.player_attacks(self, self.action)
+
             else:
                 self.action = WAIT
                 print("Action invalide pour le joueur " + str(self.color))
@@ -223,11 +225,18 @@ class Player(MovingEntity):
         ):
             # Si le déplacement est toujours valide, il est effectué
             if game.is_valid_action(self, self.action):
+                old_x, old_y = self.x, self.y
                 self.x, self.y = move((self.x, self.y), self.action)
+                game.move_entity(self, old_x, old_y)
 
             # Sinon, on fait demi-tour
             else:
                 self.action = swap_direction(self.action)
+
+            # Un item à ramasser ?
+            for entity in game.entity_grid[self.y][self.x].copy():
+                if isinstance(entity, CollectableEntity):
+                    game.collect(self, entity)
 
             self.action_progress = 0.5
 
@@ -264,12 +273,25 @@ class Arrow(MovingEntity):
         elif (
             self.action_progress < 0.5 and self.action_progress + dt * self.speed >= 0.5
         ):
+            old_x, old_y = self.x, self.y
             self.x, self.y = move((self.x, self.y), self.action)
             self.action_progress = 0.5
+
+            game.move_entity(self, old_x, old_y)
+
+            # Suppression de la flèche si elle tape un mur
+            if game.grid[self.y][self.x] == WALL:
+                game.remove_arrow(self)
 
         # Rien de spécial
         else:
             self.action_progress += dt * self.speed
+
+        # Suppression des joueurs transpercés par la flèche
+        for entity in game.entity_grid[self.y][self.x].copy():
+            if isinstance(entity, Player):
+                print(f"Joueur {entity.color} éliminé par {self.player.color}")
+                game.remove_player(entity)
 
 
 class CollectableEntity(Entity):

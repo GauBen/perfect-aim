@@ -1,4 +1,4 @@
-from map import ARROW, SPEEDBOOST, SPEEDPENALTY, WALL, COIN, SUPER_FIREBALL
+from map import ARROW, SPEEDBOOST, SPEEDPENALTY, WALL, COIN, SUPER_FIREBALL, SHIELD
 
 WAIT = 0
 MOVE_UP = 1
@@ -236,6 +236,12 @@ class Player(MovingEntity):
                 self.x, self.y = move((self.x, self.y), self.action)
                 game.move_entity(self, old_x, old_y)
 
+                # Suppression du joueur s'il est transpercé par une flèche
+                for entity in game.entity_grid[self.y][self.x].copy():
+                    if isinstance(entity, Arrow):
+                        print(f"Joueur {self.color} touché par {entity.player.color}")
+                        game.hit_player(self)
+
             # Sinon, on fait demi-tour
             else:
                 self.action = swap_direction(self.action)
@@ -290,15 +296,18 @@ class Arrow(MovingEntity):
             if game.grid[self.y][self.x] == WALL:
                 game.remove_arrow(self)
 
+            self.hit_players(game)
+
         # Rien de spécial
         else:
             self.action_progress += dt * self.speed
 
+    def hit_players(self, game):
         # Suppression des joueurs transpercés par la flèche
         for entity in game.entity_grid[self.y][self.x].copy():
             if isinstance(entity, Player):
-                print(f"Joueur {entity.color} éliminé par {self.player.color}")
-                game.remove_player(entity)
+                print(f"Joueur {entity.color} touché par {self.player.color}")
+                game.hit_player(entity)
 
 
 class CollectableEntity(Entity):
@@ -343,5 +352,7 @@ class SuperFireball(CollectableEntity):
 
 
 class Shield(CollectableEntity):
+    grid_id = SHIELD
+
     def collect(self, game, player):
         player.shield = True

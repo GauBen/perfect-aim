@@ -21,6 +21,7 @@ from entities import (
     MovingEntity,
     Coin,
     SuperFireball,
+    Shield,
 )
 from map import (
     EMPTY,
@@ -34,6 +35,7 @@ from map import (
     WALL,
     Map,
     SUPER_FIREBALL,
+    SHIELD,
 )
 
 from random import randrange
@@ -82,6 +84,8 @@ class Game:
                     self.entities.add(SpeedPenalty(x, y))
                 elif self.grid[y][x] == SUPER_FIREBALL:
                     self.entities.add(SuperFireball(x, y))
+                elif self.grid[y][x] == SHIELD:
+                    self.entities.add(Shield(x, y))
 
         for entity in self.entities:
             self.entity_grid[entity.y][entity.x].add(entity)
@@ -222,9 +226,7 @@ class Game:
             arrow = Arrow(x, y, direction, player)
             self.entities.add(arrow)
             self.entity_grid[arrow.y][arrow.x].add(arrow)
-
-            arrow.update(self, 0.0)
-
+            arrow.hit_players(self)
             self.update_grid(arrow.x, arrow.y)
 
         if player.super_fireball > 0:
@@ -262,13 +264,16 @@ class Game:
         self.entity_grid[arrow.y][arrow.x].remove(arrow)
         self.update_grid(arrow.x, arrow.y)
 
-    def remove_player(self, player: Player):
+    def hit_player(self, player: Player):
         """
         Supprime un joueur.
         """
-        self.entities.remove(player)
-        self.entity_grid[player.y][player.x].remove(player)
-        self.update_grid(player.x, player.y)
+        if player.shield:
+            player.shield = False
+        else:
+            self.entities.remove(player)
+            self.entity_grid[player.y][player.x].remove(player)
+            self.update_grid(player.x, player.y)
 
     def move_entity(self, entity: MovingEntity, old_x: int, old_y: int):
         """

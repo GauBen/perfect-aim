@@ -7,6 +7,7 @@ UNEXPLORED = 19
 SPEEDBOOST = 21
 SPEEDPENALTY = 22
 COIN = 23
+SUPER_FIREBALL = 24
 
 PLAYER_RED = 31
 PLAYER_BLUE = 32
@@ -120,7 +121,7 @@ class Map:
             (x, y) for x in range(1, size) for y in range(1, size) if x != 1 and y != 1
         ]
         shuffle(coords)
-        items = [SPEEDBOOST, SPEEDPENALTY, COIN]
+        items = [SPEEDBOOST, SPEEDPENALTY, COIN, SUPER_FIREBALL]
         while len(coords) > 0:
             x, y = coords.pop()
             if grid[y][x] == EMPTY:
@@ -134,8 +135,8 @@ class Map:
             row.pop()
 
         wall = [
-            [WALL, EMPTY]
-            + [WALL if i % 2 == 0 or random() < 0.5 else EMPTY for i in range(size - 3)]
+            [WALL if i % 2 == 0 or random() < 0.5 else EMPTY for i in range(size - 3)]
+            + [WALL, EMPTY]
         ]
         wallr = rotate(wall)
 

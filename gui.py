@@ -10,6 +10,7 @@ from map import (
     PLAYER_GREEN,
     SPEEDBOOST,
     SPEEDPENALTY,
+    SUPER_FIREBALL,
     COIN,
 )
 
@@ -38,6 +39,8 @@ def collectible_const_to_str(c):
         return "speedpenalty"
     elif c == COIN:
         return "coin"
+    elif c == SUPER_FIREBALL:
+        return "super_fireball"
     raise KeyError("Constante inconnue")
 
 
@@ -96,6 +99,7 @@ class Gui:
         self.assets["speedboost"] = PhotoImage(file="./assets/speedboost.png")
         self.assets["speedpenalty"] = PhotoImage(file="./assets/hourglass.png")
         self.assets["coin"] = PhotoImage(file="./assets/coin.png")
+        self.assets["super_fireball"] = PhotoImage(file="./assets/super_fireball.png")
 
     def draw_map(self, map):
         """

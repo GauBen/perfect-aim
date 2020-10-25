@@ -1,4 +1,4 @@
-from map import ARROW, SPEEDBOOST, SPEEDPENALTY, WALL, COIN
+from map import ARROW, SPEEDBOOST, SPEEDPENALTY, WALL, COIN, SUPER_FIREBALL
 
 WAIT = 0
 MOVE_UP = 1
@@ -193,6 +193,7 @@ class Player(MovingEntity):
         self.grid_id = self.color
         self.shield = False
         self.coins = 0
+        self.super_fireball = 0
 
     def play(self, game):
         """
@@ -305,7 +306,7 @@ class CollectableEntity(Entity):
     Une entité ramassable de la zone de jeu.
     """
 
-    def collect(self, game, player):
+    def collect(self, game, player: Player):
         """
         Le joueur `player` ramasse l'entité.
         """
@@ -332,6 +333,13 @@ class SpeedPenalty(CollectableEntity):
     def collect(self, game, player):
         if player.speed >= 0.75:
             player.speed -= 0.25
+
+
+class SuperFireball(CollectableEntity):
+    grid_id = SUPER_FIREBALL
+
+    def collect(self, game, player):
+        player.super_fireball += 1
 
 
 class Shield(CollectableEntity):

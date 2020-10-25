@@ -20,6 +20,7 @@ from entities import (
     SpeedPenalty,
     MovingEntity,
     Coin,
+    SuperFireball,
 )
 from map import (
     EMPTY,
@@ -32,6 +33,7 @@ from map import (
     SPEEDPENALTY,
     WALL,
     Map,
+    SUPER_FIREBALL,
 )
 
 from random import randrange
@@ -78,6 +80,8 @@ class Game:
                     self.entities.add(SpeedBoost(x, y))
                 elif self.grid[y][x] == SPEEDPENALTY:
                     self.entities.add(SpeedPenalty(x, y))
+                elif self.grid[y][x] == SUPER_FIREBALL:
+                    self.entities.add(SuperFireball(x, y))
 
         for entity in self.entities:
             self.entity_grid[entity.y][entity.x].add(entity)
@@ -134,7 +138,7 @@ class Game:
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
                 if self.grid[y][x] == EMPTY:
-                    collectible = Coin(x, y)
+                    collectible = SuperFireball(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
                     self.update_grid(collectible.x, collectible.y)
@@ -187,31 +191,50 @@ class Game:
         elif action in (ATTACK_UP, ATTACK_DOWN, ATTACK_LEFT, ATTACK_RIGHT):
             if not self.can_player_attack(player):
                 return False
-            x, y, _ = place_arrow((player.x, player.y), action)
-            try:
-                if self.grid[y][x] == WALL:
-                    raise CantMoveThereException()
-            except IndexError:
-                return False
-            except CantMoveThereException:
-                return False
-            return True
+            if player.super_fireball > 0:
+                return True
+            return self.can_place_arrow(player, action)
 
         # Dans le doute c'est pas possible
         return False
+
+    def can_place_arrow(self, player: Player, action):
+        """
+        Renvoie `True` si le joueur peut placer une flèche.
+        """
+        x, y, _ = place_arrow((player.x, player.y), action)
+        try:
+            if self.grid[y][x] == WALL:
+                raise CantMoveThereException()
+        except IndexError:
+            return False
+        except CantMoveThereException:
+            return False
+        return True
 
     def player_attacks(self, player: Player, action):
         """
         Lance une flèche pour le joueur `player`.
         """
-        x, y, direction = place_arrow((player.x, player.y), action)
-        arrow = Arrow(x, y, direction, player)
-        self.entities.add(arrow)
-        self.entity_grid[arrow.y][arrow.x].add(arrow)
 
-        arrow.update(self, 0.0)
+        def throw_fireball(action):
+            x, y, direction = place_arrow((player.x, player.y), action)
+            arrow = Arrow(x, y, direction, player)
+            self.entities.add(arrow)
+            self.entity_grid[arrow.y][arrow.x].add(arrow)
 
-        self.update_grid(arrow.x, arrow.y)
+            arrow.update(self, 0.0)
+
+            self.update_grid(arrow.x, arrow.y)
+
+        if player.super_fireball > 0:
+            for action in (ATTACK_UP, ATTACK_DOWN, ATTACK_LEFT, ATTACK_RIGHT):
+                if self.can_place_arrow(player, action):
+                    throw_fireball(action)
+            player.super_fireball -= 1
+
+        else:
+            throw_fireball(action)
 
     def can_player_attack(self, player: Player):
         """

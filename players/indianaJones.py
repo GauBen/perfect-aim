@@ -9,7 +9,7 @@ from entities import (
     swap_type,
 )
 from game import Game
-from map import WALL, SPEEDBOOST
+from map import WALL, SUPER_FIREBALL, SPEEDBOOST
 
 
 class IndianaJones(Player):
@@ -36,7 +36,7 @@ class IndianaJones(Player):
 
         while len(tracks) > 0:
             x, y, direction = tracks.pop(0)
-            if game.grid[y][x] in (SPEEDBOOST,):
+            if game.grid[y][x] in (SPEEDBOOST, SUPER_FIREBALL):
                 return direction
 
             for d in (MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT):

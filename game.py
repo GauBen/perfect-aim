@@ -42,8 +42,13 @@ class Game:
         """
         Initialise une partie de 4 joueurs et crée une carte.
         """
+
         self.map = Map()
         self.players = set()
+        self.t = 0
+        self.over = False
+        self.winner = None
+
         coords = [
             (self.map.size - 2, 1),
             (1, self.map.size - 2),
@@ -51,23 +56,24 @@ class Game:
             (1, 1),
         ]
         colors = [PLAYER_GREEN, PLAYER_YELLOW, PLAYER_BLUE, PLAYER_RED]
-        for player in players:
-            x, y = coords.pop()
-            self.players.add(player(x, y, 1.0, colors.pop()))
-        self.arrows: set[Arrow] = set()
-        self.collectibles: set[CollectableEntity] = {
-            SpeedBoost(self.map.size // 2 - 1, self.map.size // 2 - 1)
-        }
-        self.t = 0
-        self.over = False
-        self.winner = None
         self.grid = deepcopy(self.map.grid)
         self.entity_grid = [
             [set() for x in range(self.map.size)] for y in range(self.map.size)
         ]
+
+        for player in players:
+            x, y = coords.pop()
+            self.players.add(player(x, y, 1.0, colors.pop()))
+
+        self.arrows: set[Arrow] = set()
+        self.collectibles: set[CollectableEntity] = {
+            SpeedBoost(self.map.size // 2 - 1, self.map.size // 2 - 1)
+        }
+
         for entity in self.collectibles | self.players | self.arrows:
             self.entity_grid[entity.y][entity.x].add(entity)
             self.update_grid(entity.x, entity.y)
+
         self.update(0.0)
 
     def update(self, elapsed_time: float):
@@ -226,6 +232,15 @@ class Game:
         arrow = Arrow(x, y, direction, player)
         self.arrows.add(arrow)
         self.entity_grid[arrow.y][arrow.x].add(arrow)
+
+        # Suppression des joueurs transpercés par la flèche
+        for entity in self.entity_grid[arrow.y][arrow.x].copy():
+            if isinstance(entity, Player):
+                print(f"Joueur {entity.color} éliminé par {arrow.player.color}")
+                self.players.remove(entity)
+                self.entity_grid[arrow.y][arrow.x].remove(entity)
+
+        self.update_grid(arrow.x, arrow.y)
 
     def can_player_attack(self, player):
         """

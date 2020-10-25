@@ -10,6 +10,7 @@ from entities import (
     ATTACK_LEFT,
     ATTACK_RIGHT,
     move,
+    swap_type,
 )
 from game import Game
 from map import WALL, SPEEDBOOST
@@ -23,8 +24,17 @@ class IndianaJones(Player):
         tracks = []
 
         for direction in (MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT):
-            if game.is_valid_action(self, direction):
-                x, y = move((self.x, self.y), direction)
+            x, y = move((self.x, self.y), direction)
+            attack = swap_type(direction)
+
+            # Si on a un joueur sur la case d'à côté, on l'attaque
+            if any(
+                isinstance(e, Player) for e in game.entity_grid[y][x]
+            ) and game.is_valid_action(self, attack):
+                return attack
+
+            # Sinon, on cherche les items
+            elif game.is_valid_action(self, direction):
                 tracks.append((x, y, direction))
                 explored[y][x] = True
 

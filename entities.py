@@ -70,6 +70,26 @@ def swap_direction(action):
     return WAIT
 
 
+def swap_type(action):
+    if action == MOVE_UP:
+        return ATTACK_UP
+    elif action == MOVE_DOWN:
+        return ATTACK_DOWN
+    elif action == MOVE_LEFT:
+        return ATTACK_LEFT
+    elif action == MOVE_RIGHT:
+        return ATTACK_RIGHT
+    elif action == ATTACK_UP:
+        return MOVE_UP
+    elif action == ATTACK_DOWN:
+        return MOVE_DOWN
+    elif action == ATTACK_LEFT:
+        return MOVE_LEFT
+    elif action == ATTACK_RIGHT:
+        return MOVE_RIGHT
+    return WAIT
+
+
 class CantMoveThereException(Exception):
     """
     Exception lancée quand un joueur ne peut pas se rendre sur un case car il y a un mur.

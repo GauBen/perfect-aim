@@ -29,23 +29,30 @@ from map import (
     Map,
 )
 
+from random import randrange
+
 
 class Game:
     """
     Représente une partie de Perfect Aim, commançant avec 2-4 joueurs, et se terminant quand il n'en reste qu'un.
     """
 
-    def __init__(self):
+    def __init__(self, players):
         """
         Initialise une partie de 4 joueurs et crée une carte.
         """
         self.map = Map()
-        self.players = {
-            Player(1, 1, 1.0, PLAYER_RED),
-            Player(self.map.size - 2, self.map.size - 2, 1.5, PLAYER_BLUE),
-            Player(1, self.map.size - 2, 1, PLAYER_GREEN),
-            Player(self.map.size - 2, 1, 1, PLAYER_YELLOW),
-        }
+        self.players = set()
+        coords = [
+            (self.map.size - 2, 1),
+            (1, self.map.size - 2),
+            (self.map.size - 2, self.map.size - 2),
+            (1, 1),
+        ]
+        colors = [PLAYER_GREEN, PLAYER_YELLOW, PLAYER_BLUE, PLAYER_RED]
+        for player in players:
+            x, y = coords.pop()
+            self.players.add(player(x, y, 1.0, colors.pop()))
         self.arrows: set[Arrow] = set()
         self.collectibles: set[CollectableEntity] = {
             SpeedBoost(self.map.size // 2, self.map.size // 2)
@@ -102,6 +109,7 @@ class Game:
             if player.x != old_x or player.y != old_y:
                 self.update_grid(old_x, old_y)
 
+        # Mise à jour des flèches
         for arrow in self.arrows.copy():
 
             old_x, old_y = arrow.x, arrow.y
@@ -128,11 +136,23 @@ class Game:
             if arrow.x != old_x or arrow.y != old_y:
                 self.update_grid(old_x, old_y)
 
+        # Il ne reste qu'un joueur en vie ?
         if len(self.players) == 1:
             winner = list(self.players)[0]
             print(f"Victoire du joueur {winner.color}")
             self.over = True
             self.winner = winner
+
+        # Génération des items
+        if len(self.collectibles) == 0:
+            for _ in range(10):
+                x, y = randrange(self.map.size), randrange(self.map.size)
+                if self.grid[y][x] == EMPTY:
+                    collectible = SpeedBoost(x, y)
+                    self.collectibles.add(collectible)
+                    self.grid[y][x] = collectible.grid_id
+                    self.entity_grid[y][x].add(collectible)
+                    break
 
         # Si dt < elapsed_time, il reste des updates à traiter
         if elapsed_time - dt > 0:

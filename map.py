@@ -23,7 +23,7 @@ class Map:
         """
         Génère une carte.
         """
-        self.size = 7
+        self.size = 15
         self.grid = self.create_map(self.size)
         # self.grid = [[WALL] * self.size]
         # for i in range(self.size - 2):

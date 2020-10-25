@@ -1,4 +1,3 @@
-from random import choice
 from map import ARROW, SPEEDBOOST
 
 WAIT = 0
@@ -173,33 +172,7 @@ class Player(MovingEntity):
         """
         Choisit la prochaine action du joueur, en renvoyant une constante d'action.
         """
-
-        c = choice(
-            [
-                MOVE_UP,
-                MOVE_DOWN,
-                MOVE_LEFT,
-                MOVE_RIGHT,
-                ATTACK_UP,
-                ATTACK_DOWN,
-                ATTACK_LEFT,
-                ATTACK_RIGHT,
-            ]
-        )
-        while not game.is_valid_action(self, c):
-            c = choice(
-                [
-                    MOVE_UP,
-                    MOVE_DOWN,
-                    MOVE_LEFT,
-                    MOVE_RIGHT,
-                    ATTACK_UP,
-                    ATTACK_DOWN,
-                    ATTACK_LEFT,
-                    ATTACK_RIGHT,
-                ]
-            )
-        return c
+        return WAIT
 
     def update(self, game, dt: float):
         """
@@ -220,7 +193,7 @@ class Player(MovingEntity):
                     game.player_attacks(self, self.action)
             else:
                 self.action = WAIT
-                print("Action invalide pour le joueur " + self.color)
+                print("Action invalide pour le joueur " + str(self.color))
 
         # À la moitié du déplacement on met à jour les coordonnées du joueur
         elif (

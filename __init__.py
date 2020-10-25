@@ -3,6 +3,8 @@ from tkinter import Tk
 
 from gui import Gui
 from game import Game
+from players.randomPlayer import RandomPlayer
+from players.indianaJones import IndianaJones
 
 
 class Delta:
@@ -21,7 +23,7 @@ delta = Delta().delta
 
 if __name__ == "__main__":
     root = Tk()
-    g = Game()
+    g = Game([IndianaJones, IndianaJones, IndianaJones, IndianaJones])
     canvas = Gui(root)
     canvas.draw_map(g.map)
     canvas.draw_players(g)

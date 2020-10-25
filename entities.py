@@ -125,7 +125,7 @@ class MovingEntity(Entity):
         """
 
         # Update à la moitié de l'action
-        if 0.5 < self.action_progress:
+        if self.action_progress < 0.5:
             return 0.5 / self.speed
 
         return 1 / self.speed

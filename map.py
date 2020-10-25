@@ -33,7 +33,7 @@ def vmirror(m):
     """
     Reflet vertical d'une matrice.
     """
-    return m[::-1]
+    return [i[:] for i in m[::-1]]
 
 
 def hmirror(m):

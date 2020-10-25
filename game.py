@@ -66,8 +66,8 @@ class Game:
             [set() for x in range(self.map.size)] for y in range(self.map.size)
         ]
         for entity in self.collectibles | self.players | self.arrows:
-            self.grid[entity.y][entity.x] = entity.grid_id
             self.entity_grid[entity.y][entity.x].add(entity)
+            self.update_grid(entity.x, entity.y)
         self.update(0.0)
 
     def update(self, elapsed_time: float):
@@ -154,16 +154,16 @@ class Game:
                 if self.grid[y][x] == EMPTY:
                     collectible = SpeedBoost(x, y)
                     self.collectibles.add(collectible)
-                    self.grid[y][x] = collectible.grid_id
                     self.entity_grid[y][x].add(collectible)
+                    self.update_grid(collectible.x, collectible.y)
                     break
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
                 if self.grid[y][x] == EMPTY:
                     collectible = SpeedPenalty(x, y)
                     self.collectibles.add(collectible)
-                    self.grid[y][x] = collectible.grid_id
                     self.entity_grid[y][x].add(collectible)
+                    self.update_grid(collectible.x, collectible.y)
                     break
 
         # Si dt < elapsed_time, il reste des updates à traiter

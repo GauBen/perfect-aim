@@ -264,16 +264,17 @@ class Game:
         self.entity_grid[arrow.y][arrow.x].remove(arrow)
         self.update_grid(arrow.x, arrow.y)
 
-    def hit_player(self, player: Player):
+    def hit_player(self, arrow: Arrow, player: Player):
         """
         Supprime un joueur.
         """
         if player.shield:
             player.shield = False
+            self.remove_arrow(arrow)
         else:
             self.entities.remove(player)
             self.entity_grid[player.y][player.x].remove(player)
-            self.update_grid(player.x, player.y)
+        self.update_grid(player.x, player.y)
 
     def move_entity(self, entity: MovingEntity, old_x: int, old_y: int):
         """

@@ -240,7 +240,7 @@ class Player(MovingEntity):
                 for entity in game.entity_grid[self.y][self.x].copy():
                     if isinstance(entity, Arrow):
                         print(f"Joueur {self.color} touché par {entity.player.color}")
-                        game.hit_player(self)
+                        game.hit_player(entity, self)
 
             # Sinon, on fait demi-tour
             else:
@@ -307,7 +307,7 @@ class Arrow(MovingEntity):
         for entity in game.entity_grid[self.y][self.x].copy():
             if isinstance(entity, Player):
                 print(f"Joueur {entity.color} touché par {self.player.color}")
-                game.hit_player(entity)
+                game.hit_player(self, entity)
 
 
 class CollectableEntity(Entity):

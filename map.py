@@ -119,7 +119,10 @@ class Map:
 
         # On ajoute des items
         coords = [
-            (x, y) for x in range(1, size) for y in range(1, size) if x != 1 and y != 1
+            (x, y)
+            for x in range(1, size - 2)
+            for y in range(1, size - 2)
+            if (x, y) != (1, 1) and x % 2 == y % 2 == 1
         ]
         shuffle(coords)
         items = [SPEEDBOOST, SPEEDPENALTY, COIN, SUPER_FIREBALL, SHIELD]

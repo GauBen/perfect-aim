@@ -15,7 +15,7 @@ from map import (
     SHIELD,
 )
 
-from entities import Player, Arrow, CollectableEntity
+from entities import Player, Fireball, CollectableEntity
 
 
 def player_const_to_str(p):
@@ -81,8 +81,8 @@ class Gui:
         self.slider.pack()
         self.label.pack()
 
-        self.arrows = {}
-        self.arrow_hitboxes = {}
+        self.fireballs = {}
+        self.fireball_hitboxes = {}
         self.players = {}
         self.player_hitboxes = {}
         self.collectibles = {}
@@ -111,8 +111,8 @@ class Gui:
         self.assets["hitbox_blue"] = PhotoImage(file="./assets/hitbox_blue.png")
         self.assets["hitbox_yellow"] = PhotoImage(file="./assets/hitbox_yellow.png")
         self.assets["hitbox_green"] = PhotoImage(file="./assets/hitbox_green.png")
-        self.assets["arrow"] = PhotoImage(file="./assets/arrow.png")
-        self.assets["hitbox_arrow"] = PhotoImage(file="./assets/hitbox_arrow.png")
+        self.assets["fireball"] = PhotoImage(file="./assets/fireball.png")
+        self.assets["hitbox_fireball"] = PhotoImage(file="./assets/hitbox_fireball.png")
         self.assets["speedboost"] = PhotoImage(file="./assets/speedboost.png")
         self.assets["speedpenalty"] = PhotoImage(file="./assets/hourglass.png")
         self.assets["coin"] = PhotoImage(file="./assets/coin.png")
@@ -229,38 +229,38 @@ class Gui:
         self.canvas.delete(*diff)
         self.canvas.delete(*diff_hitboxes)
 
-        diff = set(self.arrows.values())
-        diff_hitboxes = set(self.arrow_hitboxes.values())
-        for arrow in filter(lambda e: isinstance(e, Arrow), game.entities):
-            if arrow not in self.arrows:
-                self.arrows[arrow] = (
+        diff = set(self.fireballs.values())
+        diff_hitboxes = set(self.fireball_hitboxes.values())
+        for fireball in filter(lambda e: isinstance(e, Fireball), game.entities):
+            if fireball not in self.fireballs:
+                self.fireballs[fireball] = (
                     self.canvas.create_image(
                         self.TILE_SIZE,
                         self.TILE_SIZE,
-                        image=self.assets["arrow"],
+                        image=self.assets["fireball"],
                         anchor=NW,
                     ),
                 )
-                self.arrow_hitboxes[arrow] = (
+                self.fireball_hitboxes[fireball] = (
                     self.canvas.create_image(
                         self.TILE_SIZE,
                         self.TILE_SIZE,
-                        image=self.assets["hitbox_arrow"],
+                        image=self.assets["hitbox_fireball"],
                         anchor=NW,
                     ),
                 )
             else:
-                diff.remove(self.arrows[arrow])
-                diff_hitboxes.remove(self.arrow_hitboxes[arrow])
+                diff.remove(self.fireballs[fireball])
+                diff_hitboxes.remove(self.fireball_hitboxes[fireball])
             self.canvas.moveto(
-                self.arrows[arrow],
-                int(arrow.get_visual_x() * 32),
-                int(arrow.get_visual_y() * 32),
+                self.fireballs[fireball],
+                int(fireball.get_visual_x() * 32),
+                int(fireball.get_visual_y() * 32),
             )
             self.canvas.moveto(
-                self.arrow_hitboxes[arrow],
-                int(arrow.x * 32),
-                int(arrow.y * 32),
+                self.fireball_hitboxes[fireball],
+                int(fireball.x * 32),
+                int(fireball.y * 32),
             )
 
         self.canvas.delete(*diff)

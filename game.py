@@ -10,13 +10,13 @@ from entities import (
     MOVE_RIGHT,
     MOVE_UP,
     WAIT,
-    Arrow,
+    Fireball,
     CantMoveThereException,
     CollectableEntity,
     Player,
     SpeedBoost,
     move,
-    place_arrow,
+    place_fireball,
     SpeedPenalty,
     MovingEntity,
     Coin,
@@ -197,16 +197,16 @@ class Game:
                 return False
             if player.super_fireball > 0:
                 return True
-            return self.can_place_arrow(player, action)
+            return self.can_place_fireball(player, action)
 
         # Dans le doute c'est pas possible
         return False
 
-    def can_place_arrow(self, player: Player, action):
+    def can_place_fireball(self, player: Player, action):
         """
-        Renvoie `True` si le joueur peut placer une flèche.
+        Renvoie `True` si le joueur peut placer une boule de feu.
         """
-        x, y, _ = place_arrow((player.x, player.y), action)
+        x, y, _ = place_fireball((player.x, player.y), action)
         try:
             if self.grid[y][x] == WALL:
                 raise CantMoveThereException()
@@ -218,20 +218,20 @@ class Game:
 
     def player_attacks(self, player: Player, action):
         """
-        Lance une flèche pour le joueur `player`.
+        Lance une boule de feu pour le joueur `player`.
         """
 
         def throw_fireball(action):
-            x, y, direction = place_arrow((player.x, player.y), action)
-            arrow = Arrow(x, y, direction, player)
-            arrow.action_progress = 0.5
-            self.entities.add(arrow)
-            self.entity_grid[arrow.y][arrow.x].add(arrow)
-            self.update_grid(arrow.x, arrow.y)
+            x, y, direction = place_fireball((player.x, player.y), action)
+            fireball = Fireball(x, y, direction, player)
+            fireball.action_progress = 0.5
+            self.entities.add(fireball)
+            self.entity_grid[fireball.y][fireball.x].add(fireball)
+            self.update_grid(fireball.x, fireball.y)
 
         if player.super_fireball > 0:
             for action in (ATTACK_UP, ATTACK_DOWN, ATTACK_LEFT, ATTACK_RIGHT):
-                if self.can_place_arrow(player, action):
+                if self.can_place_fireball(player, action):
                     throw_fireball(action)
             player.super_fireball -= 1
 
@@ -240,10 +240,10 @@ class Game:
 
     def can_player_attack(self, player: Player):
         """
-        Renvoie `True` si le joueur a une flèche disponible.
+        Renvoie `True` si le joueur a une boule de feu disponible.
         """
         for entity in self.entities:
-            if isinstance(entity, Arrow) and entity.player == player:
+            if isinstance(entity, Fireball) and entity.player == player:
                 return False
         return True
 
@@ -256,21 +256,21 @@ class Game:
         self.entity_grid[collectible.y][collectible.x].remove(collectible)
         self.update_grid(collectible.x, collectible.y)
 
-    def remove_arrow(self, arrow: Arrow):
+    def remove_fireball(self, fireball: Fireball):
         """
-        Supprime une flèche.
+        Supprime une boule de feu.
         """
-        self.entities.remove(arrow)
-        self.entity_grid[arrow.y][arrow.x].remove(arrow)
-        self.update_grid(arrow.x, arrow.y)
+        self.entities.remove(fireball)
+        self.entity_grid[fireball.y][fireball.x].remove(fireball)
+        self.update_grid(fireball.x, fireball.y)
 
-    def hit_player(self, arrow: Arrow, player: Player):
+    def hit_player(self, fireball: Fireball, player: Player):
         """
         Supprime un joueur.
         """
         if player.shield:
             player.shield = False
-            self.remove_arrow(arrow)
+            self.remove_fireball(fireball)
         else:
             self.entities.remove(player)
             self.entity_grid[player.y][player.x].remove(player)

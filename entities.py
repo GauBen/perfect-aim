@@ -1,4 +1,4 @@
-from map import ARROW, SPEEDBOOST, SPEEDPENALTY, WALL, COIN, SUPER_FIREBALL, SHIELD
+from map import FIREBALL, SPEEDBOOST, SPEEDPENALTY, WALL, COIN, SUPER_FIREBALL, SHIELD
 
 WAIT = 0
 MOVE_UP = 1
@@ -27,9 +27,9 @@ def move(coords, action):
     return (x, y)
 
 
-def place_arrow(coords, action):
+def place_fireball(coords, action):
     """
-    Donne un triplet `(x, y, direction)` correspondant à une flèche placée depuis les coordonnées `coords`, par l'action `action`.
+    Donne un triplet `(x, y, direction)` correspondant à une boule de feu placée depuis les coordonnées `coords`, par l'action `action`.
     """
     x, y = coords
     direction = MOVE_UP
@@ -236,9 +236,9 @@ class Player(MovingEntity):
                 self.x, self.y = move((self.x, self.y), self.action)
                 game.move_entity(self, old_x, old_y)
 
-                # Suppression du joueur s'il est transpercé par une flèche
+                # Suppression du joueur s'il est transpercé par une boule de feu
                 for entity in game.entity_grid[self.y][self.x].copy():
-                    if isinstance(entity, Arrow):
+                    if isinstance(entity, Fireball):
                         print(f"Joueur {self.color} touché par {entity.player.color}")
                         game.hit_player(entity, self)
 
@@ -258,16 +258,16 @@ class Player(MovingEntity):
                 game.collect(self, entity)
 
 
-class Arrow(MovingEntity):
+class Fireball(MovingEntity):
     """
-    Une flèche, qui tue les joueurs qu'elle traverse.
+    Une boule de feu, qui tue les joueurs qu'elle traverse.
     """
 
-    grid_id = ARROW
+    grid_id = FIREBALL
 
     def __init__(self, x, y, direction, player: Player):
         """
-        Initialise une flèche, qui se déplace à 4.0 case / seconde.
+        Initialise une boule de feu, qui se déplace à 4.0 case / seconde.
         """
         super().__init__(x, y, 4.0)
         self.action = direction
@@ -275,7 +275,7 @@ class Arrow(MovingEntity):
 
     def update(self, game, dt: float):
         """
-        Met à jour les coordonnées de la flèche.
+        Met à jour les coordonnées de la boule de feu.
         """
 
         # On recommence la même action
@@ -283,7 +283,7 @@ class Arrow(MovingEntity):
             self.action_progress = 0
             self.hit_players(game)
 
-        # À la moitié de l'action on déplace la flèche
+        # À la moitié de l'action on déplace la boule de feu
         elif (
             self.action_progress < 0.5 and self.action_progress + dt * self.speed >= 0.5
         ):
@@ -293,16 +293,16 @@ class Arrow(MovingEntity):
 
             game.move_entity(self, old_x, old_y)
 
-            # Suppression de la flèche si elle tape un mur
+            # Suppression de la boule de feu si elle tape un mur
             if game.grid[self.y][self.x] == WALL:
-                game.remove_arrow(self)
+                game.remove_fireball(self)
 
         # Rien de spécial
         else:
             self.action_progress += dt * self.speed
 
     def hit_players(self, game):
-        # Suppression des joueurs transpercés par la flèche
+        # Suppression des joueurs transpercés par la boule de feu
         for entity in game.entity_grid[self.y][self.x].copy():
             if isinstance(entity, Player):
                 print(f"Joueur {entity.color} touché par {self.player.color}")

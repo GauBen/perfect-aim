@@ -224,9 +224,9 @@ class Game:
         def throw_fireball(action):
             x, y, direction = place_arrow((player.x, player.y), action)
             arrow = Arrow(x, y, direction, player)
+            arrow.action_progress = 0.5
             self.entities.add(arrow)
             self.entity_grid[arrow.y][arrow.x].add(arrow)
-            arrow.hit_players(self)
             self.update_grid(arrow.x, arrow.y)
 
         if player.super_fireball > 0:

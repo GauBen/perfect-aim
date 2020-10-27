@@ -281,6 +281,7 @@ class Arrow(MovingEntity):
         # On recommence la même action
         if self.action_progress < 1.0 and self.action_progress + dt * self.speed >= 1.0:
             self.action_progress = 0
+            self.hit_players(game)
 
         # À la moitié de l'action on déplace la flèche
         elif (
@@ -295,8 +296,6 @@ class Arrow(MovingEntity):
             # Suppression de la flèche si elle tape un mur
             if game.grid[self.y][self.x] == WALL:
                 game.remove_arrow(self)
-
-            self.hit_players(game)
 
         # Rien de spécial
         else:

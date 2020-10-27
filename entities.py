@@ -1,4 +1,13 @@
-from map import FIREBALL, SPEEDBOOST, SPEEDPENALTY, WALL, COIN, SUPER_FIREBALL, SHIELD
+from map import (
+    FIREBALL,
+    SPEEDBOOST,
+    SPEEDPENALTY,
+    WALL,
+    COIN,
+    SUPER_FIREBALL,
+    SHIELD,
+    LAVA,
+)
 
 WAIT = 0
 MOVE_UP = 1
@@ -230,32 +239,35 @@ class Player(MovingEntity):
             and self.action_progress < 0.5
             and self.action_progress + dt * self.speed >= 0.5
         ):
+            self.action_progress = 0.5
+
             # Si le déplacement est toujours valide, il est effectué
             if game.is_valid_action(self, self.action):
                 old_x, old_y = self.x, self.y
                 self.x, self.y = move((self.x, self.y), self.action)
                 game.move_entity(self, old_x, old_y)
 
-                # Suppression du joueur s'il est transpercé par une boule de feu
+                if game.background[self.y][self.x] == LAVA:
+                    game.remove_entity(self)
+                    return
+
                 for entity in game.entity_grid[self.y][self.x].copy():
+                    # Suppression du joueur s'il est transpercé par une boule de feu
                     if isinstance(entity, Fireball):
                         print(f"Joueur {self.color} touché par {entity.player.color}")
                         game.hit_player(entity, self)
+
+                    # Un item à ramasser ?
+                    elif isinstance(entity, CollectableEntity):
+                        game.collect(self, entity)
 
             # Sinon, on fait demi-tour
             else:
                 self.action = swap_direction(self.action)
 
-            self.action_progress = 0.5
-
         # Rien de spécial, on avance dans l'action
         else:
             self.action_progress += dt * self.speed
-
-        # Un item à ramasser ?
-        for entity in game.entity_grid[self.y][self.x].copy():
-            if isinstance(entity, CollectableEntity):
-                game.collect(self, entity)
 
 
 class Fireball(MovingEntity):
@@ -295,7 +307,7 @@ class Fireball(MovingEntity):
 
             # Suppression de la boule de feu si elle tape un mur
             if game.grid[self.y][self.x] == WALL:
-                game.remove_fireball(self)
+                game.remove_entity(self)
 
         # Rien de spécial
         else:

@@ -1,8 +1,10 @@
 from random import shuffle, random
 
-EMPTY = 0
+GENERATING = -1
+FLOOR = 0
 WALL = 1
-UNEXPLORED = 19
+LAVA = 2
+DAMAGED_FLOOR = 3
 
 SPEEDBOOST = 21
 SPEEDPENALTY = 22
@@ -73,7 +75,7 @@ class Map:
         self.grid = self.create_map(self.size)
         # self.grid = [[WALL] * self.size]
         # for i in range(self.size - 2):
-        #     self.grid.append([WALL] + [EMPTY] * (self.size - 2) + [WALL])
+        #     self.grid.append([WALL] + [FLOOR] * (self.size - 2) + [WALL])
         # self.grid.append([WALL] * self.size)
 
     @staticmethod
@@ -86,34 +88,34 @@ class Map:
         for i in range(size - 2):
             grid.append(
                 [WALL]
-                + [UNEXPLORED if j % 2 == i % 2 == 0 else WALL for j in range(size - 2)]
+                + [GENERATING if j % 2 == i % 2 == 0 else WALL for j in range(size - 2)]
                 + [WALL]
             )
         grid.append([WALL] * size)
         backtrack = [(1, 1)]
         while len(backtrack) > 0:
             (x, y) = backtrack[-1]
-            grid[y][x] = EMPTY
+            grid[y][x] = FLOOR
             possible_directions = []
-            if y >= 3 and grid[y - 2][x] == UNEXPLORED:
+            if y >= 3 and grid[y - 2][x] == GENERATING:
                 possible_directions.append((x, y - 2))
-            if y <= size - 3 and grid[y + 2][x] == UNEXPLORED:
+            if y <= size - 3 and grid[y + 2][x] == GENERATING:
                 possible_directions.append((x, y + 2))
-            if x >= 3 and grid[y][x - 2] == UNEXPLORED:
+            if x >= 3 and grid[y][x - 2] == GENERATING:
                 possible_directions.append((x - 2, y))
-            if x <= size - 3 and grid[y][x + 2] == UNEXPLORED:
+            if x <= size - 3 and grid[y][x + 2] == GENERATING:
                 possible_directions.append((x + 2, y))
             if len(possible_directions) == 0:
                 backtrack.pop()
             else:
                 shuffle(possible_directions)
                 new_x, new_y = possible_directions.pop()
-                grid[(y + new_y) // 2][(x + new_x) // 2] = EMPTY
+                grid[(y + new_y) // 2][(x + new_x) // 2] = FLOOR
 
                 # On ajoute quelques chemins de traverse
                 if len(possible_directions) > 0 and random() < 0.2:
                     other_x, other_y = possible_directions.pop()
-                    grid[(y + other_y) // 2][(x + other_x) // 2] = EMPTY
+                    grid[(y + other_y) // 2][(x + other_x) // 2] = FLOOR
 
                 backtrack.append((new_x, new_y))
 
@@ -128,7 +130,7 @@ class Map:
         items = [SPEEDBOOST, SPEEDPENALTY, COIN, SUPER_FIREBALL, SHIELD]
         while len(coords) > 0:
             x, y = coords.pop()
-            if grid[y][x] == EMPTY:
+            if grid[y][x] == FLOOR:
                 grid[y][x] = items.pop()
             if len(items) == 0:
                 break
@@ -139,8 +141,8 @@ class Map:
             row.pop()
 
         wall = [
-            [WALL if i % 2 == 0 or random() < 0.5 else EMPTY for i in range(size - 3)]
-            + [WALL, EMPTY]
+            [WALL if i % 2 == 0 or random() < 0.5 else FLOOR for i in range(size - 3)]
+            + [WALL, FLOOR]
         ]
         wallr = rotate(wall)
 

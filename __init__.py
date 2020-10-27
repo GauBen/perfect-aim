@@ -26,7 +26,7 @@ if __name__ == "__main__":
     root = Tk()
     g = Game([IndianaJones, IndianaJones, IndianaJones, IndianaJones])
     canvas = Gui(root)
-    canvas.draw_map(g.map)
+    canvas.draw_map(g)
     canvas.draw_players(g)
 
     def update():

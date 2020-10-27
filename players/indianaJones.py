@@ -10,7 +10,7 @@ from entities import (
     SHIELD,
 )
 from game import Game
-from map import WALL, SUPER_FIREBALL, SPEEDBOOST
+from map import WALL, SUPER_FIREBALL, SPEEDBOOST, LAVA, DAMAGED_FLOOR
 
 
 class IndianaJones(Player):
@@ -32,18 +32,29 @@ class IndianaJones(Player):
 
             # Sinon, on cherche les items
             elif game.is_valid_action(self, direction):
-                tracks.append((x, y, direction))
+                tracks.append((x, y, direction, game.background[y][x] == DAMAGED_FLOOR))
                 explored[y][x] = True
 
         while len(tracks) > 0:
-            x, y, direction = tracks.pop(0)
+            x, y, direction, dangerous = tracks.pop(0)
             if game.grid[y][x] in (SHIELD, SPEEDBOOST, SUPER_FIREBALL):
                 return direction
 
             for d in (MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT):
                 new_x, new_y = move((x, y), d)
-                if game.grid[new_y][new_x] != WALL and not explored[new_y][new_x]:
-                    tracks.append((new_x, new_y, direction))  # Direction d'origine
+                if (
+                    game.grid[new_y][new_x] not in (WALL, LAVA)
+                    and not explored[new_y][new_x]
+                    and dangerous >= (game.background[new_y][new_x] == DAMAGED_FLOOR)
+                ):
+                    tracks.append(
+                        (
+                            new_x,
+                            new_y,
+                            direction,
+                            game.background[new_y][new_x] == DAMAGED_FLOOR,
+                        )
+                    )  # Direction d'origine
                     explored[new_y][new_x] = True
 
         return WAIT

@@ -22,9 +22,11 @@ from entities import (
     Coin,
     SuperFireball,
     Shield,
+    Entity,
 )
 from map import (
-    EMPTY,
+    FLOOR,
+    LAVA,
     PLAYER_BLUE,
     PLAYER_GREEN,
     PLAYER_RED,
@@ -36,6 +38,7 @@ from map import (
     Map,
     SUPER_FIREBALL,
     SHIELD,
+    DAMAGED_FLOOR,
 )
 
 from random import randrange
@@ -64,6 +67,7 @@ class Game:
             (1, 1),
         ]
         colors = [PLAYER_GREEN, PLAYER_YELLOW, PLAYER_BLUE, PLAYER_RED]
+        self.background = deepcopy(self.map.grid)
         self.grid = deepcopy(self.map.grid)
         self.entities = set()
         self.entity_grid = [
@@ -78,14 +82,19 @@ class Game:
             for x in range(self.map.size):
                 if self.grid[y][x] == COIN:
                     self.entities.add(Coin(x, y))
+                    self.background[y][x] = FLOOR
                 elif self.grid[y][x] == SPEEDBOOST:
                     self.entities.add(SpeedBoost(x, y))
+                    self.background[y][x] = FLOOR
                 elif self.grid[y][x] == SPEEDPENALTY:
                     self.entities.add(SpeedPenalty(x, y))
+                    self.background[y][x] = FLOOR
                 elif self.grid[y][x] == SUPER_FIREBALL:
                     self.entities.add(SuperFireball(x, y))
+                    self.background[y][x] = FLOOR
                 elif self.grid[y][x] == SHIELD:
                     self.entities.add(Shield(x, y))
+                    self.background[y][x] = FLOOR
 
         for entity in self.entities:
             self.entity_grid[entity.y][entity.x].add(entity)
@@ -102,6 +111,26 @@ class Game:
         # Si la partie est finie, pas besoin d'update
         if self.over:
             return
+
+        step = int(self.t / 10.0)
+        halfstep = (self.t - step * 10.0) > 5.0
+        coords = step
+        from_ = DAMAGED_FLOOR if halfstep else FLOOR
+        to = LAVA if halfstep else DAMAGED_FLOOR
+        if self.background[coords][coords] != to:
+            for y in range(self.map.size):
+                for x in range(self.map.size):
+                    if (
+                        x == coords
+                        or y == coords
+                        or x == self.map.size - coords - 1
+                        or y == self.map.size - coords - 1
+                    ) and self.background[y][x] == from_:
+                        if to == LAVA:
+                            self.turn_to_lava(x, y)
+                        else:
+                            self.background[y][x] = to
+                            self.update_grid(x, y)
 
         # Temps jusqu'à la prochaine update
         dt = min(
@@ -133,7 +162,7 @@ class Game:
         if len(list(filter(lambda e: isinstance(e, SpeedBoost), self.entities))) == 0:
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
-                if self.grid[y][x] == EMPTY:
+                if self.grid[y][x] in (FLOOR, DAMAGED_FLOOR):
                     collectible = SpeedBoost(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
@@ -141,7 +170,7 @@ class Game:
                     break
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
-                if self.grid[y][x] == EMPTY:
+                if self.grid[y][x] in (FLOOR, DAMAGED_FLOOR):
                     collectible = SuperFireball(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
@@ -149,7 +178,7 @@ class Game:
                     break
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
-                if self.grid[y][x] == EMPTY:
+                if self.grid[y][x] in (FLOOR, DAMAGED_FLOOR):
                     collectible = SpeedPenalty(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
@@ -162,7 +191,7 @@ class Game:
 
     def update_grid(self, x, y):
         if len(self.entity_grid[y][x]) == 0:
-            self.grid[y][x] = WALL if self.map.grid[y][x] == WALL else EMPTY
+            self.grid[y][x] = self.background[y][x]
         else:
             self.grid[y][x] = max(entity.grid_id for entity in self.entity_grid[y][x])
 
@@ -256,25 +285,21 @@ class Game:
         self.entity_grid[collectible.y][collectible.x].remove(collectible)
         self.update_grid(collectible.x, collectible.y)
 
-    def remove_fireball(self, fireball: Fireball):
-        """
-        Supprime une boule de feu.
-        """
-        self.entities.remove(fireball)
-        self.entity_grid[fireball.y][fireball.x].remove(fireball)
-        self.update_grid(fireball.x, fireball.y)
-
     def hit_player(self, fireball: Fireball, player: Player):
         """
         Supprime un joueur.
         """
         if player.shield:
             player.shield = False
-            self.remove_fireball(fireball)
+            self.remove_entity(fireball)
+            self.update_grid(player.x, player.y)
         else:
-            self.entities.remove(player)
-            self.entity_grid[player.y][player.x].remove(player)
-        self.update_grid(player.x, player.y)
+            self.remove_entity(player)
+
+    def remove_entity(self, entity: Entity):
+        self.entities.remove(entity)
+        self.entity_grid[entity.y][entity.x].remove(entity)
+        self.update_grid(entity.x, entity.y)
 
     def move_entity(self, entity: MovingEntity, old_x: int, old_y: int):
         """
@@ -283,3 +308,10 @@ class Game:
         self.entity_grid[old_y][old_x].remove(entity)
         self.entity_grid[entity.y][entity.x].add(entity)
         self.update_grid(old_x, old_y)
+
+    def turn_to_lava(self, x, y):
+        self.background[y][x] = LAVA
+        for entity in self.entity_grid[y][x].copy():
+            if not isinstance(entity, Fireball):
+                self.remove_entity(entity)
+        self.update_grid(x, y)

@@ -4,6 +4,7 @@ from tkinter.ttk import Scale, Label
 
 from map import (
     WALL,
+    LAVA,
     PLAYER_RED,
     PLAYER_BLUE,
     PLAYER_YELLOW,
@@ -13,9 +14,22 @@ from map import (
     SUPER_FIREBALL,
     COIN,
     SHIELD,
+    FLOOR,
+    DAMAGED_FLOOR,
 )
 
 from entities import Player, Fireball, CollectableEntity
+
+
+def floor_const_to_str(f):
+    if f == FLOOR:
+        return "floor"
+    elif f == WALL:
+        return "wall"
+    elif f == LAVA:
+        return "lava"
+    elif f == DAMAGED_FLOOR:
+        return "damaged_floor"
 
 
 def player_const_to_str(p):
@@ -89,8 +103,10 @@ class Gui:
         self.shielded_players = set()
 
         self.assets = {}
-        self.assets["empty"] = PhotoImage(file="./assets/empty.png")
+        self.assets["floor"] = PhotoImage(file="./assets/empty.png")
         self.assets["wall"] = PhotoImage(file="./assets/wall.png")
+        self.assets["lava"] = PhotoImage(file="./assets/lava.png")
+        self.assets["damaged_floor"] = PhotoImage(file="./assets/damaged_ground.png")
         self.assets["player_red"] = PhotoImage(file="./assets/player_red.png")
         self.assets["player_red_shield"] = PhotoImage(
             file="./assets/player_red_shield.png"
@@ -119,47 +135,62 @@ class Gui:
         self.assets["super_fireball"] = PhotoImage(file="./assets/super_fireball.png")
         self.assets["shield"] = PhotoImage(file="./assets/shield.png")
 
-    def draw_map(self, map):
+    def draw_map(self, game):
         """
         Affiche le fond de la zone de jeu.
         """
-        size = self.TILE_SIZE * map.size
+        map = game.background
+        size = self.TILE_SIZE * game.map.size
         self.canvas.config(width=size, height=size)
-        for y in range(map.size):
-            for x in range(map.size):
-                image = (
-                    self.assets["wall"]
-                    if map.grid[y][x] == WALL
-                    else self.assets["empty"]
-                )
-                self.canvas.create_image(
-                    x * self.TILE_SIZE, y * self.TILE_SIZE, image=image, anchor=NW
+        self.grid = [[None] * game.map.size for _ in range(game.map.size)]
+        for y in range(game.map.size):
+            for x in range(game.map.size):
+                image = self.assets[floor_const_to_str(map[y][x])]
+                self.grid[y][x] = (
+                    map[y][x],
+                    self.canvas.create_image(
+                        x * self.TILE_SIZE,
+                        y * self.TILE_SIZE,
+                        image=image,
+                        anchor=NW,
+                        tags="background",
+                    ),
                 )
 
     def draw_players(self, game):
         """
         Dessine les joueurs.
         """
-        for p in filter(lambda e: isinstance(e, Player), game.entities):
-            self.players[p] = (
-                self.canvas.create_image(
-                    self.TILE_SIZE,
-                    self.TILE_SIZE,
-                    image=self.assets["player_" + player_const_to_str(p.color)],
-                    anchor=NW,
-                ),
-            )
-            self.player_hitboxes[p] = self.canvas.create_image(
-                self.TILE_SIZE,
-                self.TILE_SIZE,
-                image=self.assets["hitbox_" + player_const_to_str(p.color)],
-                anchor=NW,
-            )
+        pass
 
     def update(self, game):
         """
         Met à jour la zone de jeu.
         """
+
+        # La map
+        changed = False
+        for y in range(game.map.size):
+            for x in range(game.map.size):
+                grid_id, image_id = self.grid[y][x]
+                if grid_id != game.background[y][x]:
+                    changed = True
+                    self.canvas.delete(image_id)
+                    image = self.assets[floor_const_to_str(game.background[y][x])]
+                    self.grid[y][x] = (
+                        game.background[y][x],
+                        self.canvas.create_image(
+                            x * self.TILE_SIZE,
+                            y * self.TILE_SIZE,
+                            image=image,
+                            anchor=NW,
+                            tags="background",
+                        ),
+                    )
+        if changed:
+            self.canvas.lower("background")
+
+        # Les items
         diff = set(self.collectibles.values())
         for collectible in filter(
             lambda e: isinstance(e, CollectableEntity), game.entities
@@ -185,9 +216,27 @@ class Gui:
 
         self.canvas.delete(*diff)
 
+        # Les joueurs
         diff = set(self.players.values())
         diff_hitboxes = set(self.player_hitboxes.values())
         for p in filter(lambda e: isinstance(e, Player), game.entities):
+            if p not in self.players:
+                self.players[p] = (
+                    self.canvas.create_image(
+                        self.TILE_SIZE,
+                        self.TILE_SIZE,
+                        image=self.assets["player_" + player_const_to_str(p.color)],
+                        anchor=NW,
+                    ),
+                )
+                self.player_hitboxes[p] = self.canvas.create_image(
+                    self.TILE_SIZE,
+                    self.TILE_SIZE,
+                    image=self.assets["hitbox_" + player_const_to_str(p.color)],
+                    anchor=NW,
+                )
+                diff.add(self.players[p])
+                diff_hitboxes.add(self.player_hitboxes[p])
             if p.shield and p not in self.shielded_players:
                 self.players[p] = (
                     self.canvas.create_image(
@@ -229,6 +278,7 @@ class Gui:
         self.canvas.delete(*diff)
         self.canvas.delete(*diff_hitboxes)
 
+        # Les boules de feu
         diff = set(self.fireballs.values())
         diff_hitboxes = set(self.fireball_hitboxes.values())
         for fireball in filter(lambda e: isinstance(e, Fireball), game.entities):

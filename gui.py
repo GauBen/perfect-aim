@@ -1,5 +1,5 @@
 from tkinter import Canvas as tkCanvas, PhotoImage, DoubleVar, NW, HORIZONTAL
-
+from math import floor
 from tkinter.ttk import Scale, Label
 
 from map import (
@@ -80,6 +80,7 @@ class Gui:
 
         self.slider_var = DoubleVar(value=1.0)
         self.label = Label(text="x 1.0")
+        self.label2 = Label(text="0 s")
         self.slider = Scale(
             master,
             from_=0.0,
@@ -94,6 +95,7 @@ class Gui:
         )
         self.slider.pack()
         self.label.pack()
+        self.label2.pack()
 
         self.fireballs = {}
         self.fireball_hitboxes = {}
@@ -167,7 +169,7 @@ class Gui:
         """
         Met à jour la zone de jeu.
         """
-
+        self.label2.config(text=str(floor(game.t)) + " s")
         # La map
         changed = False
         for y in range(game.map.size):

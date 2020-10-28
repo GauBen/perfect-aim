@@ -112,25 +112,26 @@ class Game:
         if self.over:
             return
 
-        step = int(self.t / 10.0)
-        halfstep = (self.t - step * 10.0) > 5.0
-        coords = step
-        from_ = DAMAGED_FLOOR if halfstep else FLOOR
-        to = LAVA if halfstep else DAMAGED_FLOOR
-        if self.background[coords][coords] != to:
-            for y in range(self.map.size):
-                for x in range(self.map.size):
-                    if (
-                        x == coords
-                        or y == coords
-                        or x == self.map.size - coords - 1
-                        or y == self.map.size - coords - 1
-                    ) and self.background[y][x] == from_:
-                        if to == LAVA:
-                            self.turn_to_lava(x, y)
-                        else:
-                            self.background[y][x] = to
-                            self.update_grid(x, y)
+        if self.t >= 65.0:
+            step = int((self.t - 65.0) / 10.0)
+            halfstep = (self.t - 65.0 - step * 10.0) > 5.0
+            coords = 1 + step
+            from_ = DAMAGED_FLOOR if halfstep else FLOOR
+            to = LAVA if halfstep else DAMAGED_FLOOR
+            if self.background[coords][coords] != to:
+                for y in range(self.map.size):
+                    for x in range(self.map.size):
+                        if (
+                            x == coords
+                            or y == coords
+                            or x == self.map.size - coords - 1
+                            or y == self.map.size - coords - 1
+                        ) and self.background[y][x] == from_:
+                            if to == LAVA:
+                                self.turn_to_lava(x, y)
+                            else:
+                                self.background[y][x] = to
+                                self.update_grid(x, y)
 
         # Temps jusqu'à la prochaine update
         dt = min(
@@ -151,12 +152,13 @@ class Game:
         # Il ne reste qu'un joueur en vie ?
         if len(players) == 1:
             winner = players[0]
-            print(f"Victoire du joueur {winner.color}")
-            self.over = True
+            # print(f"Victoire du joueur {winner.color}")
+            # self.over = True
             self.winner = winner
         elif len(players) == 0:
-            print("Match nul")
-            self.over = True
+            # print("Match nul")
+            # self.over = True
+            pass
 
         # Génération des items
         if len(list(filter(lambda e: isinstance(e, SpeedBoost), self.entities))) == 0:
@@ -171,7 +173,7 @@ class Game:
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
                 if self.grid[y][x] in (FLOOR, DAMAGED_FLOOR):
-                    collectible = SuperFireball(x, y)
+                    collectible = Shield(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
                     self.update_grid(collectible.x, collectible.y)

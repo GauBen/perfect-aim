@@ -41,17 +41,13 @@ def place_fireball(coords, action):
     Donne un triplet `(x, y, direction)` correspondant à une boule de feu placée depuis les coordonnées `coords`, par l'action `action`.
     """
     x, y = coords
-    direction = MOVE_UP
     if action == ATTACK_UP:
-        y -= 1
+        direction = MOVE_UP
     elif action == ATTACK_DOWN:
-        y += 1
         direction = MOVE_DOWN
     elif action == ATTACK_LEFT:
-        x -= 1
         direction = MOVE_LEFT
     elif action == ATTACK_RIGHT:
-        x += 1
         direction = MOVE_RIGHT
     return (x, y, direction)
 
@@ -293,7 +289,6 @@ class Fireball(MovingEntity):
         # On recommence la même action
         if self.action_progress < 1.0 and self.action_progress + dt * self.speed >= 1.0:
             self.action_progress = 0
-            self.hit_players(game)
 
         # À la moitié de l'action on déplace la boule de feu
         elif (
@@ -308,6 +303,8 @@ class Fireball(MovingEntity):
             # Suppression de la boule de feu si elle tape un mur
             if game.grid[self.y][self.x] == WALL:
                 game.remove_entity(self)
+
+            self.hit_players(game)
 
         # Rien de spécial
         else:

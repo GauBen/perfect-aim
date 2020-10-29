@@ -255,7 +255,6 @@ class Game:
         def throw_fireball(action):
             x, y, direction = place_fireball((player.x, player.y), action)
             fireball = Fireball(x, y, direction, player)
-            fireball.action_progress = 0.5
             self.entities.add(fireball)
             self.entity_grid[fireball.y][fireball.x].add(fireball)
             self.update_grid(fireball.x, fireball.y)

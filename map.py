@@ -21,51 +21,37 @@ FIREBALL = 41
 
 
 def rotate(m):
-    """
-    Solution trouvée ici https://stackoverflow.com/questions/8421337/rotating-a-two-dimensional-array-in-python.
-    """
+    """Solution trouvée sur stackoverflow."""
     return [list(i) for i in zip(*m[::-1])]
 
 
 def rotate2(m):
-    """
-    Double rotation.
-    """
+    """Double rotation."""
     return [i[::-1] for i in m][::-1]
 
 
 def vmirror(m):
-    """
-    Reflet vertical d'une matrice.
-    """
+    """Reflet vertical d'une matrice."""
     return [i[:] for i in m[::-1]]
 
 
 def hmirror(m):
-    """
-    Reflet horizontal d'une matrice.
-    """
+    """Reflet horizontal d'une matrice."""
     return [i[::-1] for i in m]
 
 
 def vstack(m, n):
-    """
-    Empile verticalement deux matrices.
-    """
+    """Empile verticalement deux matrices."""
     return m + n
 
 
 def hstack(m, n):
-    """
-    Concatène horizontalement deux matrices.
-    """
+    """Concatène horizontalement deux matrices."""
     return [m[i] + n[i] for i in range(len(m))]
 
 
 class Map:
-    """
-    Représente une carte du jeu.
-    """
+    """Représente une carte du jeu."""
 
     def __init__(self):
         """

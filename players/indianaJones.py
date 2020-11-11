@@ -1,3 +1,5 @@
+"""Stratégie d'exemple: un joueur qui cherche des items."""
+
 from entities import (
     Player,
     WAIT,
@@ -14,8 +16,10 @@ from map import WALL, SUPER_FIREBALL, SPEEDBOOST, LAVA, DAMAGED_FLOOR
 
 
 class IndianaJones(Player):
-    def play(self, game: Game):
+    """Le célèbre aventurier."""
 
+    def play(self, game: Game):
+        """Cherche un joueur adjacent ou un item atteignable."""
         explored = [[False for x in range(game.map.size)] for y in range(game.map.size)]
         explored[self.y][self.x] = True
         tracks = []

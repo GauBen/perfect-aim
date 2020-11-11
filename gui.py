@@ -24,12 +24,13 @@ from entities import Player, Fireball, CollectableEntity
 def floor_const_to_str(f):
     if f == FLOOR:
         return "floor"
-    elif f == WALL:
+    if f == WALL:
         return "wall"
-    elif f == LAVA:
+    if f == LAVA:
         return "lava"
-    elif f == DAMAGED_FLOOR:
+    if f == DAMAGED_FLOOR:
         return "damaged_floor"
+    raise KeyError("Constante inconnue")
 
 
 def player_const_to_str(p):
@@ -38,11 +39,11 @@ def player_const_to_str(p):
     """
     if p == PLAYER_RED:
         return "red"
-    elif p == PLAYER_BLUE:
+    if p == PLAYER_BLUE:
         return "blue"
-    elif p == PLAYER_YELLOW:
+    if p == PLAYER_YELLOW:
         return "yellow"
-    elif p == PLAYER_GREEN:
+    if p == PLAYER_GREEN:
         return "green"
     raise KeyError("Constante inconnue")
 
@@ -50,13 +51,13 @@ def player_const_to_str(p):
 def collectible_const_to_str(c):
     if c == SPEEDBOOST:
         return "speedboost"
-    elif c == SPEEDPENALTY:
+    if c == SPEEDPENALTY:
         return "speedpenalty"
-    elif c == COIN:
+    if c == COIN:
         return "coin"
-    elif c == SUPER_FIREBALL:
+    if c == SUPER_FIREBALL:
         return "super_fireball"
-    elif c == SHIELD:
+    if c == SHIELD:
         return "shield"
     raise KeyError("Constante inconnue")
 
@@ -76,7 +77,7 @@ class Gui:
         master.title("Perfect Aim")
 
         self.canvas = tkCanvas(master, background="#eee")
-        self.canvas.pack()
+        self.canvas.grid(column=0, row=0, rowspan=3)
 
         self.slider_var = DoubleVar(value=1.0)
         self.label = Label(text="x 1.0")
@@ -93,9 +94,12 @@ class Gui:
                 else "x " + str(round(self.slider_var.get(), 1))
             ),
         )
-        self.slider.pack()
-        self.label.pack()
-        self.label2.pack()
+        self.slider.grid(column=1, row=0, sticky="NSEW")
+        self.label.grid(column=1, row=1, sticky="NSEW")
+        self.label2.grid(column=1, row=2, sticky="NSEW")
+
+        self.master.columnconfigure(0, weight=0)
+        self.master.columnconfigure(1, weight=1)
 
         self.fireballs = {}
         self.fireball_hitboxes = {}
@@ -141,15 +145,15 @@ class Gui:
         """
         Affiche le fond de la zone de jeu.
         """
-        map = game.background
+        background = game.background
         size = self.TILE_SIZE * game.map.size
         self.canvas.config(width=size, height=size)
         self.grid = [[None] * game.map.size for _ in range(game.map.size)]
         for y in range(game.map.size):
             for x in range(game.map.size):
-                image = self.assets[floor_const_to_str(map[y][x])]
+                image = self.assets[floor_const_to_str(background[y][x])]
                 self.grid[y][x] = (
-                    map[y][x],
+                    background[y][x],
                     self.canvas.create_image(
                         x * self.TILE_SIZE,
                         y * self.TILE_SIZE,
@@ -160,16 +164,12 @@ class Gui:
                 )
 
     def draw_players(self, game):
-        """
-        Dessine les joueurs.
-        """
-        pass
+        """Dessine les joueurs."""
+        return game
 
     def update(self, game):
-        """
-        Met à jour la zone de jeu.
-        """
-        self.label2.config(text=str(floor(game.t)) + " s")
+        """Met à jour la zone de jeu."""
+        self.label2.config(text=str(floor(10.0 * game.t) / 10.0) + " s")
         # La map
         changed = False
         for y in range(game.map.size):

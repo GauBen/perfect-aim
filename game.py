@@ -55,8 +55,8 @@ class Game:
         """
 
         self.map = Map()
-        self.players = set()
-        self.t = 0
+        self.players: list[Player] = []
+        self.t = 0.0
         self.over = False
         self.winner = None
 
@@ -76,7 +76,9 @@ class Game:
 
         for player in players:
             x, y = coords.pop()
-            self.entities.add(player(x, y, 1.0, colors.pop()))
+            p = player(x, y, 1.0, colors.pop())
+            self.entities.add(p)
+            self.players.append(p)
 
         for y in range(self.map.size):
             for x in range(self.map.size):
@@ -181,7 +183,7 @@ class Game:
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
                 if self.grid[y][x] in (FLOOR, DAMAGED_FLOOR):
-                    collectible = SpeedPenalty(x, y)
+                    collectible = Coin(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
                     self.update_grid(collectible.x, collectible.y)

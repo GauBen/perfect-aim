@@ -1,3 +1,5 @@
+"""Les entités du jeu."""
+
 from map import (
     FIREBALL,
     SPEEDBOOST,
@@ -21,9 +23,7 @@ ATTACK_RIGHT = 14
 
 
 def move(coords, action):
-    """
-    Applique le déplacement `action` à la paire de coordonnées `coords`.
-    """
+    """Applique le déplacement `action` à la paire de coordonnées `coords`."""
     x, y = coords
     if action == MOVE_UP:
         y -= 1
@@ -38,7 +38,10 @@ def move(coords, action):
 
 def place_fireball(coords, action):
     """
-    Donne un triplet `(x, y, direction)` correspondant à une boule de feu placée depuis les coordonnées `coords`, par l'action `action`.
+    Donne les infos sur le placement d'une boule de feu.
+
+    Donne un triplet `(x, y, direction)` correspondant à une boule de feu placée depuis
+    les coordonnées `coords`, par l'action `action`.
     """
     x, y = coords
     if action == ATTACK_UP:
@@ -53,108 +56,90 @@ def place_fireball(coords, action):
 
 
 def swap_direction(action):
-    """
-    Donne la direction opposée pour l'action `action`.
-    """
+    """Donne la direction opposée pour l'action `action`."""
     if action == MOVE_UP:
         return MOVE_DOWN
-    elif action == MOVE_DOWN:
+    if action == MOVE_DOWN:
         return MOVE_UP
-    elif action == MOVE_LEFT:
+    if action == MOVE_LEFT:
         return MOVE_RIGHT
-    elif action == MOVE_RIGHT:
+    if action == MOVE_RIGHT:
         return MOVE_LEFT
-    elif action == ATTACK_UP:
+    if action == ATTACK_UP:
         return ATTACK_DOWN
-    elif action == ATTACK_DOWN:
+    if action == ATTACK_DOWN:
         return ATTACK_UP
-    elif action == ATTACK_LEFT:
+    if action == ATTACK_LEFT:
         return ATTACK_RIGHT
-    elif action == ATTACK_RIGHT:
+    if action == ATTACK_RIGHT:
         return ATTACK_LEFT
     return WAIT
 
 
 def swap_type(action):
+    """Echange les attaques et les déplacements."""
     if action == MOVE_UP:
         return ATTACK_UP
-    elif action == MOVE_DOWN:
+    if action == MOVE_DOWN:
         return ATTACK_DOWN
-    elif action == MOVE_LEFT:
+    if action == MOVE_LEFT:
         return ATTACK_LEFT
-    elif action == MOVE_RIGHT:
+    if action == MOVE_RIGHT:
         return ATTACK_RIGHT
-    elif action == ATTACK_UP:
+    if action == ATTACK_UP:
         return MOVE_UP
-    elif action == ATTACK_DOWN:
+    if action == ATTACK_DOWN:
         return MOVE_DOWN
-    elif action == ATTACK_LEFT:
+    if action == ATTACK_LEFT:
         return MOVE_LEFT
-    elif action == ATTACK_RIGHT:
+    if action == ATTACK_RIGHT:
         return MOVE_RIGHT
     return WAIT
 
 
 class CantMoveThereException(Exception):
-    """
-    Exception lancée quand un joueur ne peut pas se rendre sur un case car il y a un mur.
-    """
-
-    pass
+    """Exception lancée quand un joueur ne peut pas se rendre sur un case."""
 
 
 class Entity:
-    """
-    Une entité de la zone de jeu.
-    """
+    """Une entité de la zone de jeu."""
 
     grid_id = 0
 
     def __init__(self, x: int, y: int):
-        """
-        Entité placée initialement en `(x, y)`
-        """
+        """Entité placée initialement en `(x, y)`."""
         self.x = x
         self.y = y
 
     def get_visual_x(self):
-        """
-        Position x affichée de l'entité, utilisée pour les animations.
-        """
+        """Position x affichée de l'entité, utilisée pour les animations."""
         return self.x
 
     def get_visual_y(self):
-        """
-        Position y affichée de l'entité, utilisée pour les animations.
-        """
+        """Position y affichée de l'entité, utilisée pour les animations."""
         return self.y
 
     def update(self, game, dt: float):
+        """Met à jour l'entité."""
         pass
 
     def next_update_in(self, dt: float):
+        """Temps avant la prochaine mise à jour de l'entité."""
         return float("inf")
 
 
 class MovingEntity(Entity):
-    """
-    Une entité mobile de la zone de jeu.
-    """
+    """Une entité mobile de la zone de jeu."""
 
     def __init__(self, x, y, speed: float):
-        """
-        L'entité réalise `speed` actions par seconde.
-        """
+        """L'entité réalise `speed` actions par seconde."""
         super().__init__(x, y)
         self.speed = speed
         self.action = WAIT
         self.action_progress = 0.0
 
     def next_update_in(self, dt):
-        """
-        Temps en seconde avant la prochaine update pour cette entité.
-        """
-
+        """Temps en seconde avant la prochaine update pour cette entité."""
         # Update à la moitié de l'action
         if self.action_progress < 0.5:
             return 0.5 / self.speed
@@ -162,22 +147,18 @@ class MovingEntity(Entity):
         return 1 / self.speed
 
     def get_visual_x(self):
-        """
-        Position x affichée de l'entité, utilisée pour les animations.
-        """
+        """Position x affichée de l'entité, utilisée pour les animations."""
         if self.action == MOVE_LEFT:
             return self.x + int(self.action_progress >= 0.5) - self.action_progress
-        elif self.action == MOVE_RIGHT:
+        if self.action == MOVE_RIGHT:
             return self.x - int(self.action_progress >= 0.5) + self.action_progress
         return self.x
 
     def get_visual_y(self):
-        """
-        Position y affichée de l'entité, utilisée pour les animations.
-        """
+        """Position y affichée de l'entité, utilisée pour les animations."""
         if self.action == MOVE_UP:
             return self.y + int(self.action_progress >= 0.5) - self.action_progress
-        elif self.action == MOVE_DOWN:
+        if self.action == MOVE_DOWN:
             return self.y - int(self.action_progress >= 0.5) + self.action_progress
         return self.y
 
@@ -186,13 +167,12 @@ class Player(MovingEntity):
     """
     Un joueur, qui fait `speed` actions par seconde.
 
-    L'action du joueur est choisie par la fonction `play`, qui renvoie une constante d'action.
+    L'action du joueur est choisie par la fonction `play`, qui renvoie une constante
+    d'action.
     """
 
     def __init__(self, x, y, speed, color):
-        """
-        Initialise un joueur avec sa couleur.
-        """
+        """Initialise un joueur avec sa couleur."""
         super(Player, self).__init__(x, y, speed)
         self.color = color
         self.grid_id = self.color
@@ -201,18 +181,13 @@ class Player(MovingEntity):
         self.super_fireball = 0
 
     def play(self, game):
-        """
-        Choisit la prochaine action du joueur, en renvoyant une constante d'action.
-        """
+        """Choisit la prochaine action du joueur, en renvoyant une constante d'action."""
         return WAIT
 
     def update(self, game, dt: float):
-        """
-        Met à jour la position du joueur et choisit sa prochaine action.
-        """
-
+        """Met à jour la position du joueur et choisit sa prochaine action."""
         # Fin d'une action, choix de la prochaine action
-        if self.action_progress < 1.0 and self.action_progress + dt * self.speed >= 1.0:
+        if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
 
             # Choix de la prochaine action
             action = self.play(game)
@@ -232,8 +207,7 @@ class Player(MovingEntity):
         # À la moitié du déplacement on met à jour les coordonnées du joueur
         elif (
             self.action in (MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT)
-            and self.action_progress < 0.5
-            and self.action_progress + dt * self.speed >= 0.5
+            and self.action_progress < 0.5 <= self.action_progress + dt * self.speed
         ):
             self.action_progress = 0.5
 
@@ -267,33 +241,24 @@ class Player(MovingEntity):
 
 
 class Fireball(MovingEntity):
-    """
-    Une boule de feu, qui tue les joueurs qu'elle traverse.
-    """
+    """Une boule de feu, qui tue les joueurs qu'elle traverse."""
 
     grid_id = FIREBALL
 
     def __init__(self, x, y, direction, player: Player):
-        """
-        Initialise une boule de feu, qui se déplace à 4.0 case / seconde.
-        """
+        """Initialise une boule de feu, qui se déplace à 4.0 case / seconde."""
         super().__init__(x, y, 4.0)
         self.action = direction
         self.player = player
 
     def update(self, game, dt: float):
-        """
-        Met à jour les coordonnées de la boule de feu.
-        """
-
+        """Met à jour les coordonnées de la boule de feu."""
         # On recommence la même action
-        if self.action_progress < 1.0 and self.action_progress + dt * self.speed >= 1.0:
+        if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
             self.action_progress = 0
 
         # À la moitié de l'action on déplace la boule de feu
-        elif (
-            self.action_progress < 0.5 and self.action_progress + dt * self.speed >= 0.5
-        ):
+        elif self.action_progress < 0.5 <= self.action_progress + dt * self.speed:
             old_x, old_y = self.x, self.y
             self.x, self.y = move((self.x, self.y), self.action)
             self.action_progress = 0.5
@@ -311,6 +276,7 @@ class Fireball(MovingEntity):
             self.action_progress += dt * self.speed
 
     def hit_players(self, game):
+        """TODO."""
         # Suppression des joueurs transpercés par la boule de feu
         for entity in game.entity_grid[self.y][self.x].copy():
             if isinstance(entity, Player):
@@ -319,48 +285,58 @@ class Fireball(MovingEntity):
 
 
 class CollectableEntity(Entity):
-    """
-    Une entité ramassable de la zone de jeu.
-    """
+    """Une entité ramassable de la zone de jeu."""
 
     def collect(self, game, player: Player):
-        """
-        Le joueur `player` ramasse l'entité.
-        """
-        pass
+        """Le joueur `player` ramasse l'entité."""
 
 
 class Coin(CollectableEntity):
+    """TODO."""
+
     grid_id = COIN
 
     def collect(self, game, player):
+        """TODO."""
         player.coins += 1
 
 
 class SpeedBoost(CollectableEntity):
+    """TODO."""
+
     grid_id = SPEEDBOOST
 
     def collect(self, game, player):
+        """TODO."""
         player.speed += 0.25
 
 
 class SpeedPenalty(CollectableEntity):
+    """TODO."""
+
     grid_id = SPEEDPENALTY
 
     def collect(self, game, player):
+        """TODO."""
         if player.speed >= 0.75:
             player.speed -= 0.25
 
 
 class SuperFireball(CollectableEntity):
+    """TODO."""
+
     grid_id = SUPER_FIREBALL
 
     def collect(self, game, player):
+        """TODO."""
         player.super_fireball += 1
 
 
 class Shield(CollectableEntity):
+    """TODO."""
+
     grid_id = SHIELD
 
     def collect(self, game, player):
+        """TODO."""
         player.shield = True

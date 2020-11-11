@@ -1,6 +1,8 @@
+"""Gestion de l'affichage du jeu."""
+
 from tkinter import Canvas as tkCanvas, PhotoImage, DoubleVar, NW, HORIZONTAL
 from math import floor
-from tkinter.ttk import Scale, Label
+from tkinter.ttk import Scale, Label, Frame, Progressbar
 
 from map import (
     WALL,
@@ -21,7 +23,8 @@ from map import (
 from entities import Player, Fireball, CollectableEntity
 
 
-def floor_const_to_str(f):
+def const_to_str(f):  # noqa
+    """Transforme une constante en clé de dictionnaire."""
     if f == FLOOR:
         return "floor"
     if f == WALL:
@@ -30,54 +33,39 @@ def floor_const_to_str(f):
         return "lava"
     if f == DAMAGED_FLOOR:
         return "damaged_floor"
-    raise KeyError("Constante inconnue")
-
-
-def player_const_to_str(p):
-    """
-    Transforme un constante `PLAYER_*` en `"*"`.
-    """
-    if p == PLAYER_RED:
+    if f == PLAYER_RED:
         return "red"
-    if p == PLAYER_BLUE:
+    if f == PLAYER_BLUE:
         return "blue"
-    if p == PLAYER_YELLOW:
+    if f == PLAYER_YELLOW:
         return "yellow"
-    if p == PLAYER_GREEN:
+    if f == PLAYER_GREEN:
         return "green"
-    raise KeyError("Constante inconnue")
-
-
-def collectible_const_to_str(c):
-    if c == SPEEDBOOST:
+    if f == SPEEDBOOST:
         return "speedboost"
-    if c == SPEEDPENALTY:
+    if f == SPEEDPENALTY:
         return "speedpenalty"
-    if c == COIN:
+    if f == COIN:
         return "coin"
-    if c == SUPER_FIREBALL:
+    if f == SUPER_FIREBALL:
         return "super_fireball"
-    if c == SHIELD:
+    if f == SHIELD:
         return "shield"
     raise KeyError("Constante inconnue")
 
 
 class Gui:
-    """
-    Gestion de l'affichage de Perfect Aim.
-    """
+    """Gestion de l'affichage de Perfect Aim."""
 
     def __init__(self, master):
-        """
-        Initialise la fenêtre tkinter.
-        """
+        """Initialise la fenêtre tkinter."""
         self.TILE_SIZE = 32
 
         self.master = master
         master.title("Perfect Aim")
 
         self.canvas = tkCanvas(master, background="#eee")
-        self.canvas.grid(column=0, row=0, rowspan=3)
+        self.canvas.grid(column=0, row=0, columnspan=3)
 
         self.slider_var = DoubleVar(value=1.0)
         self.label = Label(text="x 1.0")
@@ -94,12 +82,12 @@ class Gui:
                 else "x " + str(round(self.slider_var.get(), 1))
             ),
         )
-        self.slider.grid(column=1, row=0, sticky="NSEW")
+        self.slider.grid(column=0, row=1, sticky="NSEW")
         self.label.grid(column=1, row=1, sticky="NSEW")
-        self.label2.grid(column=1, row=2, sticky="NSEW")
+        self.label2.grid(column=2, row=1, sticky="NSEW")
 
-        self.master.columnconfigure(0, weight=0)
-        self.master.columnconfigure(1, weight=1)
+        # self.master.columnconfigure(0, weight=0)
+        # self.master.columnconfigure(1, weight=1)
 
         self.fireballs = {}
         self.fireball_hitboxes = {}
@@ -142,16 +130,14 @@ class Gui:
         self.assets["shield"] = PhotoImage(file="./assets/shield.png")
 
     def draw_map(self, game):
-        """
-        Affiche le fond de la zone de jeu.
-        """
+        """Affiche le fond de la zone de jeu."""
         background = game.background
         size = self.TILE_SIZE * game.map.size
         self.canvas.config(width=size, height=size)
         self.grid = [[None] * game.map.size for _ in range(game.map.size)]
         for y in range(game.map.size):
             for x in range(game.map.size):
-                image = self.assets[floor_const_to_str(background[y][x])]
+                image = self.assets[const_to_str(background[y][x])]
                 self.grid[y][x] = (
                     background[y][x],
                     self.canvas.create_image(
@@ -163,9 +149,45 @@ class Gui:
                     ),
                 )
 
+    def _player_string(self, player):
+        return (
+            f"Vitesse {player.speed} / "
+            f"Fireballs {player.super_fireball} / "
+            f"Coins {player.coins}"
+        )
+
     def draw_players(self, game):
-        """Dessine les joueurs."""
-        return game
+
+        self.player_panels_data = []
+        self.player_panels_frame = Frame(self.master)
+
+        for i in range(len(game.players)):
+
+            data = {}
+            player_panel_frame = Frame(self.player_panels_frame, padding=10)
+            self.player_panels_data.append(data)
+
+            player = game.players[i]
+
+            label = Label(player_panel_frame, text=player.get_name())
+            data["label"] = label
+
+            bar = Progressbar(player_panel_frame, maximum=1.0)
+            data["bar"] = bar
+
+            label2 = Label(
+                player_panel_frame,
+                text=self._player_string(player),
+            )
+            data["label2"] = label2
+
+            label.grid(row=0, column=0)
+            label2.grid(row=1, column=0, sticky="EW")
+            bar.grid(row=2, column=0, sticky="EW")
+            player_panel_frame.grid(row=i, column=0, sticky="EW")
+            player_panel_frame.columnconfigure(0, weight=1)
+
+        self.player_panels_frame.grid(column=3, row=0, rowspan=2, sticky="EW")
 
     def update(self, game):
         """Met à jour la zone de jeu."""
@@ -178,7 +200,7 @@ class Gui:
                 if grid_id != game.background[y][x]:
                     changed = True
                     self.canvas.delete(image_id)
-                    image = self.assets[floor_const_to_str(game.background[y][x])]
+                    image = self.assets[const_to_str(game.background[y][x])]
                     self.grid[y][x] = (
                         game.background[y][x],
                         self.canvas.create_image(
@@ -202,9 +224,7 @@ class Gui:
                     self.canvas.create_image(
                         self.TILE_SIZE,
                         self.TILE_SIZE,
-                        image=self.assets[
-                            collectible_const_to_str(collectible.grid_id)
-                        ],
+                        image=self.assets[const_to_str(collectible.grid_id)],
                         anchor=NW,
                     ),
                 )
@@ -219,6 +239,14 @@ class Gui:
         self.canvas.delete(*diff)
 
         # Les joueurs
+        for p in range(len(game.players)):
+            self.player_panels_data[p]["bar"].config(
+                value=game.players[p].action_progress
+            )
+            self.player_panels_data[p]["label2"].config(
+                text=self._player_string(game.players[p])
+            )
+
         diff = set(self.players.values())
         diff_hitboxes = set(self.player_hitboxes.values())
         for p in filter(lambda e: isinstance(e, Player), game.entities):
@@ -227,14 +255,14 @@ class Gui:
                     self.canvas.create_image(
                         self.TILE_SIZE,
                         self.TILE_SIZE,
-                        image=self.assets["player_" + player_const_to_str(p.color)],
+                        image=self.assets["player_" + const_to_str(p.color)],
                         anchor=NW,
                     ),
                 )
                 self.player_hitboxes[p] = self.canvas.create_image(
                     self.TILE_SIZE,
                     self.TILE_SIZE,
-                    image=self.assets["hitbox_" + player_const_to_str(p.color)],
+                    image=self.assets["hitbox_" + const_to_str(p.color)],
                     anchor=NW,
                 )
                 diff.add(self.players[p])
@@ -245,7 +273,7 @@ class Gui:
                         self.TILE_SIZE,
                         self.TILE_SIZE,
                         image=self.assets[
-                            "player_" + player_const_to_str(p.color) + "_shield"
+                            "player_" + const_to_str(p.color) + "_shield"
                         ],
                         anchor=NW,
                     ),
@@ -257,7 +285,7 @@ class Gui:
                     self.canvas.create_image(
                         self.TILE_SIZE,
                         self.TILE_SIZE,
-                        image=self.assets["player_" + player_const_to_str(p.color)],
+                        image=self.assets["player_" + const_to_str(p.color)],
                         anchor=NW,
                     ),
                 )

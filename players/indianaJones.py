@@ -31,7 +31,7 @@ class IndianaJones(Player):
                 return attack
 
             # Sinon, on cherche les items
-            elif game.is_valid_action(self, direction):
+            if game.is_valid_action(self, direction):
                 tracks.append((x, y, direction, game.background[y][x] == DAMAGED_FLOOR))
                 explored[y][x] = True
 

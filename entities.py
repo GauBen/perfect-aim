@@ -9,6 +9,10 @@ from map import (
     SUPER_FIREBALL,
     SHIELD,
     LAVA,
+    PLAYER_BLUE,
+    PLAYER_GREEN,
+    PLAYER_RED,
+    PLAYER_YELLOW,
 )
 
 WAIT = 0
@@ -171,6 +175,8 @@ class Player(MovingEntity):
     d'action.
     """
 
+    name = "Donne-moi un nom !"
+
     def __init__(self, x, y, speed, color):
         """Initialise un joueur avec sa couleur."""
         super(Player, self).__init__(x, y, speed)
@@ -238,6 +244,18 @@ class Player(MovingEntity):
         # Rien de spécial, on avance dans l'action
         else:
             self.action_progress += dt * self.speed
+
+    def get_name(self):
+        name = self.name
+        if self.color == PLAYER_RED:
+            name += " (rouge)"
+        elif self.color == PLAYER_BLUE:
+            name += " (bleu)"
+        elif self.color == PLAYER_YELLOW:
+            name += " (jaune)"
+        elif self.color == PLAYER_GREEN:
+            name += " (vert)"
+        return name
 
 
 class Fireball(MovingEntity):

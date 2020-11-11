@@ -18,6 +18,8 @@ from map import WALL, SUPER_FIREBALL, SPEEDBOOST, LAVA, DAMAGED_FLOOR
 class IndianaJones(Player):
     """Le célèbre aventurier."""
 
+    name = "Indiana Jones"
+
     def play(self, game: Game):
         """Cherche un joueur adjacent ou un item atteignable."""
         explored = [[False for x in range(game.map.size)] for y in range(game.map.size)]

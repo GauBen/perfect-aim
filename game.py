@@ -298,8 +298,9 @@ class Game:
             self.remove_entity(player)
 
     def remove_entity(self, entity: Entity):
-        self.entities.remove(entity)
-        self.entity_grid[entity.y][entity.x].remove(entity)
+        if entity in self.entities:
+            self.entities.remove(entity)
+            self.entity_grid[entity.y][entity.x].remove(entity)
         self.update_grid(entity.x, entity.y)
 
     def move_entity(self, entity: MovingEntity, old_x: int, old_y: int):

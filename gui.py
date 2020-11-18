@@ -1,26 +1,60 @@
 """Gestion de l'affichage du jeu."""
 
-from tkinter import Canvas as tkCanvas, PhotoImage, DoubleVar, NW, HORIZONTAL
 from math import floor
-from tkinter.ttk import Scale, Label, Frame, Progressbar
+from tkinter import EW, HORIZONTAL, NSEW, NW, N, E, S, W
+from tkinter import Canvas as tkCanvas
+from tkinter import DoubleVar, PhotoImage
+from tkinter.ttk import Frame, Label, Progressbar, Scale
 
+from entities import (
+    ATTACK_DOWN,
+    ATTACK_LEFT,
+    ATTACK_RIGHT,
+    ATTACK_UP,
+    MOVE_DOWN,
+    MOVE_LEFT,
+    MOVE_RIGHT,
+    MOVE_UP,
+    CollectableEntity,
+    Fireball,
+    Player,
+)
 from map import (
-    WALL,
+    COIN,
+    DAMAGED_FLOOR,
+    FLOOR,
     LAVA,
-    PLAYER_RED,
     PLAYER_BLUE,
-    PLAYER_YELLOW,
     PLAYER_GREEN,
+    PLAYER_RED,
+    PLAYER_YELLOW,
+    SHIELD,
     SPEEDBOOST,
     SPEEDPENALTY,
     SUPER_FIREBALL,
-    COIN,
-    SHIELD,
-    FLOOR,
-    DAMAGED_FLOOR,
+    WALL,
 )
 
-from entities import Player, Fireball, CollectableEntity
+
+def action_to_str(action):
+    """Version textuelle d'une action."""
+    if action == MOVE_UP:
+        return "Mvt haut"
+    if action == MOVE_DOWN:
+        return "Mvt bas"
+    if action == MOVE_LEFT:
+        return "Mvt gauche"
+    if action == MOVE_RIGHT:
+        return "Mvt droit"
+    if action == ATTACK_UP:
+        return "Atk haut"
+    if action == ATTACK_DOWN:
+        return "Atk bas"
+    if action == ATTACK_LEFT:
+        return "Atk gauche"
+    if action == ATTACK_RIGHT:
+        return "Atk droit"
+    return "Attente"
 
 
 def const_to_str(f):  # noqa
@@ -82,12 +116,9 @@ class Gui:
                 else "x " + str(round(self.slider_var.get(), 1))
             ),
         )
-        self.slider.grid(column=0, row=1, sticky="NSEW")
-        self.label.grid(column=1, row=1, sticky="NSEW")
-        self.label2.grid(column=2, row=1, sticky="NSEW")
-
-        # self.master.columnconfigure(0, weight=0)
-        # self.master.columnconfigure(1, weight=1)
+        self.slider.grid(column=0, row=1, sticky=NSEW)
+        self.label.grid(column=1, row=1, sticky=NSEW)
+        self.label2.grid(column=2, row=1, sticky=NSEW)
 
         self.fireballs = {}
         self.fireball_hitboxes = {}
@@ -96,6 +127,10 @@ class Gui:
         self.collectibles = {}
         self.shielded_players = set()
 
+        self.create_assets()
+
+    def create_assets(self):
+        """Initialise les ressources du jeu."""
         self.assets = {}
         self.assets["floor"] = PhotoImage(file="./assets/empty.png")
         self.assets["wall"] = PhotoImage(file="./assets/wall.png")
@@ -149,45 +184,63 @@ class Gui:
                     ),
                 )
 
-    def _player_string(self, player):
-        return (
-            f"Vitesse {player.speed} / "
-            f"Fireballs {player.super_fireball} / "
-            f"Coins {player.coins}"
+    def create_player_panel(self, player: Player, frame: Frame):
+        """Crée le panneau des statistiques d'un joueur."""
+        widgets = {}
+        widgets["player_icon"] = Label(frame, image=self.assets["player_red"])
+        widgets["player_label"] = Label(frame, text=player.get_name())
+        widgets["speed_icon"] = Label(frame, image=self.assets["speedboost"])
+        widgets["speed_label"] = Label(frame, text=f"{player.speed:.2f}")
+        widgets["super_fireball_icon"] = Label(
+            frame, image=self.assets["super_fireball"]
         )
+        widgets["super_fireball_label"] = Label(frame, text=f"{player.super_fireball}")
+        widgets["coin_icon"] = Label(frame, image=self.assets["coin"])
+        widgets["coin_label"] = Label(frame, text=f"{player.coins}")
+        widgets["action_label"] = Label(frame, text=action_to_str(player.action))
+        widgets["action_bar"] = Progressbar(frame, length=1, max=1.0, value=0.0)
+
+        widgets["player_icon"].grid(row=0, column=0)
+        widgets["player_label"].grid(row=0, column=1, columnspan=5, sticky=W)
+        widgets["speed_icon"].grid(row=1, column=0)
+        widgets["speed_label"].grid(row=1, column=1, sticky=W)
+        widgets["super_fireball_icon"].grid(row=1, column=2)
+        widgets["super_fireball_label"].grid(row=1, column=3, sticky=W)
+        widgets["coin_icon"].grid(row=1, column=4)
+        widgets["coin_label"].grid(row=1, column=5, sticky=W)
+        widgets["action_label"].grid(row=2, column=0, columnspan=4)
+        widgets["action_bar"].grid(row=2, column=4, columnspan=2, sticky=EW, padx=8)
+
+        frame.grid_columnconfigure(1, weight=1)
+        frame.grid_columnconfigure(3, weight=1)
+        frame.grid_columnconfigure(5, weight=1)
+
+        return widgets
+
+    def update_player_panel(self, player: Player):
+        """Met à jour le panneau des statistiques d'un joueur."""
+        widgets = self.player_panels_data[player]
+        widgets["speed_label"].configure(text=f"{player.speed:.2f}")
+        widgets["super_fireball_label"].configure(text=f"{player.super_fireball}")
+        widgets["coin_label"].configure(text=f"{player.coins}")
+        widgets["action_label"].configure(text=action_to_str(player.action))
+        widgets["action_bar"].configure(value=player.action_progress)
 
     def draw_players(self, game):
-
-        self.player_panels_data = []
+        """Dessine le panneau des statistiques."""
+        self.player_panels_data = {}
         self.player_panels_frame = Frame(self.master)
 
         for i in range(len(game.players)):
-
-            data = {}
             player_panel_frame = Frame(self.player_panels_frame, padding=10)
-            self.player_panels_data.append(data)
-
-            player = game.players[i]
-
-            label = Label(player_panel_frame, text=player.get_name())
-            data["label"] = label
-
-            bar = Progressbar(player_panel_frame, maximum=1.0)
-            data["bar"] = bar
-
-            label2 = Label(
-                player_panel_frame,
-                text=self._player_string(player),
+            self.player_panels_data[game.players[i]] = self.create_player_panel(
+                game.players[i], player_panel_frame
             )
-            data["label2"] = label2
+            player_panel_frame.grid(row=i, column=0, sticky=EW)
 
-            label.grid(row=0, column=0)
-            label2.grid(row=1, column=0, sticky="EW")
-            bar.grid(row=2, column=0, sticky="EW")
-            player_panel_frame.grid(row=i, column=0, sticky="EW")
-            player_panel_frame.columnconfigure(0, weight=1)
-
-        self.player_panels_frame.grid(column=3, row=0, rowspan=2, sticky="EW")
+        self.player_panels_frame.grid(column=3, row=0, rowspan=2, sticky=EW)
+        self.player_panels_frame.columnconfigure(0, weight=1)
+        self.master.grid_columnconfigure(3, weight=1)
 
     def update(self, game):
         """Met à jour la zone de jeu."""
@@ -239,13 +292,8 @@ class Gui:
         self.canvas.delete(*diff)
 
         # Les joueurs
-        for p in range(len(game.players)):
-            self.player_panels_data[p]["bar"].config(
-                value=game.players[p].action_progress
-            )
-            self.player_panels_data[p]["label2"].config(
-                text=self._player_string(game.players[p])
-            )
+        for p in game.players:
+            self.update_player_panel(p)
 
         diff = set(self.players.values())
         diff_hitboxes = set(self.player_hitboxes.values())

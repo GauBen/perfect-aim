@@ -1,18 +1,18 @@
 """Les entités du jeu."""
 
 from map import (
-    FIREBALL,
-    SPEEDBOOST,
-    SPEEDPENALTY,
-    WALL,
     COIN,
-    SUPER_FIREBALL,
-    SHIELD,
+    FIREBALL,
     LAVA,
     PLAYER_BLUE,
     PLAYER_GREEN,
     PLAYER_RED,
     PLAYER_YELLOW,
+    SHIELD,
+    SPEEDBOOST,
+    SPEEDPENALTY,
+    SUPER_FIREBALL,
+    WALL,
 )
 
 WAIT = 0
@@ -246,6 +246,7 @@ class Player(MovingEntity):
             self.action_progress += dt * self.speed
 
     def get_name(self):
+        """Renvoie le nom du joueur et sa couleur."""
         name = self.name
         if self.color == PLAYER_RED:
             name += " (rouge)"

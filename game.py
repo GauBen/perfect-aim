@@ -154,13 +154,13 @@ class Game:
         # Il ne reste qu'un joueur en vie ?
         if len(players) == 1:
             winner = players[0]
-            # print(f"Victoire du joueur {winner.color}")
-            # self.over = True
+            print(f"Victoire du joueur {winner.color}")
+            self.over = True
             self.winner = winner
         elif len(players) == 0:
-            # print("Match nul")
-            # self.over = True
-            pass
+            print("Match nul")
+            self.over = True
+            # pass
 
         # Génération des items
         if len(list(filter(lambda e: isinstance(e, SpeedBoost), self.entities))) == 0:

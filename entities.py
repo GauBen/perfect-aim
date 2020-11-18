@@ -102,7 +102,7 @@ def swap_type(action):
 
 
 class CantMoveThereException(Exception):
-    """Exception lancée quand un joueur ne peut pas se rendre sur un case."""
+    """Exception lancée quand un joueur ne peut pas se rendre sur une case."""
 
 
 class Entity:
@@ -295,7 +295,7 @@ class Fireball(MovingEntity):
             self.action_progress += dt * self.speed
 
     def hit_players(self, game):
-        """TODO."""
+        """Inflige un point de dégât à tous les joueurs de la case."""
         # Suppression des joueurs transpercés par la boule de feu
         for entity in game.entity_grid[self.y][self.x].copy():
             if isinstance(entity, Player):
@@ -311,51 +311,51 @@ class CollectableEntity(Entity):
 
 
 class Coin(CollectableEntity):
-    """TODO."""
+    """Une pièce à ramasser."""
 
     grid_id = COIN
 
     def collect(self, game, player):
-        """TODO."""
+        """Ajoute une pièce au joueur."""
         player.coins += 1
 
 
 class SpeedBoost(CollectableEntity):
-    """TODO."""
+    """Un bonus de vitesse."""
 
     grid_id = SPEEDBOOST
 
     def collect(self, game, player):
-        """TODO."""
+        """Ajoute 25pts% de vitesse au joueur."""
         player.speed += 0.25
 
 
 class SpeedPenalty(CollectableEntity):
-    """TODO."""
+    """Un malus de vitesse."""
 
     grid_id = SPEEDPENALTY
 
     def collect(self, game, player):
-        """TODO."""
+        """Retire 25pts% de vitesse au joueur."""
         if player.speed >= 0.75:
             player.speed -= 0.25
 
 
 class SuperFireball(CollectableEntity):
-    """TODO."""
+    """Un sort qui lance une boule de feu dans toutes les directions."""
 
     grid_id = SUPER_FIREBALL
 
     def collect(self, game, player):
-        """TODO."""
+        """Ajoute un sort au joueur."""
         player.super_fireball += 1
 
 
 class Shield(CollectableEntity):
-    """TODO."""
+    """Un bouclier qui protège d'une boule de feu."""
 
     grid_id = SHIELD
 
     def collect(self, game, player):
-        """TODO."""
+        """Protège le joueur jusqu'au prochain coup."""
         player.shield = True

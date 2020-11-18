@@ -48,6 +48,7 @@ if __name__ == "__main__":
         dt = delta() * canvas.slider_var.get()
         if dt > 0:
             g.update(dt)
+        delta()
         canvas.update(g)
         if not g.over:
             root.after(1000 // 60, update)

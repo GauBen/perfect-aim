@@ -1,93 +1,63 @@
 """Gestion de l'affichage du jeu."""
 
-from time import monotonic
-from tkinter import EW, HORIZONTAL, NSEW, NW
-from tkinter import Canvas as tkCanvas
-from tkinter import DoubleVar, PhotoImage, Tk, Toplevel, W
-from tkinter.ttk import Button, Combobox, Frame, Label, Progressbar, Scale
+import tkinter
+import tkinter.ttk as ttk
+import time
 
-from entities import (
-    ATTACK_DOWN,
-    ATTACK_LEFT,
-    ATTACK_RIGHT,
-    ATTACK_UP,
-    MOVE_DOWN,
-    MOVE_LEFT,
-    MOVE_RIGHT,
-    MOVE_UP,
-    CollectableEntity,
-    Fireball,
-    Player,
-)
-from game import Game
-from map import (
-    COIN,
-    DAMAGED_FLOOR,
-    FLOOR,
-    LAVA,
-    PLAYER_BLUE,
-    PLAYER_GREEN,
-    PLAYER_RED,
-    PLAYER_YELLOW,
-    SHIELD,
-    SPEEDBOOST,
-    SPEEDPENALTY,
-    SUPER_FIREBALL,
-    WALL,
-)
-from players import list_player_subclasses
-
-print(list())
+import entities
+import game
+import map
+import players
 
 
 def action_to_str(action):
     """Version textuelle d'une action."""
-    if action == MOVE_UP:
+    if action == entities.MOVE_UP:
         return "Mvt haut"
-    if action == MOVE_DOWN:
+    if action == entities.MOVE_DOWN:
         return "Mvt bas"
-    if action == MOVE_LEFT:
+    if action == entities.MOVE_LEFT:
         return "Mvt gauche"
-    if action == MOVE_RIGHT:
+    if action == entities.MOVE_RIGHT:
         return "Mvt droit"
-    if action == ATTACK_UP:
+    if action == entities.ATTACK_UP:
         return "Atk haut"
-    if action == ATTACK_DOWN:
+    if action == entities.ATTACK_DOWN:
         return "Atk bas"
-    if action == ATTACK_LEFT:
+    if action == entities.ATTACK_LEFT:
         return "Atk gauche"
-    if action == ATTACK_RIGHT:
+    if action == entities.ATTACK_RIGHT:
         return "Atk droit"
     return "Attente"
 
 
 def const_to_str(f):  # noqa
     """Transforme une constante en clé de dictionnaire."""
-    if f == FLOOR:
+    if f == map.FLOOR:
         return "floor"
-    if f == WALL:
+    if f == map.WALL:
         return "wall"
-    if f == LAVA:
+    if f == map.LAVA:
         return "lava"
-    if f == DAMAGED_FLOOR:
+    if f == map.DAMAGED_FLOOR:
         return "damaged_floor"
-    if f == PLAYER_RED:
+    if f == map.PLAYER_RED:
         return "red"
-    if f == PLAYER_BLUE:
+    if f == map.PLAYER_BLUE:
         return "blue"
-    if f == PLAYER_YELLOW:
+    if f == map.PLAYER_YELLOW:
         return "yellow"
-    if f == PLAYER_GREEN:
+    if f == map.PLAYER_GREEN:
         return "green"
-    if f == SPEEDBOOST:
+    if f == map.SPEEDBOOST:
         return "speedboost"
-    if f == SPEEDPENALTY:
+    if f == map.SPEEDPENALTY:
         return "speedpenalty"
-    if f == COIN:
+    if f == map.COIN:
         return "coin"
-    if f == SUPER_FIREBALL:
+    if f == map.SUPER_FIREBALL:
         return "super_fireball"
-    if f == SHIELD:
+    if f == map.SHIELD:
         return "shield"
     raise KeyError("Constante inconnue")
 
@@ -97,11 +67,11 @@ class Delta:
 
     def __init__(self):
         """Temp."""
-        self.last = monotonic()
+        self.last = time.monotonic()
 
     def delta(self):
         """Temp."""
-        t = monotonic()
+        t = time.monotonic()
         out = t - self.last
         self.last = t
         return out
@@ -117,31 +87,37 @@ class Gui:
 
     def __init__(self):
         """Initialise la fenêtre tkinter."""
-        self.master = Tk()
+        self.master = tkinter.Tk()
         self.master.title("Perfect Aim")
         self.create_assets()
+        self.in_game = False
 
-        frame = Frame(self.master, padding=(32, 16))
+        frame = ttk.Frame(self.master, padding=(32, 16))
         frame.grid(row=0, column=0)
         self.master.grid_columnconfigure(0, weight=1)
         self.master.grid_rowconfigure(0, weight=1)
 
-        label_title = Label(frame, text="Perfect Aim", font=("", 24, "bold"))
-        button_play = Button(frame, text="Play", command=self.play)
+        label_title = ttk.Label(frame, text="Perfect Aim", font=("", 24, "bold"))
+        button_play = ttk.Button(frame, text="Play", command=self.play)
+        subframe = ttk.Frame(frame, padding=16)
 
-        player_subclasses = list_player_subclasses()
+        player_subclasses = players.list_player_subclasses()
         self.available_players = list(player_subclasses)
         self.available_players.insert(0, ("<aucun>", None))
 
-        label_title.grid(row=0, column=0, columnspan=2)
+        label_title.grid(
+            row=0,
+            column=0,
+        )
         self.player_widgets = []
         for i in range(4):
             widgets = {}
-            widgets["icon"] = Label(
-                frame, image=self.assets["player_" + const_to_str(PLAYER_RED + i)]
+            widgets["icon"] = ttk.Label(
+                subframe,
+                image=self.assets["player_" + const_to_str(map.PLAYER_RED + i)],
             )
-            widgets["combobox"] = Combobox(
-                frame,
+            widgets["combobox"] = ttk.Combobox(
+                subframe,
                 values=tuple(name for name, _ in self.available_players),
                 state="readonly",
             )
@@ -150,20 +126,25 @@ class Gui:
             widgets["combobox"].grid(row=i + 1, column=1)
             self.player_widgets.append(widgets)
 
-        button_play.grid(row=5, column=0, columnspan=2)
+        subframe.grid(row=1, column=0)
+        button_play.grid(row=2, column=0)
 
         self.master.mainloop()
 
     def play(self):
         """Lance une nouvelle partie."""
+        if self.in_game:
+            return
+        self.in_game = True
+
         players = []
         for widgets in self.player_widgets:
             name = widgets["combobox"].get()
-            for refname, clazz in self.available_players:
-                if name == refname and clazz is not None:
-                    players.append(clazz)
+            for refname, constructor in self.available_players:
+                if name == refname and constructor is not None:
+                    players.append(constructor)
 
-        g = Game(players)
+        g = game.Game(players)
         self.master.withdraw()
 
         self.create_main_window(self.master)
@@ -186,20 +167,20 @@ class Gui:
 
     def create_main_window(self, master):
         """Crée la fenêtre principale du jeu."""
-        self.game_window = Toplevel(master)
+        self.game_window = tkinter.Toplevel(master)
         master.title("Perfect Aim")
 
-        self.canvas = tkCanvas(self.game_window, background="#eee")
+        self.canvas = tkinter.Canvas(self.game_window, background="#eee")
         self.canvas.grid(column=0, row=0, columnspan=3)
 
-        self.slider_var = DoubleVar(value=1.0)
-        self.label = Label(self.game_window, text="x 1.0")
-        self.label2 = Label(self.game_window, text="0 s")
-        self.slider = Scale(
+        self.slider_var = tkinter.DoubleVar(value=1.0)
+        self.label = ttk.Label(self.game_window, text="x 1.0")
+        self.label2 = ttk.Label(self.game_window, text="0 s")
+        self.slider = ttk.Scale(
             self.game_window,
             from_=0.0,
             to=10.0,
-            orient=HORIZONTAL,
+            orient=tkinter.HORIZONTAL,
             variable=self.slider_var,
             command=lambda x: self.label.config(
                 text="Paused"
@@ -207,9 +188,9 @@ class Gui:
                 else "x " + str(round(self.slider_var.get(), 1))
             ),
         )
-        self.slider.grid(column=0, row=1, sticky=NSEW)
-        self.label.grid(column=1, row=1, sticky=NSEW)
-        self.label2.grid(column=2, row=1, sticky=NSEW)
+        self.slider.grid(column=0, row=1, sticky=tkinter.NSEW)
+        self.label.grid(column=1, row=1, sticky=tkinter.NSEW)
+        self.label2.grid(column=2, row=1, sticky=tkinter.NSEW)
 
         self.fireballs = {}
         self.fireball_hitboxes = {}
@@ -221,37 +202,51 @@ class Gui:
     def create_assets(self):
         """Initialise les ressources du jeu."""
         self.assets = {}
-        self.assets["floor"] = PhotoImage(file="./assets/empty.png")
-        self.assets["wall"] = PhotoImage(file="./assets/wall.png")
-        self.assets["lava"] = PhotoImage(file="./assets/lava.png")
-        self.assets["damaged_floor"] = PhotoImage(file="./assets/damaged_ground.png")
-        self.assets["player_red"] = PhotoImage(file="./assets/player_red.png")
-        self.assets["player_red_shield"] = PhotoImage(
+        self.assets["floor"] = tkinter.PhotoImage(file="./assets/empty.png")
+        self.assets["wall"] = tkinter.PhotoImage(file="./assets/wall.png")
+        self.assets["lava"] = tkinter.PhotoImage(file="./assets/lava.png")
+        self.assets["damaged_floor"] = tkinter.PhotoImage(
+            file="./assets/damaged_ground.png"
+        )
+        self.assets["player_red"] = tkinter.PhotoImage(file="./assets/player_red.png")
+        self.assets["player_red_shield"] = tkinter.PhotoImage(
             file="./assets/player_red_shield.png"
         )
-        self.assets["player_blue"] = PhotoImage(file="./assets/player_blue.png")
-        self.assets["player_blue_shield"] = PhotoImage(
+        self.assets["player_blue"] = tkinter.PhotoImage(file="./assets/player_blue.png")
+        self.assets["player_blue_shield"] = tkinter.PhotoImage(
             file="./assets/player_blue_shield.png"
         )
-        self.assets["player_yellow"] = PhotoImage(file="./assets/player_yellow.png")
-        self.assets["player_yellow_shield"] = PhotoImage(
+        self.assets["player_yellow"] = tkinter.PhotoImage(
+            file="./assets/player_yellow.png"
+        )
+        self.assets["player_yellow_shield"] = tkinter.PhotoImage(
             file="./assets/player_yellow_shield.png"
         )
-        self.assets["player_green"] = PhotoImage(file="./assets/player_green.png")
-        self.assets["player_green_shield"] = PhotoImage(
+        self.assets["player_green"] = tkinter.PhotoImage(
+            file="./assets/player_green.png"
+        )
+        self.assets["player_green_shield"] = tkinter.PhotoImage(
             file="./assets/player_green_shield.png"
         )
-        self.assets["hitbox_red"] = PhotoImage(file="./assets/hitbox_red.png")
-        self.assets["hitbox_blue"] = PhotoImage(file="./assets/hitbox_blue.png")
-        self.assets["hitbox_yellow"] = PhotoImage(file="./assets/hitbox_yellow.png")
-        self.assets["hitbox_green"] = PhotoImage(file="./assets/hitbox_green.png")
-        self.assets["fireball"] = PhotoImage(file="./assets/fireball.png")
-        self.assets["hitbox_fireball"] = PhotoImage(file="./assets/hitbox_fireball.png")
-        self.assets["speedboost"] = PhotoImage(file="./assets/speedboost.png")
-        self.assets["speedpenalty"] = PhotoImage(file="./assets/hourglass.png")
-        self.assets["coin"] = PhotoImage(file="./assets/coin.png")
-        self.assets["super_fireball"] = PhotoImage(file="./assets/super_fireball.png")
-        self.assets["shield"] = PhotoImage(file="./assets/shield.png")
+        self.assets["hitbox_red"] = tkinter.PhotoImage(file="./assets/hitbox_red.png")
+        self.assets["hitbox_blue"] = tkinter.PhotoImage(file="./assets/hitbox_blue.png")
+        self.assets["hitbox_yellow"] = tkinter.PhotoImage(
+            file="./assets/hitbox_yellow.png"
+        )
+        self.assets["hitbox_green"] = tkinter.PhotoImage(
+            file="./assets/hitbox_green.png"
+        )
+        self.assets["fireball"] = tkinter.PhotoImage(file="./assets/fireball.png")
+        self.assets["hitbox_fireball"] = tkinter.PhotoImage(
+            file="./assets/hitbox_fireball.png"
+        )
+        self.assets["speedboost"] = tkinter.PhotoImage(file="./assets/speedboost.png")
+        self.assets["speedpenalty"] = tkinter.PhotoImage(file="./assets/hourglass.png")
+        self.assets["coin"] = tkinter.PhotoImage(file="./assets/coin.png")
+        self.assets["super_fireball"] = tkinter.PhotoImage(
+            file="./assets/super_fireball.png"
+        )
+        self.assets["shield"] = tkinter.PhotoImage(file="./assets/shield.png")
 
     def draw_map(self, game):
         """Affiche le fond de la zone de jeu."""
@@ -268,37 +263,41 @@ class Gui:
                         x * self.TILE_SIZE,
                         y * self.TILE_SIZE,
                         image=image,
-                        anchor=NW,
+                        anchor=tkinter.NW,
                         tags="background",
                     ),
                 )
 
-    def create_player_panel(self, player: Player, frame: Frame):
+    def create_player_panel(self, player: entities.Player, frame: ttk.Frame):
         """Crée le panneau des statistiques d'un joueur."""
         widgets = {}
-        widgets["player_icon"] = Label(frame, image=self.assets["player_red"])
-        widgets["player_label"] = Label(frame, text=player.get_name())
-        widgets["speed_icon"] = Label(frame, image=self.assets["speedboost"])
-        widgets["speed_label"] = Label(frame, text=f"{player.speed:.2f}")
-        widgets["super_fireball_icon"] = Label(
+        widgets["player_icon"] = ttk.Label(frame, image=self.assets["player_red"])
+        widgets["player_label"] = ttk.Label(frame, text=player.get_name())
+        widgets["speed_icon"] = ttk.Label(frame, image=self.assets["speedboost"])
+        widgets["speed_label"] = ttk.Label(frame, text=f"{player.speed:.2f}")
+        widgets["super_fireball_icon"] = ttk.Label(
             frame, image=self.assets["super_fireball"]
         )
-        widgets["super_fireball_label"] = Label(frame, text=f"{player.super_fireball}")
-        widgets["coin_icon"] = Label(frame, image=self.assets["coin"])
-        widgets["coin_label"] = Label(frame, text=f"{player.coins}")
-        widgets["action_label"] = Label(frame, text=action_to_str(player.action))
-        widgets["action_bar"] = Progressbar(frame, length=1, max=1.0, value=0.0)
+        widgets["super_fireball_label"] = ttk.Label(
+            frame, text=f"{player.super_fireball}"
+        )
+        widgets["coin_icon"] = ttk.Label(frame, image=self.assets["coin"])
+        widgets["coin_label"] = ttk.Label(frame, text=f"{player.coins}")
+        widgets["action_label"] = ttk.Label(frame, text=action_to_str(player.action))
+        widgets["action_bar"] = ttk.Progressbar(frame, length=1, max=1.0, value=0.0)
 
         widgets["player_icon"].grid(row=0, column=0)
-        widgets["player_label"].grid(row=0, column=1, columnspan=5, sticky=W)
+        widgets["player_label"].grid(row=0, column=1, columnspan=5, sticky=tkinter.W)
         widgets["speed_icon"].grid(row=1, column=0)
-        widgets["speed_label"].grid(row=1, column=1, sticky=W)
+        widgets["speed_label"].grid(row=1, column=1, sticky=tkinter.W)
         widgets["super_fireball_icon"].grid(row=1, column=2)
-        widgets["super_fireball_label"].grid(row=1, column=3, sticky=W)
+        widgets["super_fireball_label"].grid(row=1, column=3, sticky=tkinter.W)
         widgets["coin_icon"].grid(row=1, column=4)
-        widgets["coin_label"].grid(row=1, column=5, sticky=W)
+        widgets["coin_label"].grid(row=1, column=5, sticky=tkinter.W)
         widgets["action_label"].grid(row=2, column=0, columnspan=4)
-        widgets["action_bar"].grid(row=2, column=4, columnspan=2, sticky=EW, padx=8)
+        widgets["action_bar"].grid(
+            row=2, column=4, columnspan=2, sticky=tkinter.EW, padx=8
+        )
 
         frame.grid_columnconfigure(1, weight=1)
         frame.grid_columnconfigure(3, weight=1)
@@ -306,7 +305,7 @@ class Gui:
 
         return widgets
 
-    def update_player_panel(self, player: Player):
+    def update_player_panel(self, player: entities.Player):
         """Met à jour le panneau des statistiques d'un joueur."""
         widgets = self.player_panels_data[player]
         widgets["speed_label"].configure(text=f"{player.speed:.2f}")
@@ -318,16 +317,16 @@ class Gui:
     def draw_players(self, game):
         """Dessine le panneau des statistiques."""
         self.player_panels_data = {}
-        self.player_panels_frame = Frame(self.game_window)
+        self.player_panels_frame = ttk.Frame(self.game_window)
 
         for i in range(len(game.players)):
-            player_panel_frame = Frame(self.player_panels_frame, padding=10)
+            player_panel_frame = ttk.Frame(self.player_panels_frame, padding=10)
             self.player_panels_data[game.players[i]] = self.create_player_panel(
                 game.players[i], player_panel_frame
             )
-            player_panel_frame.grid(row=i, column=0, sticky=EW)
+            player_panel_frame.grid(row=i, column=0, sticky=tkinter.EW)
 
-        self.player_panels_frame.grid(column=3, row=0, rowspan=2, sticky=EW)
+        self.player_panels_frame.grid(column=3, row=0, rowspan=2, sticky=tkinter.EW)
         self.player_panels_frame.columnconfigure(0, weight=1)
         self.game_window.grid_columnconfigure(3, weight=1)
 
@@ -349,7 +348,7 @@ class Gui:
                             x * self.TILE_SIZE,
                             y * self.TILE_SIZE,
                             image=image,
-                            anchor=NW,
+                            anchor=tkinter.NW,
                             tags="background",
                         ),
                     )
@@ -359,7 +358,7 @@ class Gui:
         # Les items
         diff = set(self.collectibles.values())
         for collectible in filter(
-            lambda e: isinstance(e, CollectableEntity), game.entities
+            lambda e: isinstance(e, entities.CollectableEntity), game.entities
         ):
             if collectible not in self.collectibles:
                 self.collectibles[collectible] = (
@@ -367,7 +366,7 @@ class Gui:
                         self.TILE_SIZE,
                         self.TILE_SIZE,
                         image=self.assets[const_to_str(collectible.grid_id)],
-                        anchor=NW,
+                        anchor=tkinter.NW,
                     ),
                 )
                 self.canvas.moveto(
@@ -386,21 +385,21 @@ class Gui:
 
         diff = set(self.players.values())
         diff_hitboxes = set(self.player_hitboxes.values())
-        for p in filter(lambda e: isinstance(e, Player), game.entities):
+        for p in filter(lambda e: isinstance(e, entities.Player), game.entities):
             if p not in self.players:
                 self.players[p] = (
                     self.canvas.create_image(
                         self.TILE_SIZE,
                         self.TILE_SIZE,
                         image=self.assets["player_" + const_to_str(p.color)],
-                        anchor=NW,
+                        anchor=tkinter.NW,
                     ),
                 )
                 self.player_hitboxes[p] = self.canvas.create_image(
                     self.TILE_SIZE,
                     self.TILE_SIZE,
                     image=self.assets["hitbox_" + const_to_str(p.color)],
-                    anchor=NW,
+                    anchor=tkinter.NW,
                 )
                 diff.add(self.players[p])
                 diff_hitboxes.add(self.player_hitboxes[p])
@@ -412,7 +411,7 @@ class Gui:
                         image=self.assets[
                             "player_" + const_to_str(p.color) + "_shield"
                         ],
-                        anchor=NW,
+                        anchor=tkinter.NW,
                     ),
                 )
                 self.shielded_players.add(p)
@@ -423,7 +422,7 @@ class Gui:
                         self.TILE_SIZE,
                         self.TILE_SIZE,
                         image=self.assets["player_" + const_to_str(p.color)],
-                        anchor=NW,
+                        anchor=tkinter.NW,
                     ),
                 )
                 self.shielded_players.remove(p)
@@ -448,14 +447,16 @@ class Gui:
         # Les boules de feu
         diff = set(self.fireballs.values())
         diff_hitboxes = set(self.fireball_hitboxes.values())
-        for fireball in filter(lambda e: isinstance(e, Fireball), game.entities):
+        for fireball in filter(
+            lambda e: isinstance(e, entities.Fireball), game.entities
+        ):
             if fireball not in self.fireballs:
                 self.fireballs[fireball] = (
                     self.canvas.create_image(
                         self.TILE_SIZE,
                         self.TILE_SIZE,
                         image=self.assets["fireball"],
-                        anchor=NW,
+                        anchor=tkinter.NW,
                     ),
                 )
                 self.fireball_hitboxes[fireball] = (
@@ -463,7 +464,7 @@ class Gui:
                         self.TILE_SIZE,
                         self.TILE_SIZE,
                         image=self.assets["hitbox_fireball"],
-                        anchor=NW,
+                        anchor=tkinter.NW,
                     ),
                 )
             else:

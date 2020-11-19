@@ -1,10 +1,10 @@
 """Gestion de l'affichage du jeu."""
 
-from math import floor
-from tkinter import EW, HORIZONTAL, NSEW, NW, N, E, S, W
+from time import monotonic
+from tkinter import EW, HORIZONTAL, NSEW, NW
 from tkinter import Canvas as tkCanvas
-from tkinter import DoubleVar, PhotoImage
-from tkinter.ttk import Frame, Label, Progressbar, Scale
+from tkinter import DoubleVar, PhotoImage, Tk, Toplevel, W
+from tkinter.ttk import Button, Frame, Label, Progressbar, Scale
 
 from entities import (
     ATTACK_DOWN,
@@ -19,6 +19,7 @@ from entities import (
     Fireball,
     Player,
 )
+from game import Game
 from map import (
     COIN,
     DAMAGED_FLOOR,
@@ -34,6 +35,7 @@ from map import (
     SUPER_FIREBALL,
     WALL,
 )
+from players.indianaJones import IndianaJones
 
 
 def action_to_str(action):
@@ -88,24 +90,70 @@ def const_to_str(f):  # noqa
     raise KeyError("Constante inconnue")
 
 
+class Delta:
+    """Temp."""
+
+    def __init__(self):
+        """Temp."""
+        self.last = monotonic()
+
+    def delta(self):
+        """Temp."""
+        t = monotonic()
+        out = t - self.last
+        self.last = t
+        return out
+
+
+delta = Delta().delta
+
+
 class Gui:
     """Gestion de l'affichage de Perfect Aim."""
 
-    def __init__(self, master):
+    def __init__(self):
         """Initialise la fenêtre tkinter."""
         self.TILE_SIZE = 32
+        self.master = Tk()
+        Button(self.master, text="Play", command=self.play).pack(padx=10, pady=10)
+        self.master.mainloop()
 
-        self.master = master
+    def play(self):
+        """Lance une nouvelle partie."""
+        g = Game([IndianaJones, IndianaJones, IndianaJones, IndianaJones])
+        self.master.withdraw()
+
+        self.create_main_window(self.master)
+        self.game_window.protocol("WM_DELETE_WINDOW", lambda: self.master.destroy())
+        self.draw_map(g)
+        self.draw_players(g)
+
+        def update():
+            """Temp."""
+            dt = delta() * self.slider_var.get()
+            if dt > 0:
+                g.update(dt)
+            delta()
+            self.update(g)
+            if not g.over:
+                self.master.after(1000 // 60, update)
+
+        delta()
+        update()
+
+    def create_main_window(self, master):
+        """Crée la fenêtre principale du jeu."""
+        self.game_window = Toplevel(master)
         master.title("Perfect Aim")
 
-        self.canvas = tkCanvas(master, background="#eee")
+        self.canvas = tkCanvas(self.game_window, background="#eee")
         self.canvas.grid(column=0, row=0, columnspan=3)
 
         self.slider_var = DoubleVar(value=1.0)
-        self.label = Label(text="x 1.0")
-        self.label2 = Label(text="0 s")
+        self.label = Label(self.game_window, text="x 1.0")
+        self.label2 = Label(self.game_window, text="0 s")
         self.slider = Scale(
-            master,
+            self.game_window,
             from_=0.0,
             to=10.0,
             orient=HORIZONTAL,
@@ -229,7 +277,7 @@ class Gui:
     def draw_players(self, game):
         """Dessine le panneau des statistiques."""
         self.player_panels_data = {}
-        self.player_panels_frame = Frame(self.master)
+        self.player_panels_frame = Frame(self.game_window)
 
         for i in range(len(game.players)):
             player_panel_frame = Frame(self.player_panels_frame, padding=10)
@@ -240,11 +288,11 @@ class Gui:
 
         self.player_panels_frame.grid(column=3, row=0, rowspan=2, sticky=EW)
         self.player_panels_frame.columnconfigure(0, weight=1)
-        self.master.grid_columnconfigure(3, weight=1)
+        self.game_window.grid_columnconfigure(3, weight=1)
 
     def update(self, game):
         """Met à jour la zone de jeu."""
-        self.label2.config(text=str(floor(10.0 * game.t) / 10.0) + " s")
+        self.label2.config(text=f"{game.t:.1f} s")
         # La map
         changed = False
         for y in range(game.map.size):
@@ -283,8 +331,8 @@ class Gui:
                 )
                 self.canvas.moveto(
                     self.collectibles[collectible],
-                    int(collectible.x * 32),
-                    int(collectible.y * 32),
+                    int(collectible.x * self.TILE_SIZE),
+                    int(collectible.y * self.TILE_SIZE),
                 )
             else:
                 diff.remove(self.collectibles[collectible])
@@ -342,13 +390,13 @@ class Gui:
 
             self.canvas.moveto(
                 self.players[p],
-                int(p.get_visual_x() * 32),
-                int(p.get_visual_y() * 32),
+                int(p.get_visual_x() * self.TILE_SIZE),
+                int(p.get_visual_y() * self.TILE_SIZE),
             )
             self.canvas.moveto(
                 self.player_hitboxes[p],
-                int(p.x * 32),
-                int(p.y * 32),
+                int(p.x * self.TILE_SIZE),
+                int(p.y * self.TILE_SIZE),
             )
             diff.remove(self.players[p])
             diff_hitboxes.remove(self.player_hitboxes[p])
@@ -382,13 +430,13 @@ class Gui:
                 diff_hitboxes.remove(self.fireball_hitboxes[fireball])
             self.canvas.moveto(
                 self.fireballs[fireball],
-                int(fireball.get_visual_x() * 32),
-                int(fireball.get_visual_y() * 32),
+                int(fireball.get_visual_x() * self.TILE_SIZE),
+                int(fireball.get_visual_y() * self.TILE_SIZE),
             )
             self.canvas.moveto(
                 self.fireball_hitboxes[fireball],
-                int(fireball.x * 32),
-                int(fireball.y * 32),
+                int(fireball.x * self.TILE_SIZE),
+                int(fireball.y * self.TILE_SIZE),
             )
 
         self.canvas.delete(*diff)

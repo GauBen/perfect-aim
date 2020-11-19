@@ -4,7 +4,7 @@ from time import monotonic
 from tkinter import EW, HORIZONTAL, NSEW, NW
 from tkinter import Canvas as tkCanvas
 from tkinter import DoubleVar, PhotoImage, Tk, Toplevel, W
-from tkinter.ttk import Button, Frame, Label, Progressbar, Scale
+from tkinter.ttk import Button, Combobox, Frame, Label, Progressbar, Scale
 
 from entities import (
     ATTACK_DOWN,
@@ -35,7 +35,9 @@ from map import (
     SUPER_FIREBALL,
     WALL,
 )
-from players.indianaJones import IndianaJones
+from players import list_player_subclasses
+
+print(list())
 
 
 def action_to_str(action):
@@ -111,16 +113,57 @@ delta = Delta().delta
 class Gui:
     """Gestion de l'affichage de Perfect Aim."""
 
+    TILE_SIZE = 32
+
     def __init__(self):
         """Initialise la fenêtre tkinter."""
-        self.TILE_SIZE = 32
         self.master = Tk()
-        Button(self.master, text="Play", command=self.play).pack(padx=10, pady=10)
+        self.master.title("Perfect Aim")
+        self.create_assets()
+
+        frame = Frame(self.master, padding=(32, 16))
+        frame.grid(row=0, column=0)
+        self.master.grid_columnconfigure(0, weight=1)
+        self.master.grid_rowconfigure(0, weight=1)
+
+        label_title = Label(frame, text="Perfect Aim", font=("", 24, "bold"))
+        button_play = Button(frame, text="Play", command=self.play)
+
+        player_subclasses = list_player_subclasses()
+        self.available_players = list(player_subclasses)
+        self.available_players.insert(0, ("<aucun>", None))
+
+        label_title.grid(row=0, column=0, columnspan=2)
+        self.player_widgets = []
+        for i in range(4):
+            widgets = {}
+            widgets["icon"] = Label(
+                frame, image=self.assets["player_" + const_to_str(PLAYER_RED + i)]
+            )
+            widgets["combobox"] = Combobox(
+                frame,
+                values=tuple(name for name, _ in self.available_players),
+                state="readonly",
+            )
+            widgets["combobox"].current(0)
+            widgets["icon"].grid(row=i + 1, column=0)
+            widgets["combobox"].grid(row=i + 1, column=1)
+            self.player_widgets.append(widgets)
+
+        button_play.grid(row=5, column=0, columnspan=2)
+
         self.master.mainloop()
 
     def play(self):
         """Lance une nouvelle partie."""
-        g = Game([IndianaJones, IndianaJones, IndianaJones, IndianaJones])
+        players = []
+        for widgets in self.player_widgets:
+            name = widgets["combobox"].get()
+            for refname, clazz in self.available_players:
+                if name == refname and clazz is not None:
+                    players.append(clazz)
+
+        g = Game(players)
         self.master.withdraw()
 
         self.create_main_window(self.master)
@@ -174,8 +217,6 @@ class Gui:
         self.player_hitboxes = {}
         self.collectibles = {}
         self.shielded_players = set()
-
-        self.create_assets()
 
     def create_assets(self):
         """Initialise les ressources du jeu."""

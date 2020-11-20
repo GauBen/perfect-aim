@@ -354,7 +354,7 @@ class PlayerSelector:
         assets_manager: AssetsManager,
         players: List[Union[None, entities.Player]],
         frame: ttk.Frame,
-        i,
+        i: int,
     ):
         """Crée les widgets tkinter."""
         self.player_constructors = players
@@ -444,7 +444,7 @@ class GameLauncher:
             return
         self.launch_many_games(players)
 
-    def launch_one_game(self, players):
+    def launch_one_game(self, players: List[Union[players.Player, None]]):
         """Lance une partie."""
         if self.game_launched:
             return
@@ -454,7 +454,7 @@ class GameLauncher:
         g = game.Game(players)
         GameInterface(self.master, self.assets_manager, g).start()
 
-    def launch_many_games(self, players):
+    def launch_many_games(self, players: List[Union[players.Player, None]]):
         """Lance 2020 parties simultanées."""
         if self.game_launched:
             return

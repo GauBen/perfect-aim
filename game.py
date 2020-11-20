@@ -1,6 +1,9 @@
-from copy import deepcopy
-from typing import Set
+"""Classes du jeu, sans interface."""
 
+from copy import deepcopy
+from typing import Callable, List, Optional, Set
+
+import entities
 from entities import (
     Action,
     Fireball,
@@ -39,17 +42,18 @@ from random import randrange
 
 class Game:
     """
-    Représente une partie de Perfect Aim, commançant avec 2-4 joueurs, et se terminant quand il n'en reste qu'un.
+    Représente une partie de Perfect Aim.
+
+    Elle commence avec 2-4 joueurs, et se termine quand il n'en reste qu'un.
     """
 
     MIN_PLAYERS = 2
     MAX_PLAYERS = 4
 
-    def __init__(self, players):
-        """
-        Initialise une partie de 4 joueurs et crée une carte.
-        """
-
+    def __init__(
+        self, player_constructors: List[Optional[Callable[[], entities.Player]]]
+    ):
+        """Initialise une partie et crée une carte."""
         self.map = Map()
         self.players: list[Player] = []
         self.t = 0.0
@@ -70,7 +74,7 @@ class Game:
             [set() for x in range(self.map.size)] for y in range(self.map.size)
         ]
 
-        for player in players:
+        for player in player_constructors:
             x, y = coords.pop()
             p = player(x, y, 1.0, colors.pop())
             self.entities.add(p)

@@ -4,7 +4,7 @@ import time
 import tkinter
 import tkinter.ttk as ttk
 from copy import copy, deepcopy
-from typing import List, Union
+from typing import Callable, List, Optional, Union
 
 import entities
 import game
@@ -373,7 +373,7 @@ class PlayerSelector:
         self.combobox.grid(row=i + 1, column=1)
 
     @property
-    def selected_constructor(self) -> Union[entities.Player, None]:
+    def selected_constructor(self) -> Optional[Callable[[], entities.Player]]:
         """Constructeur du joueur choisi."""
         value = self.combobox.get()
         for c in self.player_constructors:
@@ -391,7 +391,7 @@ class GameLauncher:
         self.master.title("Perfect Aim")
 
         self.assets_manager = AssetsManager()
-        self.player_constructors = list(players.list_player_constructors())
+        self.player_constructors = players.list_player_constructors()
 
         self.game_launched = False
         self.create_launcher()
@@ -444,7 +444,7 @@ class GameLauncher:
             return
         self.launch_many_games(players)
 
-    def launch_one_game(self, players: List[Union[players.Player, None]]):
+    def launch_one_game(self, players: List[Optional[Callable[[], entities.Player]]]):
         """Lance une partie."""
         if self.game_launched:
             return
@@ -454,7 +454,7 @@ class GameLauncher:
         g = game.Game(players)
         GameInterface(self.master, self.assets_manager, g).start()
 
-    def launch_many_games(self, players: List[Union[players.Player, None]]):
+    def launch_many_games(self, players: List[Optional[Callable[[], entities.Player]]]):
         """Lance 2020 parties simultanées."""
         if self.game_launched:
             return

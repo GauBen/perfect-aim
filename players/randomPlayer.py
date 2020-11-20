@@ -1,15 +1,5 @@
 """Stratégie d'exemple: joueur qui joue au hasard."""
-from entities import (
-    Player,
-    MOVE_UP,
-    MOVE_DOWN,
-    MOVE_LEFT,
-    MOVE_RIGHT,
-    ATTACK_UP,
-    ATTACK_DOWN,
-    ATTACK_LEFT,
-    ATTACK_RIGHT,
-)
+from entities import Player, Action
 from random import choice
 
 
@@ -20,29 +10,7 @@ class RandomPlayer(Player):
 
     def play(self, game):
         """Choisit une action aléatoirement parmi toutes les actions possibles."""
-        c = choice(
-            [
-                MOVE_UP,
-                MOVE_DOWN,
-                MOVE_LEFT,
-                MOVE_RIGHT,
-                ATTACK_UP,
-                ATTACK_DOWN,
-                ATTACK_LEFT,
-                ATTACK_RIGHT,
-            ]
-        )
+        c = choice(list(Action))
         while not game.is_valid_action(self, c):
-            c = choice(
-                [
-                    MOVE_UP,
-                    MOVE_DOWN,
-                    MOVE_LEFT,
-                    MOVE_RIGHT,
-                    ATTACK_UP,
-                    ATTACK_DOWN,
-                    ATTACK_LEFT,
-                    ATTACK_RIGHT,
-                ]
-            )
+            c = choice(list(Action))
         return c

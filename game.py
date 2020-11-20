@@ -2,15 +2,7 @@ from copy import deepcopy
 from typing import Set
 
 from entities import (
-    ATTACK_DOWN,
-    ATTACK_LEFT,
-    ATTACK_RIGHT,
-    ATTACK_UP,
-    MOVE_DOWN,
-    MOVE_LEFT,
-    MOVE_RIGHT,
-    MOVE_UP,
-    WAIT,
+    Action,
     Fireball,
     CantMoveThereException,
     CollectableEntity,
@@ -207,11 +199,16 @@ class Game:
         """
         Renvoie `True` si l'action `action` est jouable par le joueur `player`.
         """
-        if action == WAIT:
+        if action == Action.WAIT:
             return True
 
         # Un déplacement est possible s'il n'y a ni mur ni joueur
-        elif action in (MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT):
+        elif action in (
+            Action.MOVE_UP,
+            Action.MOVE_DOWN,
+            Action.MOVE_LEFT,
+            Action.MOVE_RIGHT,
+        ):
             x, y = move((player.x, player.y), action)
             try:
                 if self.grid[y][x] in (
@@ -229,7 +226,12 @@ class Game:
             return True
 
         # Un tir d'arc est possible s'il n'est pas fait contre un mur
-        elif action in (ATTACK_UP, ATTACK_DOWN, ATTACK_LEFT, ATTACK_RIGHT):
+        elif action in (
+            Action.ATTACK_UP,
+            Action.ATTACK_DOWN,
+            Action.ATTACK_LEFT,
+            Action.ATTACK_RIGHT,
+        ):
             if not self.can_player_attack(player):
                 return False
             if player.super_fireball > 0:
@@ -266,7 +268,12 @@ class Game:
             self.update_grid(fireball.x, fireball.y)
 
         if player.super_fireball > 0:
-            for action in (ATTACK_UP, ATTACK_DOWN, ATTACK_LEFT, ATTACK_RIGHT):
+            for action in (
+                Action.ATTACK_UP,
+                Action.ATTACK_DOWN,
+                Action.ATTACK_LEFT,
+                Action.ATTACK_RIGHT,
+            ):
                 if self.can_place_fireball(player, action):
                     throw_fireball(action)
             player.super_fireball -= 1

@@ -2,11 +2,7 @@
 
 from entities import (
     Player,
-    WAIT,
-    MOVE_UP,
-    MOVE_DOWN,
-    MOVE_LEFT,
-    MOVE_RIGHT,
+    Action,
     move,
     swap_type,
     SHIELD,
@@ -26,7 +22,12 @@ class IndianaJones(Player):
         explored[self.y][self.x] = True
         tracks = []
 
-        for direction in (MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT):
+        for direction in (
+            Action.MOVE_UP,
+            Action.MOVE_DOWN,
+            Action.MOVE_LEFT,
+            Action.MOVE_RIGHT,
+        ):
             x, y = move((self.x, self.y), direction)
             attack = swap_type(direction)
 
@@ -46,7 +47,12 @@ class IndianaJones(Player):
             if game.grid[y][x] in (SHIELD, SPEEDBOOST, SUPER_FIREBALL):
                 return direction
 
-            for d in (MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT):
+            for d in (
+                Action.MOVE_UP,
+                Action.MOVE_DOWN,
+                Action.MOVE_LEFT,
+                Action.MOVE_RIGHT,
+            ):
                 new_x, new_y = move((x, y), d)
                 if (
                     game.grid[new_y][new_x] not in (WALL, LAVA)
@@ -63,4 +69,4 @@ class IndianaJones(Player):
                     )  # Direction d'origine
                     explored[new_y][new_x] = True
 
-        return WAIT
+        return Action.WAIT

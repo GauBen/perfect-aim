@@ -1,4 +1,6 @@
 """Les entités du jeu."""
+from enum import Enum
+from typing import Tuple
 
 from map import (
     COIN,
@@ -15,32 +17,36 @@ from map import (
     WALL,
 )
 
-WAIT = 0
-MOVE_UP = 1
-MOVE_DOWN = 2
-MOVE_LEFT = 3
-MOVE_RIGHT = 4
-ATTACK_UP = 11
-ATTACK_DOWN = 12
-ATTACK_LEFT = 13
-ATTACK_RIGHT = 14
+
+class Action(Enum):
+    """Toutes les actions possibles d'un joueur."""
+
+    WAIT = 0
+    MOVE_UP = 1
+    MOVE_DOWN = 2
+    MOVE_LEFT = 3
+    MOVE_RIGHT = 4
+    ATTACK_UP = 11
+    ATTACK_DOWN = 12
+    ATTACK_LEFT = 13
+    ATTACK_RIGHT = 14
 
 
-def move(coords, action):
+def move(coords: Tuple[int, int], action: Action) -> Tuple[int, int]:
     """Applique le déplacement `action` à la paire de coordonnées `coords`."""
     x, y = coords
-    if action == MOVE_UP:
+    if action == Action.MOVE_UP:
         y -= 1
-    elif action == MOVE_DOWN:
+    elif action == Action.MOVE_DOWN:
         y += 1
-    elif action == MOVE_LEFT:
+    elif action == Action.MOVE_LEFT:
         x -= 1
-    elif action == MOVE_RIGHT:
+    elif action == Action.MOVE_RIGHT:
         x += 1
     return (x, y)
 
 
-def place_fireball(coords, action):
+def place_fireball(coords: Tuple[int, int], action: Action) -> Tuple[int, int, Action]:
     """
     Donne les infos sur le placement d'une boule de feu.
 
@@ -48,57 +54,58 @@ def place_fireball(coords, action):
     les coordonnées `coords`, par l'action `action`.
     """
     x, y = coords
-    if action == ATTACK_UP:
-        direction = MOVE_UP
-    elif action == ATTACK_DOWN:
-        direction = MOVE_DOWN
-    elif action == ATTACK_LEFT:
-        direction = MOVE_LEFT
-    elif action == ATTACK_RIGHT:
-        direction = MOVE_RIGHT
+    direction = Action.WAIT
+    if action == Action.ATTACK_UP:
+        direction = Action.MOVE_UP
+    elif action == Action.ATTACK_DOWN:
+        direction = Action.MOVE_DOWN
+    elif action == Action.ATTACK_LEFT:
+        direction = Action.MOVE_LEFT
+    elif action == Action.ATTACK_RIGHT:
+        direction = Action.MOVE_RIGHT
     return (x, y, direction)
 
 
 def swap_direction(action):
     """Donne la direction opposée pour l'action `action`."""
-    if action == MOVE_UP:
-        return MOVE_DOWN
-    if action == MOVE_DOWN:
-        return MOVE_UP
-    if action == MOVE_LEFT:
-        return MOVE_RIGHT
-    if action == MOVE_RIGHT:
-        return MOVE_LEFT
-    if action == ATTACK_UP:
-        return ATTACK_DOWN
-    if action == ATTACK_DOWN:
-        return ATTACK_UP
-    if action == ATTACK_LEFT:
-        return ATTACK_RIGHT
-    if action == ATTACK_RIGHT:
-        return ATTACK_LEFT
-    return WAIT
+    if action == Action.MOVE_UP:
+        return Action.MOVE_DOWN
+    if action == Action.MOVE_DOWN:
+        return Action.MOVE_UP
+    if action == Action.MOVE_LEFT:
+        return Action.MOVE_RIGHT
+    if action == Action.MOVE_RIGHT:
+        return Action.MOVE_LEFT
+    if action == Action.ATTACK_UP:
+        return Action.ATTACK_DOWN
+    if action == Action.ATTACK_DOWN:
+        return Action.ATTACK_UP
+    if action == Action.ATTACK_LEFT:
+        return Action.ATTACK_RIGHT
+    if action == Action.ATTACK_RIGHT:
+        return Action.ATTACK_LEFT
+    return Action.WAIT
 
 
 def swap_type(action):
     """Echange les attaques et les déplacements."""
-    if action == MOVE_UP:
-        return ATTACK_UP
-    if action == MOVE_DOWN:
-        return ATTACK_DOWN
-    if action == MOVE_LEFT:
-        return ATTACK_LEFT
-    if action == MOVE_RIGHT:
-        return ATTACK_RIGHT
-    if action == ATTACK_UP:
-        return MOVE_UP
-    if action == ATTACK_DOWN:
-        return MOVE_DOWN
-    if action == ATTACK_LEFT:
-        return MOVE_LEFT
-    if action == ATTACK_RIGHT:
-        return MOVE_RIGHT
-    return WAIT
+    if action == Action.MOVE_UP:
+        return Action.ATTACK_UP
+    if action == Action.MOVE_DOWN:
+        return Action.ATTACK_DOWN
+    if action == Action.MOVE_LEFT:
+        return Action.ATTACK_LEFT
+    if action == Action.MOVE_RIGHT:
+        return Action.ATTACK_RIGHT
+    if action == Action.ATTACK_UP:
+        return Action.Action.MOVE_UP
+    if action == Action.ATTACK_DOWN:
+        return Action.MOVE_DOWN
+    if action == Action.ATTACK_LEFT:
+        return Action.MOVE_LEFT
+    if action == Action.ATTACK_RIGHT:
+        return Action.MOVE_RIGHT
+    return Action.WAIT
 
 
 class CantMoveThereException(Exception):
@@ -139,7 +146,7 @@ class MovingEntity(Entity):
         """L'entité réalise `speed` actions par seconde."""
         super().__init__(x, y)
         self.speed = speed
-        self.action = WAIT
+        self.action = Action.WAIT
         self.action_progress = 0.0
 
     def next_update_in(self, dt):
@@ -152,17 +159,17 @@ class MovingEntity(Entity):
 
     def get_visual_x(self):
         """Position x affichée de l'entité, utilisée pour les animations."""
-        if self.action == MOVE_LEFT:
+        if self.action == Action.MOVE_LEFT:
             return self.x + int(self.action_progress >= 0.5) - self.action_progress
-        if self.action == MOVE_RIGHT:
+        if self.action == Action.MOVE_RIGHT:
             return self.x - int(self.action_progress >= 0.5) + self.action_progress
         return self.x
 
     def get_visual_y(self):
         """Position y affichée de l'entité, utilisée pour les animations."""
-        if self.action == MOVE_UP:
+        if self.action == Action.MOVE_UP:
             return self.y + int(self.action_progress >= 0.5) - self.action_progress
-        if self.action == MOVE_DOWN:
+        if self.action == Action.MOVE_DOWN:
             return self.y - int(self.action_progress >= 0.5) + self.action_progress
         return self.y
 
@@ -188,7 +195,7 @@ class Player(MovingEntity):
 
     def play(self, game):
         """Choisit la prochaine action du joueur, en renvoyant une constante d'action."""
-        return WAIT
+        return Action.WAIT
 
     def update(self, game, dt: float):
         """Met à jour la position du joueur et choisit sa prochaine action."""
@@ -203,16 +210,22 @@ class Player(MovingEntity):
             if game.is_valid_action(self, action):
                 self.action = action
 
-                if self.action in (ATTACK_UP, ATTACK_DOWN, ATTACK_LEFT, ATTACK_RIGHT):
+                if self.action in (
+                    Action.ATTACK_UP,
+                    Action.ATTACK_DOWN,
+                    Action.ATTACK_LEFT,
+                    Action.ATTACK_RIGHT,
+                ):
                     game.player_attacks(self, self.action)
 
             else:
-                self.action = WAIT
+                self.action = Action.WAIT
                 print("Action invalide pour le joueur " + str(self.color))
 
         # À la moitié du déplacement on met à jour les coordonnées du joueur
         elif (
-            self.action in (MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT)
+            self.action
+            in (Action.MOVE_UP, Action.MOVE_DOWN, Action.MOVE_LEFT, Action.MOVE_RIGHT)
             and self.action_progress < 0.5 <= self.action_progress + dt * self.speed
         ):
             self.action_progress = 0.5

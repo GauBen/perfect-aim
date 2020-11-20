@@ -12,23 +12,23 @@ import map
 import players
 
 
-def action_to_str(action) -> str:
+def action_to_str(action: int) -> str:
     """Version textuelle d'une action."""
-    if action == entities.MOVE_UP:
+    if action == entities.Action.MOVE_UP:
         return "Mvt haut"
-    if action == entities.MOVE_DOWN:
+    if action == entities.Action.MOVE_DOWN:
         return "Mvt bas"
-    if action == entities.MOVE_LEFT:
+    if action == entities.Action.MOVE_LEFT:
         return "Mvt gauche"
-    if action == entities.MOVE_RIGHT:
+    if action == entities.Action.MOVE_RIGHT:
         return "Mvt droit"
-    if action == entities.ATTACK_UP:
+    if action == entities.Action.ATTACK_UP:
         return "Atk haut"
-    if action == entities.ATTACK_DOWN:
+    if action == entities.Action.ATTACK_DOWN:
         return "Atk bas"
-    if action == entities.ATTACK_LEFT:
+    if action == entities.Action.ATTACK_LEFT:
         return "Atk gauche"
-    if action == entities.ATTACK_RIGHT:
+    if action == entities.Action.ATTACK_RIGHT:
         return "Atk droit"
     return "Attente"
 

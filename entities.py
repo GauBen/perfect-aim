@@ -115,11 +115,11 @@ class Entity:
         self.x = x
         self.y = y
 
-    def get_visual_x(self):
+    def get_visual_x(self) -> float:
         """Position x affichée de l'entité, utilisée pour les animations."""
         return self.x
 
-    def get_visual_y(self):
+    def get_visual_y(self) -> float:
         """Position y affichée de l'entité, utilisée pour les animations."""
         return self.y
 

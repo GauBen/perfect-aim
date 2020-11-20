@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import Set
 
 from entities import (
     ATTACK_DOWN,
@@ -49,6 +50,9 @@ class Game:
     Représente une partie de Perfect Aim, commançant avec 2-4 joueurs, et se terminant quand il n'en reste qu'un.
     """
 
+    MIN_PLAYERS = 2
+    MAX_PLAYERS = 4
+
     def __init__(self, players):
         """
         Initialise une partie de 4 joueurs et crée une carte.
@@ -69,7 +73,7 @@ class Game:
         colors = [PLAYER_GREEN, PLAYER_YELLOW, PLAYER_BLUE, PLAYER_RED]
         self.background = deepcopy(self.map.grid)
         self.grid = deepcopy(self.map.grid)
-        self.entities = set()
+        self.entities: Set[Entity] = set()
         self.entity_grid = [
             [set() for x in range(self.map.size)] for y in range(self.map.size)
         ]

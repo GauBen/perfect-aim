@@ -29,57 +29,52 @@ class Tile(IntEnum):
 
     FIREBALL = 41
 
-    @classmethod
-    def is_background(cls, tile):
-        """Renvoie vrai si `tile` correspond au fond du plateau."""
-        return tile in (
-            cls.FLOOR,
-            cls.WALL,
-            cls.LAVA,
-            cls.DAMAGED_FLOOR,
+    def is_background(self) -> bool:
+        """Renvoie vrai si `self` correspond au fond du plateau."""
+        return self in (
+            Tile.FLOOR,
+            Tile.WALL,
+            Tile.LAVA,
+            Tile.DAMAGED_FLOOR,
         )
 
-    @classmethod
-    def is_collectible(cls, tile):
-        """Renvoie vrai si `tile` correspond à un objet."""
-        return tile in (
-            cls.SPEEDBOOST,
-            cls.SPEEDPENALTY,
-            cls.COIN,
-            cls.SUPER_FIREBALL,
-            cls.SHIELD,
+    def is_collectible(self) -> bool:
+        """Renvoie vrai si `self` correspond à un objet."""
+        return self in (
+            Tile.SPEEDBOOST,
+            Tile.SPEEDPENALTY,
+            Tile.COIN,
+            Tile.SUPER_FIREBALL,
+            Tile.SHIELD,
         )
 
-    @classmethod
-    def is_bonus(cls, tile):
-        """Renvoie vrai si `tile` correspond à un objet positif."""
-        return tile in (
-            cls.SPEEDBOOST,
-            cls.SUPER_FIREBALL,
-            cls.SHIELD,
+    def is_bonus(self) -> bool:
+        """Renvoie vrai si `self` correspond à un objet positif."""
+        return self in (
+            Tile.SPEEDBOOST,
+            Tile.SUPER_FIREBALL,
+            Tile.SHIELD,
         )
 
-    @classmethod
-    def is_player(cls, tile):
-        """Renvoie vrai si `tile` correspond à un joueur."""
-        return tile in (
-            cls.PLAYER_RED,
-            cls.PLAYER_BLUE,
-            cls.PLAYER_YELLOW,
-            cls.PLAYER_GREEN,
+    def is_player(self) -> bool:
+        """Renvoie vrai si `self` correspond à un joueur."""
+        return self in (
+            Tile.PLAYER_RED,
+            Tile.PLAYER_BLUE,
+            Tile.PLAYER_YELLOW,
+            Tile.PLAYER_GREEN,
         )
 
-    @classmethod
-    def is_dangerous(cls, tile):
-        """Renvoie vrai si `tile` représente un danger."""
-        return tile in (
-            cls.LAVA,
-            cls.DAMAGED_FLOOR,
-            cls.PLAYER_RED,
-            cls.PLAYER_BLUE,
-            cls.PLAYER_YELLOW,
-            cls.PLAYER_GREEN,
-            cls.FIREBALL,
+    def is_dangerous(self) -> bool:
+        """Renvoie vrai si `self` représente un danger."""
+        return self in (
+            Tile.LAVA,
+            Tile.DAMAGED_FLOOR,
+            Tile.PLAYER_RED,
+            Tile.PLAYER_BLUE,
+            Tile.PLAYER_YELLOW,
+            Tile.PLAYER_GREEN,
+            Tile.FIREBALL,
         )
 
 

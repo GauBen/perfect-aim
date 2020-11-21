@@ -63,6 +63,24 @@ class Action(Enum):
             return Action.ATTACK_RIGHT
         return self
 
+    def is_movement(self) -> bool:
+        """Renvoie vrai si l'action est un déplacement."""
+        return self in (
+            Action.MOVE_UP,
+            Action.MOVE_DOWN,
+            Action.MOVE_LEFT,
+            Action.MOVE_RIGHT,
+        )
+
+    def is_attack(self) -> bool:
+        """Renvoie vrai si l'action est une attaque."""
+        return self in (
+            Action.ATTACK_UP,
+            Action.ATTACK_DOWN,
+            Action.ATTACK_LEFT,
+            Action.ATTACK_RIGHT,
+        )
+
 
 class CantMoveThereException(Exception):
     """Exception lancée quand un joueur ne peut pas se rendre sur une case."""
@@ -165,12 +183,7 @@ class Player(MovingEntity):
             if game.is_valid_action(self, action):
                 self.action = action
 
-                if self.action in (
-                    Action.ATTACK_UP,
-                    Action.ATTACK_DOWN,
-                    Action.ATTACK_LEFT,
-                    Action.ATTACK_RIGHT,
-                ):
+                if self.action.is_attack():
                     game.player_attacks(self, self.action)
 
             else:
@@ -179,8 +192,7 @@ class Player(MovingEntity):
 
         # À la moitié du déplacement on met à jour les coordonnées du joueur
         elif (
-            self.action
-            in (Action.MOVE_UP, Action.MOVE_DOWN, Action.MOVE_LEFT, Action.MOVE_RIGHT)
+            self.action.is_movement()
             and self.action_progress < 0.5 <= self.action_progress + dt * self.speed
         ):
             self.action_progress = 0.5

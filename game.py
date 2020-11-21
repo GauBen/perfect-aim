@@ -107,44 +107,45 @@ class Game:
 
     def update(self, elapsed_time: float):
         """Calcule toutes les updates qui ont eu lieu en `elapsed_time` secondes."""
-        # Si la partie est finie, pas besoin d'update
-        if self.over:
-            return
+        # On applique les updates itérativement, car on a discrétisé le temps
+        while elapsed_time > 0.0:
+            # Si la partie est finie, pas besoin d'update
+            if self.over:
+                return
 
-        # Génération du terrain
-        self.add_lava()
-        self.add_collectibles()
+            # Génération du terrain
+            self.add_lava()
+            self.add_collectibles()
 
-        # Temps jusqu'à la prochaine update
-        dt = min(
-            [entity.next_update_in(elapsed_time) for entity in self.entities]
-            + [elapsed_time]
-        )
-        # dt vaut la plus petite durée avant un évènement (changement de case par exemple)
-        self.t += dt
+            # Temps jusqu'à la prochaine update
+            dt = min(
+                [entity.next_update_in(elapsed_time) for entity in self.entities]
+                + [elapsed_time]
+            )
+            # dt vaut la plus petite durée avant un évènement (changement de case par exemple)
+            self.t += dt
 
-        # Mise à jour des entités
-        for entity in self.entities.copy():
-            if entity in self.entities:
-                entity.update(self, dt)
-            self.update_grid(entity.x, entity.y)
+            # Mise à jour des entités
+            for entity in self.entities.copy():
+                if entity in self.entities:
+                    entity.update(self, dt)
+                self.update_grid(entity.x, entity.y)
 
-        players = list(filter(lambda e: isinstance(e, Player), self.entities))
+            players = list(filter(lambda e: isinstance(e, Player), self.entities))
 
-        # Il ne reste qu'un joueur en vie ?
-        if len(players) == 1:
-            winner = players[0]
-            print(f"Victoire du joueur {winner.color}")
-            self.over = True
-            self.winner = winner
-        elif len(players) == 0:
-            print("Match nul")
-            self.over = True
-            # pass
+            # Il ne reste qu'un joueur en vie ?
+            if len(players) == 1:
+                winner = players[0]
+                print(f"Victoire du joueur {winner.color}")
+                self.over = True
+                self.winner = winner
+            elif len(players) == 0:
+                print("Match nul")
+                self.over = True
+                # pass
 
-        # Si dt < elapsed_time, il reste des updates à traiter
-        if elapsed_time - dt > 0:
-            self.update(elapsed_time - dt)
+            # Si dt < elapsed_time, il reste des updates à traiter
+            elapsed_time -= dt
 
     def add_collectibles(self):
         """Ajoute des objets s'il n'y en a plus."""

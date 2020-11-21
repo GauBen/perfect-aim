@@ -11,4 +11,7 @@ Votre objectif ? Créer un joueur ordinateur meilleur que celui des autres.
 if __name__ == "__main__":
     from gui import GameLauncher
 
-    GameLauncher().start()
+    launcher = GameLauncher()
+    # Pour lancer automatiquement une partie configurée :
+    # launcher.launch_one_game([p1, p2, p3, p4])
+    launcher.start()

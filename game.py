@@ -9,7 +9,6 @@ from entities import (
     Fireball,
     CantMoveThereException,
     CollectableEntity,
-    Player,
     SpeedBoost,
     SpeedPenalty,
     MovingEntity,
@@ -41,6 +40,10 @@ def place_fireball(coords: Tuple[int, int], action: Action) -> Tuple[int, int, A
     elif action == Action.ATTACK_RIGHT:
         direction = Action.MOVE_RIGHT
     return (x, y, direction)
+
+
+class Player(entities.Player):
+    pass
 
 
 class Game:

@@ -1,7 +1,8 @@
 """Stratégie d'exemple: joueur qui joue au hasard."""
 
-from entities import Player, Action
 from random import choice
+
+from game import Action, Player
 
 
 class RandomPlayer(Player):

@@ -1,8 +1,6 @@
 """Stratégie d'exemple: un joueur qui cherche des items."""
 
-from entities import Player, Action
-from game import Game
-from gamegrid import Tile
+from game import Action, Game, Player, Tile
 
 
 class IndianaJones(Player):

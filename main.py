@@ -4,7 +4,7 @@ Perfect Aim, un jeu développé spécialement pour un hackathon.
 Perfect Aim
 ===========
 
-Un jeu de stratégie en temps discret développé specialement pour un hacktathon.
+Un jeu de stratégie en temps discret développé specialement pour un hackathon.
 Votre objectif ? Créer un joueur ordinateur meilleur que celui des autres.
 """
 

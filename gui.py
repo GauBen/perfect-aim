@@ -12,27 +12,6 @@ from gamegrid import Tile
 import players
 
 
-def action_to_str(action: int) -> str:
-    """Version textuelle d'une action."""
-    if action == entities.Action.MOVE_UP:
-        return "Mvt haut"
-    if action == entities.Action.MOVE_DOWN:
-        return "Mvt bas"
-    if action == entities.Action.MOVE_LEFT:
-        return "Mvt gauche"
-    if action == entities.Action.MOVE_RIGHT:
-        return "Mvt droit"
-    if action == entities.Action.ATTACK_UP:
-        return "Atk haut"
-    if action == entities.Action.ATTACK_DOWN:
-        return "Atk bas"
-    if action == entities.Action.ATTACK_LEFT:
-        return "Atk gauche"
-    if action == entities.Action.ATTACK_RIGHT:
-        return "Atk droit"
-    return "Attente"
-
-
 class Delta:
     """Temp."""
 
@@ -181,7 +160,7 @@ class PlayerPanel:
         self.super_fireball_label = ttk.Label(frame, text=f"{player.super_fireball}")
         self.coin_icon = ttk.Label(frame, image=self.assets_manager.asset_coin)
         self.coin_label = ttk.Label(frame, text=f"{player.coins}")
-        self.action_label = ttk.Label(frame, text=action_to_str(player.action))
+        self.action_label = ttk.Label(frame, text=player.action.value)
         self.action_bar = ttk.Progressbar(frame, length=1, max=1.0, value=0.0)
 
         # Offset vertical
@@ -204,7 +183,7 @@ class PlayerPanel:
         self.speed_label.configure(text=f"{self.player.speed:.2f}")
         self.super_fireball_label.configure(text=f"{self.player.super_fireball}")
         self.coin_label.configure(text=f"{self.player.coins}")
-        self.action_label.configure(text=action_to_str(self.player.action))
+        self.action_label.configure(text=self.player.action.value)
         self.action_bar.configure(value=self.player.action_progress)
 
 

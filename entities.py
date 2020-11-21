@@ -8,15 +8,15 @@ from gamegrid import Tile
 class Action(Enum):
     """Toutes les actions possibles d'un joueur."""
 
-    WAIT = 0
-    MOVE_UP = 1
-    MOVE_DOWN = 2
-    MOVE_LEFT = 3
-    MOVE_RIGHT = 4
-    ATTACK_UP = 11
-    ATTACK_DOWN = 12
-    ATTACK_LEFT = 13
-    ATTACK_RIGHT = 14
+    WAIT = "Attente"
+    MOVE_UP = "Mvt haut"
+    MOVE_DOWN = "Mvt bas"
+    MOVE_LEFT = "Mvt gauche"
+    MOVE_RIGHT = "Mvt droit"
+    ATTACK_UP = "Atk haut"
+    ATTACK_DOWN = "Atk bas"
+    ATTACK_LEFT = "Atk gauche"
+    ATTACK_RIGHT = "Atk droite"
 
 
 def move(coords: Tuple[int, int], action: Action) -> Tuple[int, int]:

@@ -8,8 +8,8 @@ from typing import List
 class Tile(IntEnum):
     """Tous les éléments présents sur le jeu."""
 
-    INVALID = -2
-    GENERATING = -1
+    GENERATING = -2
+    INVALID = -1
 
     FLOOR = 0
     WALL = 1
@@ -31,12 +31,7 @@ class Tile(IntEnum):
 
     def is_background(self) -> bool:
         """Renvoie vrai si `self` correspond au fond du plateau."""
-        return self in (
-            Tile.FLOOR,
-            Tile.WALL,
-            Tile.LAVA,
-            Tile.DAMAGED_FLOOR,
-        )
+        return self in (Tile.FLOOR, Tile.WALL, Tile.LAVA, Tile.DAMAGED_FLOOR)
 
     def is_collectible(self) -> bool:
         """Renvoie vrai si `self` correspond à un objet."""
@@ -50,11 +45,7 @@ class Tile(IntEnum):
 
     def is_bonus(self) -> bool:
         """Renvoie vrai si `self` correspond à un objet positif."""
-        return self in (
-            Tile.SPEEDBOOST,
-            Tile.SUPER_FIREBALL,
-            Tile.SHIELD,
-        )
+        return self in (Tile.SPEEDBOOST, Tile.SUPER_FIREBALL, Tile.SHIELD)
 
     def is_player(self) -> bool:
         """Renvoie vrai si `self` correspond à un joueur."""

@@ -1,4 +1,5 @@
 """Stratégie d'exemple: joueur qui joue au hasard."""
+
 from entities import Player, Action
 from random import choice
 

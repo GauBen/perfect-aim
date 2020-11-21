@@ -9,6 +9,7 @@ class Tile(IntEnum):
     """Tous les éléments présents sur le jeu."""
 
     GENERATING = -1
+
     FLOOR = 0
     WALL = 1
     LAVA = 2
@@ -26,6 +27,59 @@ class Tile(IntEnum):
     PLAYER_GREEN = 34
 
     FIREBALL = 41
+
+    @classmethod
+    def is_background(cls, tile):
+        """Renvoie vrai si `tile` correspond au fond du plateau."""
+        return tile in (
+            cls.FLOOR,
+            cls.WALL,
+            cls.LAVA,
+            cls.DAMAGED_FLOOR,
+        )
+
+    @classmethod
+    def is_collectible(cls, tile):
+        """Renvoie vrai si `tile` correspond à un objet."""
+        return tile in (
+            cls.SPEEDBOOST,
+            cls.SPEEDPENALTY,
+            cls.COIN,
+            cls.SUPER_FIREBALL,
+            cls.SHIELD,
+        )
+
+    @classmethod
+    def is_bonus(cls, tile):
+        """Renvoie vrai si `tile` correspond à un objet positif."""
+        return tile in (
+            cls.SPEEDBOOST,
+            cls.SUPER_FIREBALL,
+            cls.SHIELD,
+        )
+
+    @classmethod
+    def is_player(cls, tile):
+        """Renvoie vrai si `tile` correspond à un joueur."""
+        return tile in (
+            cls.PLAYER_RED,
+            cls.PLAYER_BLUE,
+            cls.PLAYER_YELLOW,
+            cls.PLAYER_GREEN,
+        )
+
+    @classmethod
+    def is_dangerous(cls, tile):
+        """Renvoie vrai si `tile` représente un danger."""
+        return tile in (
+            cls.LAVA,
+            cls.DAMAGED_FLOOR,
+            cls.PLAYER_RED,
+            cls.PLAYER_BLUE,
+            cls.PLAYER_YELLOW,
+            cls.PLAYER_GREEN,
+            cls.FIREBALL,
+        )
 
 
 class Matrix:

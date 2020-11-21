@@ -89,49 +89,49 @@ class AssetsManager:
 
     def entity(self, entity: entities.Entity) -> tkinter.PhotoImage:  # noqa
         """Renvoie l'image correspondante."""
-        if entity.grid_id == Tile.PLAYER_RED:
+        if entity.TILE == Tile.PLAYER_RED:
             return self.asset_player_red
-        if entity.grid_id == Tile.PLAYER_BLUE:
+        if entity.TILE == Tile.PLAYER_BLUE:
             return self.asset_player_blue
-        if entity.grid_id == Tile.PLAYER_YELLOW:
+        if entity.TILE == Tile.PLAYER_YELLOW:
             return self.asset_player_yellow
-        if entity.grid_id == Tile.PLAYER_GREEN:
+        if entity.TILE == Tile.PLAYER_GREEN:
             return self.asset_player_green
-        if entity.grid_id == Tile.SPEEDBOOST:
+        if entity.TILE == Tile.SPEEDBOOST:
             return self.asset_speedboost
-        if entity.grid_id == Tile.SPEEDPENALTY:
+        if entity.TILE == Tile.SPEEDPENALTY:
             return self.asset_speedpenalty
-        if entity.grid_id == Tile.COIN:
+        if entity.TILE == Tile.COIN:
             return self.asset_coin
-        if entity.grid_id == Tile.SUPER_FIREBALL:
+        if entity.TILE == Tile.SUPER_FIREBALL:
             return self.asset_super_fireball
-        if entity.grid_id == Tile.SHIELD:
+        if entity.TILE == Tile.SHIELD:
             return self.asset_shield
-        if entity.grid_id == Tile.FIREBALL:
+        if entity.TILE == Tile.FIREBALL:
             return self.asset_fireball
         raise KeyError("Constante inconnue")
 
     def entity_hitbox(self, entity: entities.Entity) -> tkinter.PhotoImage:  # noqa
         """Renvoie l'image correspondante."""
-        if entity.grid_id == Tile.PLAYER_RED:
+        if entity.TILE == Tile.PLAYER_RED:
             return self.asset_hitbox_red
-        if entity.grid_id == Tile.PLAYER_BLUE:
+        if entity.TILE == Tile.PLAYER_BLUE:
             return self.asset_hitbox_blue
-        if entity.grid_id == Tile.PLAYER_YELLOW:
+        if entity.TILE == Tile.PLAYER_YELLOW:
             return self.asset_hitbox_yellow
-        if entity.grid_id == Tile.PLAYER_GREEN:
+        if entity.TILE == Tile.PLAYER_GREEN:
             return self.asset_hitbox_green
-        if entity.grid_id == Tile.SPEEDBOOST:
+        if entity.TILE == Tile.SPEEDBOOST:
             return self.asset_hitbox_fireball
-        if entity.grid_id == Tile.SPEEDPENALTY:
+        if entity.TILE == Tile.SPEEDPENALTY:
             return self.asset_hitbox_fireball
-        if entity.grid_id == Tile.COIN:
+        if entity.TILE == Tile.COIN:
             return self.asset_hitbox_fireball
-        if entity.grid_id == Tile.SUPER_FIREBALL:
+        if entity.TILE == Tile.SUPER_FIREBALL:
             return self.asset_hitbox_fireball
-        if entity.grid_id == Tile.SHIELD:
+        if entity.TILE == Tile.SHIELD:
             return self.asset_hitbox_fireball
-        if entity.grid_id == Tile.FIREBALL:
+        if entity.TILE == Tile.FIREBALL:
             return self.asset_hitbox_fireball
         raise KeyError("Constante inconnue")
 
@@ -308,7 +308,7 @@ class GameInterface:
         self.canvas.delete("entities")
         self.canvas.delete("hitboxes")
         entities = copy(self.game.entities)
-        for entity in sorted(entities, key=lambda entity: entity.grid_id):
+        for entity in sorted(entities, key=lambda entity: entity.TILE):
             self.canvas.create_image(
                 int(entity.get_visual_x() * self.assets_manager.TILE_SIZE),
                 int(entity.get_visual_y() * self.assets_manager.TILE_SIZE),

@@ -1,7 +1,7 @@
 """Classes du jeu, sans interface."""
 
 from copy import deepcopy
-from typing import Callable, List, Optional, Set
+from typing import Callable, List, Optional, Set, Tuple
 
 import entities
 from entities import (
@@ -11,7 +11,6 @@ from entities import (
     CollectableEntity,
     Player,
     SpeedBoost,
-    place_fireball,
     SpeedPenalty,
     MovingEntity,
     Coin,
@@ -22,6 +21,26 @@ from entities import (
 from gamegrid import Grid, Tile
 
 from random import randrange
+
+
+def place_fireball(coords: Tuple[int, int], action: Action) -> Tuple[int, int, Action]:
+    """
+    Donne les infos sur le placement d'une boule de feu.
+
+    Donne un triplet `(x, y, direction)` correspondant à une boule de feu placée depuis
+    les coordonnées `coords`, par l'action `action`.
+    """
+    x, y = coords
+    direction = Action.WAIT
+    if action == Action.ATTACK_UP:
+        direction = Action.MOVE_UP
+    elif action == Action.ATTACK_DOWN:
+        direction = Action.MOVE_DOWN
+    elif action == Action.ATTACK_LEFT:
+        direction = Action.MOVE_LEFT
+    elif action == Action.ATTACK_RIGHT:
+        direction = Action.MOVE_RIGHT
+    return (x, y, direction)
 
 
 class Game:
@@ -194,7 +213,7 @@ class Game:
         if len(self.entity_grid[y][x]) == 0:
             self.grid[y][x] = self.background[y][x]
         else:
-            self.grid[y][x] = max(entity.grid_id for entity in self.entity_grid[y][x])
+            self.grid[y][x] = max(entity.TILE for entity in self.entity_grid[y][x])
 
     def is_valid_action(self, player: entities.Player, action: entities.Action):
         """Renvoie `True` si l'action `action` est jouable."""
@@ -285,7 +304,7 @@ class Game:
 
     def collect(self, player: Player, collectible: CollectableEntity):
         """Ramasse l'object `collectible` pour le joueur `player`."""
-        collectible.collect(self, player)
+        collectible.collect(player)
         self.entities.remove(collectible)
         self.entity_grid[collectible.y][collectible.x].remove(collectible)
         self.update_grid(collectible.x, collectible.y)

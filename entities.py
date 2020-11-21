@@ -64,26 +64,6 @@ class Action(Enum):
         return self
 
 
-def place_fireball(coords: Tuple[int, int], action: Action) -> Tuple[int, int, Action]:
-    """
-    Donne les infos sur le placement d'une boule de feu.
-
-    Donne un triplet `(x, y, direction)` correspondant à une boule de feu placée depuis
-    les coordonnées `coords`, par l'action `action`.
-    """
-    x, y = coords
-    direction = Action.WAIT
-    if action == Action.ATTACK_UP:
-        direction = Action.MOVE_UP
-    elif action == Action.ATTACK_DOWN:
-        direction = Action.MOVE_DOWN
-    elif action == Action.ATTACK_LEFT:
-        direction = Action.MOVE_LEFT
-    elif action == Action.ATTACK_RIGHT:
-        direction = Action.MOVE_RIGHT
-    return (x, y, direction)
-
-
 class CantMoveThereException(Exception):
     """Exception lancée quand un joueur ne peut pas se rendre sur une case."""
 
@@ -91,7 +71,7 @@ class CantMoveThereException(Exception):
 class Entity:
     """Une entité de la zone de jeu."""
 
-    grid_id = 0
+    TILE = Tile.INVALID
 
     def __init__(self, x: int, y: int):
         """Entité placée initialement en `(x, y)`."""
@@ -100,17 +80,16 @@ class Entity:
 
     def get_visual_x(self) -> float:
         """Position x affichée de l'entité, utilisée pour les animations."""
-        return self.x
+        return float(self.x)
 
     def get_visual_y(self) -> float:
         """Position y affichée de l'entité, utilisée pour les animations."""
-        return self.y
+        return float(self.y)
 
     def update(self, game, dt: float):
         """Met à jour l'entité."""
-        pass
 
-    def next_update_in(self, dt: float):
+    def next_update_in(self, dt: float) -> float:
         """Temps avant la prochaine mise à jour de l'entité."""
         return float("inf")
 
@@ -118,14 +97,14 @@ class Entity:
 class MovingEntity(Entity):
     """Une entité mobile de la zone de jeu."""
 
-    def __init__(self, x, y, speed: float):
+    def __init__(self, x: int, y: int, speed: float):
         """L'entité réalise `speed` actions par seconde."""
         super().__init__(x, y)
         self.speed = speed
         self.action = Action.WAIT
         self.action_progress = 0.0
 
-    def next_update_in(self, dt):
+    def next_update_in(self, dt: float) -> float:
         """Temps en seconde avant la prochaine update pour cette entité."""
         # Update à la moitié de l'action
         if self.action_progress < 0.5:
@@ -133,21 +112,21 @@ class MovingEntity(Entity):
 
         return 1 / self.speed
 
-    def get_visual_x(self):
+    def get_visual_x(self) -> float:
         """Position x affichée de l'entité, utilisée pour les animations."""
         if self.action == Action.MOVE_LEFT:
             return self.x + int(self.action_progress >= 0.5) - self.action_progress
         if self.action == Action.MOVE_RIGHT:
             return self.x - int(self.action_progress >= 0.5) + self.action_progress
-        return self.x
+        return float(self.x)
 
-    def get_visual_y(self):
+    def get_visual_y(self) -> float:
         """Position y affichée de l'entité, utilisée pour les animations."""
         if self.action == Action.MOVE_UP:
             return self.y + int(self.action_progress >= 0.5) - self.action_progress
         if self.action == Action.MOVE_DOWN:
             return self.y - int(self.action_progress >= 0.5) + self.action_progress
-        return self.y
+        return float(self.y)
 
 
 class Player(MovingEntity):
@@ -160,11 +139,11 @@ class Player(MovingEntity):
 
     name = "Donne-moi un nom !"
 
-    def __init__(self, x, y, speed, color):
+    def __init__(self, x: int, y: int, speed: float, color: Tile):
         """Initialise un joueur avec sa couleur."""
         super(Player, self).__init__(x, y, speed)
         self.color = color
-        self.grid_id = self.color
+        self.TILE = self.color
         self.shield = False
         self.coins = 0
         self.super_fireball = 0
@@ -251,7 +230,7 @@ class Player(MovingEntity):
 class Fireball(MovingEntity):
     """Une boule de feu, qui tue les joueurs qu'elle traverse."""
 
-    grid_id = Tile.FIREBALL
+    TILE = Tile.FIREBALL
 
     def __init__(self, x, y, direction, player: Player):
         """Initialise une boule de feu, qui se déplace à 4.0 case / seconde."""
@@ -295,16 +274,16 @@ class Fireball(MovingEntity):
 class CollectableEntity(Entity):
     """Une entité ramassable de la zone de jeu."""
 
-    def collect(self, game, player: Player):
+    def collect(self, player: Player):
         """Le joueur `player` ramasse l'entité."""
 
 
 class Coin(CollectableEntity):
     """Une pièce à ramasser."""
 
-    grid_id = Tile.COIN
+    TILE = Tile.COIN
 
-    def collect(self, game, player):
+    def collect(self, player: Player):
         """Ajoute une pièce au joueur."""
         player.coins += 1
 
@@ -312,9 +291,9 @@ class Coin(CollectableEntity):
 class SpeedBoost(CollectableEntity):
     """Un bonus de vitesse."""
 
-    grid_id = Tile.SPEEDBOOST
+    TILE = Tile.SPEEDBOOST
 
-    def collect(self, game, player):
+    def collect(self, player: Player):
         """Ajoute 25pts% de vitesse au joueur."""
         player.speed += 0.25
 
@@ -322,9 +301,9 @@ class SpeedBoost(CollectableEntity):
 class SpeedPenalty(CollectableEntity):
     """Un malus de vitesse."""
 
-    grid_id = Tile.SPEEDPENALTY
+    TILE = Tile.SPEEDPENALTY
 
-    def collect(self, game, player):
+    def collect(self, player: Player):
         """Retire 25pts% de vitesse au joueur."""
         if player.speed >= 0.75:
             player.speed -= 0.25
@@ -333,9 +312,9 @@ class SpeedPenalty(CollectableEntity):
 class SuperFireball(CollectableEntity):
     """Un sort qui lance une boule de feu dans toutes les directions."""
 
-    grid_id = Tile.SUPER_FIREBALL
+    TILE = Tile.SUPER_FIREBALL
 
-    def collect(self, game, player):
+    def collect(self, player: Player):
         """Ajoute un sort au joueur."""
         player.super_fireball += 1
 
@@ -343,8 +322,8 @@ class SuperFireball(CollectableEntity):
 class Shield(CollectableEntity):
     """Un bouclier qui protège d'une boule de feu."""
 
-    grid_id = Tile.SHIELD
+    TILE = Tile.SHIELD
 
-    def collect(self, game, player):
+    def collect(self, player: Player):
         """Protège le joueur jusqu'au prochain coup."""
         player.shield = True

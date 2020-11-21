@@ -8,6 +8,7 @@ from typing import List
 class Tile(IntEnum):
     """Tous les éléments présents sur le jeu."""
 
+    INVALID = -2
     GENERATING = -1
 
     FLOOR = 0

@@ -11,7 +11,6 @@ from entities import (
     CollectableEntity,
     Player,
     SpeedBoost,
-    move,
     place_fireball,
     SpeedPenalty,
     MovingEntity,
@@ -197,7 +196,7 @@ class Game:
         else:
             self.grid[y][x] = max(entity.grid_id for entity in self.entity_grid[y][x])
 
-    def is_valid_action(self, player: Player, action):
+    def is_valid_action(self, player: entities.Player, action: entities.Action):
         """Renvoie `True` si l'action `action` est jouable."""
         if action == Action.WAIT:
             return True
@@ -209,7 +208,7 @@ class Game:
             Action.MOVE_LEFT,
             Action.MOVE_RIGHT,
         ):
-            x, y = move((player.x, player.y), action)
+            x, y = action.apply((player.x, player.y))
             try:
                 if self.grid[y][x] in (
                     Tile.WALL,

@@ -18,19 +18,50 @@ class Action(Enum):
     ATTACK_LEFT = "Atk gauche"
     ATTACK_RIGHT = "Atk droite"
 
+    def apply(self, coords: Tuple[int, int]) -> Tuple[int, int]:
+        """Applique le déplacement à la paire de coordonnées."""
+        x, y = coords
+        if self == Action.MOVE_UP:
+            return x, y - 1
+        if self == Action.MOVE_DOWN:
+            return x, y + 1
+        if self == Action.MOVE_LEFT:
+            return x - 1, y
+        if self == Action.MOVE_RIGHT:
+            return x + 1, y
+        return x, y
 
-def move(coords: Tuple[int, int], action: Action) -> Tuple[int, int]:
-    """Applique le déplacement `action` à la paire de coordonnées `coords`."""
-    x, y = coords
-    if action == Action.MOVE_UP:
-        y -= 1
-    elif action == Action.MOVE_DOWN:
-        y += 1
-    elif action == Action.MOVE_LEFT:
-        x -= 1
-    elif action == Action.MOVE_RIGHT:
-        x += 1
-    return (x, y)
+    def swap(self):
+        """Donne la direction opposée de l'action."""
+        if self == Action.MOVE_UP:
+            return Action.MOVE_DOWN
+        if self == Action.MOVE_DOWN:
+            return Action.MOVE_UP
+        if self == Action.MOVE_LEFT:
+            return Action.MOVE_RIGHT
+        if self == Action.MOVE_RIGHT:
+            return Action.MOVE_LEFT
+        if self == Action.ATTACK_UP:
+            return Action.ATTACK_DOWN
+        if self == Action.ATTACK_DOWN:
+            return Action.ATTACK_UP
+        if self == Action.ATTACK_LEFT:
+            return Action.ATTACK_RIGHT
+        if self == Action.ATTACK_RIGHT:
+            return Action.ATTACK_LEFT
+        return Action.WAIT
+
+    def attack(self):
+        """Attaque dans la direction."""
+        if self == Action.MOVE_UP:
+            return Action.ATTACK_UP
+        if self == Action.MOVE_DOWN:
+            return Action.ATTACK_DOWN
+        if self == Action.MOVE_LEFT:
+            return Action.ATTACK_LEFT
+        if self == Action.MOVE_RIGHT:
+            return Action.ATTACK_RIGHT
+        return self
 
 
 def place_fireball(coords: Tuple[int, int], action: Action) -> Tuple[int, int, Action]:
@@ -51,48 +82,6 @@ def place_fireball(coords: Tuple[int, int], action: Action) -> Tuple[int, int, A
     elif action == Action.ATTACK_RIGHT:
         direction = Action.MOVE_RIGHT
     return (x, y, direction)
-
-
-def swap_direction(action):
-    """Donne la direction opposée pour l'action `action`."""
-    if action == Action.MOVE_UP:
-        return Action.MOVE_DOWN
-    if action == Action.MOVE_DOWN:
-        return Action.MOVE_UP
-    if action == Action.MOVE_LEFT:
-        return Action.MOVE_RIGHT
-    if action == Action.MOVE_RIGHT:
-        return Action.MOVE_LEFT
-    if action == Action.ATTACK_UP:
-        return Action.ATTACK_DOWN
-    if action == Action.ATTACK_DOWN:
-        return Action.ATTACK_UP
-    if action == Action.ATTACK_LEFT:
-        return Action.ATTACK_RIGHT
-    if action == Action.ATTACK_RIGHT:
-        return Action.ATTACK_LEFT
-    return Action.WAIT
-
-
-def swap_type(action):
-    """Echange les attaques et les déplacements."""
-    if action == Action.MOVE_UP:
-        return Action.ATTACK_UP
-    if action == Action.MOVE_DOWN:
-        return Action.ATTACK_DOWN
-    if action == Action.MOVE_LEFT:
-        return Action.ATTACK_LEFT
-    if action == Action.MOVE_RIGHT:
-        return Action.ATTACK_RIGHT
-    if action == Action.ATTACK_UP:
-        return Action.Action.MOVE_UP
-    if action == Action.ATTACK_DOWN:
-        return Action.MOVE_DOWN
-    if action == Action.ATTACK_LEFT:
-        return Action.MOVE_LEFT
-    if action == Action.ATTACK_RIGHT:
-        return Action.MOVE_RIGHT
-    return Action.WAIT
 
 
 class CantMoveThereException(Exception):
@@ -220,7 +209,7 @@ class Player(MovingEntity):
             # Si le déplacement est toujours valide, il est effectué
             if game.is_valid_action(self, self.action):
                 old_x, old_y = self.x, self.y
-                self.x, self.y = move((self.x, self.y), self.action)
+                self.x, self.y = self.action.apply((self.x, self.y))
                 game.move_entity(self, old_x, old_y)
 
                 if game.background[self.y][self.x] == Tile.LAVA:
@@ -239,7 +228,7 @@ class Player(MovingEntity):
 
             # Sinon, on fait demi-tour
             else:
-                self.action = swap_direction(self.action)
+                self.action = self.action.swap()
 
         # Rien de spécial, on avance dans l'action
         else:
@@ -279,7 +268,7 @@ class Fireball(MovingEntity):
         # À la moitié de l'action on déplace la boule de feu
         elif self.action_progress < 0.5 <= self.action_progress + dt * self.speed:
             old_x, old_y = self.x, self.y
-            self.x, self.y = move((self.x, self.y), self.action)
+            self.x, self.y = self.action.apply((self.x, self.y))
             self.action_progress = 0.5
 
             game.move_entity(self, old_x, old_y)

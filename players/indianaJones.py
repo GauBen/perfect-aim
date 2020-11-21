@@ -1,6 +1,6 @@
 """Stratégie d'exemple: un joueur qui cherche des items."""
 
-from entities import Player, Action, move, swap_type
+from entities import Player, Action
 from game import Game
 from gamegrid import Tile
 
@@ -22,8 +22,8 @@ class IndianaJones(Player):
             Action.MOVE_LEFT,
             Action.MOVE_RIGHT,
         ):
-            x, y = move((self.x, self.y), direction)
-            attack = swap_type(direction)
+            x, y = direction.apply((self.x, self.y))
+            attack = direction.attack()
 
             # Si on a un joueur sur la case d'à côté, on l'attaque
             if any(
@@ -49,7 +49,7 @@ class IndianaJones(Player):
                 Action.MOVE_LEFT,
                 Action.MOVE_RIGHT,
             ):
-                new_x, new_y = move((x, y), d)
+                new_x, new_y = d.apply((x, y))
                 if (
                     game.grid[new_y][new_x] not in (Tile.WALL, Tile.LAVA)
                     and not explored[new_y][new_x]

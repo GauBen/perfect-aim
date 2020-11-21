@@ -96,11 +96,13 @@ class Entity:
         self.x = x
         self.y = y
 
-    def get_visual_x(self) -> float:
+    @property
+    def visual_x(self) -> float:
         """Position x affichée de l'entité, utilisée pour les animations."""
         return float(self.x)
 
-    def get_visual_y(self) -> float:
+    @property
+    def visual_y(self) -> float:
         """Position y affichée de l'entité, utilisée pour les animations."""
         return float(self.y)
 
@@ -130,7 +132,8 @@ class MovingEntity(Entity):
 
         return 1 / self.speed
 
-    def get_visual_x(self) -> float:
+    @property
+    def visual_x(self) -> float:
         """Position x affichée de l'entité, utilisée pour les animations."""
         if self.action == Action.MOVE_LEFT:
             return self.x + int(self.action_progress >= 0.5) - self.action_progress
@@ -138,7 +141,8 @@ class MovingEntity(Entity):
             return self.x - int(self.action_progress >= 0.5) + self.action_progress
         return float(self.x)
 
-    def get_visual_y(self) -> float:
+    @property
+    def visual_y(self) -> float:
         """Position y affichée de l'entité, utilisée pour les animations."""
         if self.action == Action.MOVE_UP:
             return self.y + int(self.action_progress >= 0.5) - self.action_progress

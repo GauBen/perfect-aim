@@ -310,8 +310,8 @@ class GameInterface:
         entities = copy(self.game.entities)
         for entity in sorted(entities, key=lambda entity: entity.TILE):
             self.canvas.create_image(
-                int(entity.get_visual_x() * self.assets_manager.TILE_SIZE),
-                int(entity.get_visual_y() * self.assets_manager.TILE_SIZE),
+                int(entity.visual_x * self.assets_manager.TILE_SIZE),
+                int(entity.visual_y * self.assets_manager.TILE_SIZE),
                 image=self.assets_manager.entity(entity),
                 anchor=tkinter.NW,
                 tags="entities",

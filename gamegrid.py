@@ -198,7 +198,12 @@ class Grid:
     @staticmethod
     def add_collectibles(grid: List[List[Tile]], size: int):
         """Ajoute tous les objets possibles sur la grille."""
-        coords = [(x, y) for x in range(1, size, 2) for y in range(1, size, 2)]
+        coords = [
+            (x, y)
+            for x in range(1, size, 2)
+            for y in range(1, size, 2)
+            if (x, y) != (1, 1)
+        ]
         shuffle(coords)
         items = [
             Tile.SPEEDBOOST,

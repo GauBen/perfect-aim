@@ -109,6 +109,7 @@ class Game:
         """Calcule toutes les updates qui ont eu lieu en `elapsed_time` secondes."""
         # On applique les updates itérativement, car on a discrétisé le temps
         while elapsed_time > 0.0:
+
             # Si la partie est finie, pas besoin d'update
             if self.over:
                 return

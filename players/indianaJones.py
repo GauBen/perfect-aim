@@ -1,14 +1,8 @@
 """Stratégie d'exemple: un joueur qui cherche des items."""
 
-from entities import (
-    Player,
-    Action,
-    move,
-    swap_type,
-    SHIELD,
-)
+from entities import Player, Action, move, swap_type
 from game import Game
-from map import WALL, SUPER_FIREBALL, SPEEDBOOST, LAVA, DAMAGED_FLOOR
+from gamegrid import Tile
 
 
 class IndianaJones(Player):
@@ -39,12 +33,14 @@ class IndianaJones(Player):
 
             # Sinon, on cherche les items
             if game.is_valid_action(self, direction):
-                tracks.append((x, y, direction, game.background[y][x] == DAMAGED_FLOOR))
+                tracks.append(
+                    (x, y, direction, game.background[y][x] == Tile.DAMAGED_FLOOR)
+                )
                 explored[y][x] = True
 
         while len(tracks) > 0:
             x, y, direction, dangerous = tracks.pop(0)
-            if game.grid[y][x] in (SHIELD, SPEEDBOOST, SUPER_FIREBALL):
+            if game.grid[y][x] in (Tile.SHIELD, Tile.SPEEDBOOST, Tile.SUPER_FIREBALL):
                 return direction
 
             for d in (
@@ -55,16 +51,17 @@ class IndianaJones(Player):
             ):
                 new_x, new_y = move((x, y), d)
                 if (
-                    game.grid[new_y][new_x] not in (WALL, LAVA)
+                    game.grid[new_y][new_x] not in (Tile.WALL, Tile.LAVA)
                     and not explored[new_y][new_x]
-                    and dangerous >= (game.background[new_y][new_x] == DAMAGED_FLOOR)
+                    and dangerous
+                    >= (game.background[new_y][new_x] == Tile.DAMAGED_FLOOR)
                 ):
                     tracks.append(
                         (
                             new_x,
                             new_y,
                             direction,
-                            game.background[new_y][new_x] == DAMAGED_FLOOR,
+                            game.background[new_y][new_x] == Tile.DAMAGED_FLOOR,
                         )
                     )  # Direction d'origine
                     explored[new_y][new_x] = True

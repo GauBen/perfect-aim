@@ -2,20 +2,7 @@
 from enum import Enum
 from typing import Tuple
 
-from map import (
-    COIN,
-    FIREBALL,
-    LAVA,
-    PLAYER_BLUE,
-    PLAYER_GREEN,
-    PLAYER_RED,
-    PLAYER_YELLOW,
-    SHIELD,
-    SPEEDBOOST,
-    SPEEDPENALTY,
-    SUPER_FIREBALL,
-    WALL,
-)
+from gamegrid import Tile
 
 
 class Action(Enum):
@@ -236,7 +223,7 @@ class Player(MovingEntity):
                 self.x, self.y = move((self.x, self.y), self.action)
                 game.move_entity(self, old_x, old_y)
 
-                if game.background[self.y][self.x] == LAVA:
+                if game.background[self.y][self.x] == Tile.LAVA:
                     game.remove_entity(self)
                     return
 
@@ -261,13 +248,13 @@ class Player(MovingEntity):
     def get_name(self):
         """Renvoie le nom du joueur et sa couleur."""
         name = self.name
-        if self.color == PLAYER_RED:
+        if self.color == Tile.PLAYER_RED:
             name += " (rouge)"
-        elif self.color == PLAYER_BLUE:
+        elif self.color == Tile.PLAYER_BLUE:
             name += " (bleu)"
-        elif self.color == PLAYER_YELLOW:
+        elif self.color == Tile.PLAYER_YELLOW:
             name += " (jaune)"
-        elif self.color == PLAYER_GREEN:
+        elif self.color == Tile.PLAYER_GREEN:
             name += " (vert)"
         return name
 
@@ -275,7 +262,7 @@ class Player(MovingEntity):
 class Fireball(MovingEntity):
     """Une boule de feu, qui tue les joueurs qu'elle traverse."""
 
-    grid_id = FIREBALL
+    grid_id = Tile.FIREBALL
 
     def __init__(self, x, y, direction, player: Player):
         """Initialise une boule de feu, qui se déplace à 4.0 case / seconde."""
@@ -298,7 +285,7 @@ class Fireball(MovingEntity):
             game.move_entity(self, old_x, old_y)
 
             # Suppression de la boule de feu si elle tape un mur
-            if game.grid[self.y][self.x] == WALL:
+            if game.grid[self.y][self.x] == Tile.WALL:
                 game.remove_entity(self)
 
             self.hit_players(game)
@@ -326,7 +313,7 @@ class CollectableEntity(Entity):
 class Coin(CollectableEntity):
     """Une pièce à ramasser."""
 
-    grid_id = COIN
+    grid_id = Tile.COIN
 
     def collect(self, game, player):
         """Ajoute une pièce au joueur."""
@@ -336,7 +323,7 @@ class Coin(CollectableEntity):
 class SpeedBoost(CollectableEntity):
     """Un bonus de vitesse."""
 
-    grid_id = SPEEDBOOST
+    grid_id = Tile.SPEEDBOOST
 
     def collect(self, game, player):
         """Ajoute 25pts% de vitesse au joueur."""
@@ -346,7 +333,7 @@ class SpeedBoost(CollectableEntity):
 class SpeedPenalty(CollectableEntity):
     """Un malus de vitesse."""
 
-    grid_id = SPEEDPENALTY
+    grid_id = Tile.SPEEDPENALTY
 
     def collect(self, game, player):
         """Retire 25pts% de vitesse au joueur."""
@@ -357,7 +344,7 @@ class SpeedPenalty(CollectableEntity):
 class SuperFireball(CollectableEntity):
     """Un sort qui lance une boule de feu dans toutes les directions."""
 
-    grid_id = SUPER_FIREBALL
+    grid_id = Tile.SUPER_FIREBALL
 
     def collect(self, game, player):
         """Ajoute un sort au joueur."""
@@ -367,7 +354,7 @@ class SuperFireball(CollectableEntity):
 class Shield(CollectableEntity):
     """Un bouclier qui protège d'une boule de feu."""
 
-    grid_id = SHIELD
+    grid_id = Tile.SHIELD
 
     def collect(self, game, player):
         """Protège le joueur jusqu'au prochain coup."""

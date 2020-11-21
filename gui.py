@@ -8,7 +8,7 @@ from typing import Callable, List, Optional, Union
 
 import entities
 import game
-import map
+from gamegrid import Tile
 import players
 
 
@@ -98,61 +98,61 @@ class AssetsManager:
 
     def tile(self, tile: int) -> tkinter.PhotoImage:
         """Renvoie l'image correspondante."""
-        if tile == map.FLOOR:
+        if tile == Tile.FLOOR:
             return self.asset_floor
-        if tile == map.WALL:
+        if tile == Tile.WALL:
             return self.asset_wall
-        if tile == map.LAVA:
+        if tile == Tile.LAVA:
             return self.asset_lava
-        if tile == map.DAMAGED_FLOOR:
+        if tile == Tile.DAMAGED_FLOOR:
             return self.asset_damaged_floor
         raise KeyError("Constante inconnue")
 
     def entity(self, entity: entities.Entity) -> tkinter.PhotoImage:  # noqa
         """Renvoie l'image correspondante."""
-        if entity.grid_id == map.PLAYER_RED:
+        if entity.grid_id == Tile.PLAYER_RED:
             return self.asset_player_red
-        if entity.grid_id == map.PLAYER_BLUE:
+        if entity.grid_id == Tile.PLAYER_BLUE:
             return self.asset_player_blue
-        if entity.grid_id == map.PLAYER_YELLOW:
+        if entity.grid_id == Tile.PLAYER_YELLOW:
             return self.asset_player_yellow
-        if entity.grid_id == map.PLAYER_GREEN:
+        if entity.grid_id == Tile.PLAYER_GREEN:
             return self.asset_player_green
-        if entity.grid_id == map.SPEEDBOOST:
+        if entity.grid_id == Tile.SPEEDBOOST:
             return self.asset_speedboost
-        if entity.grid_id == map.SPEEDPENALTY:
+        if entity.grid_id == Tile.SPEEDPENALTY:
             return self.asset_speedpenalty
-        if entity.grid_id == map.COIN:
+        if entity.grid_id == Tile.COIN:
             return self.asset_coin
-        if entity.grid_id == map.SUPER_FIREBALL:
+        if entity.grid_id == Tile.SUPER_FIREBALL:
             return self.asset_super_fireball
-        if entity.grid_id == map.SHIELD:
+        if entity.grid_id == Tile.SHIELD:
             return self.asset_shield
-        if entity.grid_id == map.FIREBALL:
+        if entity.grid_id == Tile.FIREBALL:
             return self.asset_fireball
         raise KeyError("Constante inconnue")
 
     def entity_hitbox(self, entity: entities.Entity) -> tkinter.PhotoImage:  # noqa
         """Renvoie l'image correspondante."""
-        if entity.grid_id == map.PLAYER_RED:
+        if entity.grid_id == Tile.PLAYER_RED:
             return self.asset_hitbox_red
-        if entity.grid_id == map.PLAYER_BLUE:
+        if entity.grid_id == Tile.PLAYER_BLUE:
             return self.asset_hitbox_blue
-        if entity.grid_id == map.PLAYER_YELLOW:
+        if entity.grid_id == Tile.PLAYER_YELLOW:
             return self.asset_hitbox_yellow
-        if entity.grid_id == map.PLAYER_GREEN:
+        if entity.grid_id == Tile.PLAYER_GREEN:
             return self.asset_hitbox_green
-        if entity.grid_id == map.SPEEDBOOST:
+        if entity.grid_id == Tile.SPEEDBOOST:
             return self.asset_hitbox_fireball
-        if entity.grid_id == map.SPEEDPENALTY:
+        if entity.grid_id == Tile.SPEEDPENALTY:
             return self.asset_hitbox_fireball
-        if entity.grid_id == map.COIN:
+        if entity.grid_id == Tile.COIN:
             return self.asset_hitbox_fireball
-        if entity.grid_id == map.SUPER_FIREBALL:
+        if entity.grid_id == Tile.SUPER_FIREBALL:
             return self.asset_hitbox_fireball
-        if entity.grid_id == map.SHIELD:
+        if entity.grid_id == Tile.SHIELD:
             return self.asset_hitbox_fireball
-        if entity.grid_id == map.FIREBALL:
+        if entity.grid_id == Tile.FIREBALL:
             return self.asset_hitbox_fireball
         raise KeyError("Constante inconnue")
 

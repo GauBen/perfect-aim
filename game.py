@@ -20,22 +20,7 @@ from entities import (
     Shield,
     Entity,
 )
-from map import (
-    FLOOR,
-    LAVA,
-    PLAYER_BLUE,
-    PLAYER_GREEN,
-    PLAYER_RED,
-    PLAYER_YELLOW,
-    COIN,
-    SPEEDBOOST,
-    SPEEDPENALTY,
-    WALL,
-    Map,
-    SUPER_FIREBALL,
-    SHIELD,
-    DAMAGED_FLOOR,
-)
+from gamegrid import Grid, Tile
 
 from random import randrange
 
@@ -54,7 +39,7 @@ class Game:
         self, player_constructors: List[Optional[Callable[[], entities.Player]]]
     ):
         """Initialise une partie et crée une carte."""
-        self.map = Map()
+        self.map = Grid()
         self.players: list[Player] = []
         self.t = 0.0
         self.over = False
@@ -66,7 +51,12 @@ class Game:
             (self.map.size - 2, self.map.size - 2),
             (1, 1),
         ]
-        colors = [PLAYER_GREEN, PLAYER_YELLOW, PLAYER_BLUE, PLAYER_RED]
+        colors = [
+            Tile.PLAYER_GREEN,
+            Tile.PLAYER_YELLOW,
+            Tile.PLAYER_BLUE,
+            Tile.PLAYER_RED,
+        ]
         self.background = deepcopy(self.map.grid)
         self.grid = deepcopy(self.map.grid)
         self.entities: Set[Entity] = set()
@@ -82,21 +72,21 @@ class Game:
 
         for y in range(self.map.size):
             for x in range(self.map.size):
-                if self.grid[y][x] == COIN:
+                if self.grid[y][x] == Tile.COIN:
                     self.entities.add(Coin(x, y))
-                    self.background[y][x] = FLOOR
-                elif self.grid[y][x] == SPEEDBOOST:
+                    self.background[y][x] = Tile.FLOOR
+                elif self.grid[y][x] == Tile.SPEEDBOOST:
                     self.entities.add(SpeedBoost(x, y))
-                    self.background[y][x] = FLOOR
-                elif self.grid[y][x] == SPEEDPENALTY:
+                    self.background[y][x] = Tile.FLOOR
+                elif self.grid[y][x] == Tile.SPEEDPENALTY:
                     self.entities.add(SpeedPenalty(x, y))
-                    self.background[y][x] = FLOOR
-                elif self.grid[y][x] == SUPER_FIREBALL:
+                    self.background[y][x] = Tile.FLOOR
+                elif self.grid[y][x] == Tile.SUPER_FIREBALL:
                     self.entities.add(SuperFireball(x, y))
-                    self.background[y][x] = FLOOR
-                elif self.grid[y][x] == SHIELD:
+                    self.background[y][x] = Tile.FLOOR
+                elif self.grid[y][x] == Tile.SHIELD:
                     self.entities.add(Shield(x, y))
-                    self.background[y][x] = FLOOR
+                    self.background[y][x] = Tile.FLOOR
 
         for entity in self.entities:
             self.entity_grid[entity.y][entity.x].add(entity)
@@ -123,7 +113,8 @@ class Game:
                 [entity.next_update_in(elapsed_time) for entity in self.entities]
                 + [elapsed_time]
             )
-            # dt vaut la plus petite durée avant un évènement (changement de case par exemple)
+            # dt vaut la plus petite durée avant un évènement
+            # (changement de case par exemple)
             self.t += dt
 
             # Mise à jour des entités
@@ -153,7 +144,7 @@ class Game:
         if len(list(filter(lambda e: isinstance(e, SpeedBoost), self.entities))) == 0:
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
-                if self.grid[y][x] in (FLOOR, DAMAGED_FLOOR):
+                if self.grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
                     collectible = SpeedBoost(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
@@ -161,7 +152,7 @@ class Game:
                     break
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
-                if self.grid[y][x] in (FLOOR, DAMAGED_FLOOR):
+                if self.grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
                     collectible = Shield(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
@@ -169,7 +160,7 @@ class Game:
                     break
             for _ in range(10):
                 x, y = randrange(self.map.size), randrange(self.map.size)
-                if self.grid[y][x] in (FLOOR, DAMAGED_FLOOR):
+                if self.grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
                     collectible = Coin(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
@@ -182,8 +173,8 @@ class Game:
             step = int((self.t - 65.0) / 10.0)
             halfstep = (self.t - 65.0 - step * 10.0) > 5.0
             coords = 1 + step
-            from_ = DAMAGED_FLOOR if halfstep else FLOOR
-            to = LAVA if halfstep else DAMAGED_FLOOR
+            from_ = Tile.DAMAGED_FLOOR if halfstep else Tile.FLOOR
+            to = Tile.LAVA if halfstep else Tile.DAMAGED_FLOOR
             if self.background[coords][coords] != to:
                 for y in range(self.map.size):
                     for x in range(self.map.size):
@@ -193,7 +184,7 @@ class Game:
                             or x == self.map.size - coords - 1
                             or y == self.map.size - coords - 1
                         ) and self.background[y][x] == from_:
-                            if to == LAVA:
+                            if to == Tile.LAVA:
                                 self.turn_to_lava(x, y)
                             else:
                                 self.background[y][x] = to
@@ -221,11 +212,11 @@ class Game:
             x, y = move((player.x, player.y), action)
             try:
                 if self.grid[y][x] in (
-                    WALL,
-                    PLAYER_RED,
-                    PLAYER_BLUE,
-                    PLAYER_YELLOW,
-                    PLAYER_GREEN,
+                    Tile.WALL,
+                    Tile.PLAYER_RED,
+                    Tile.PLAYER_BLUE,
+                    Tile.PLAYER_YELLOW,
+                    Tile.PLAYER_GREEN,
                 ):
                     raise CantMoveThereException()
             except IndexError:
@@ -254,7 +245,7 @@ class Game:
         """Renvoie `True` si le joueur peut placer une boule de feu."""
         x, y, _ = place_fireball((player.x, player.y), action)
         try:
-            if self.grid[y][x] == WALL:
+            if self.grid[y][x] == Tile.WALL:
                 raise CantMoveThereException()
         except IndexError:
             return False
@@ -324,7 +315,7 @@ class Game:
 
     def turn_to_lava(self, x, y):
         """Transforme une case en lave."""
-        self.background[y][x] = LAVA
+        self.background[y][x] = Tile.LAVA
         for entity in self.entity_grid[y][x].copy():
             if not isinstance(entity, Fireball):
                 self.remove_entity(entity)

@@ -396,6 +396,8 @@ class GameLauncher:
         self.game_launched = False
         self.create_launcher()
 
+    def start(self):
+        """Lance la boucle de tkinter."""
         self.master.mainloop()
 
     def create_launcher(self):

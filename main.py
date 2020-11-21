@@ -11,4 +11,4 @@ Votre objectif ? Créer un joueur ordinateur meilleur que celui des autres.
 if __name__ == "__main__":
     from gui import GameLauncher
 
-    GameLauncher()
+    GameLauncher().start()

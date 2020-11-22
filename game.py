@@ -1,25 +1,14 @@
 """Classes du jeu, sans interface."""
 
 from copy import deepcopy
-from typing import Callable, List, Optional, Set, Tuple
+from typing import List, Optional, Set, Tuple, Type, Union
 
 import entities
-from entities import (
-    Action,
-    Fireball,
-    CantMoveThereException,
-    CollectableEntity,
-    SpeedBoost,
-    SpeedPenalty,
-    MovingEntity,
-    Coin,
-    SuperFireball,
-    Shield,
-    Entity,
-)
 from gamegrid import Grid, Tile
 
 from random import randrange
+
+Action = entities.Action
 
 
 def place_fireball(coords: Tuple[int, int], action: Action) -> Tuple[int, int, Action]:
@@ -42,8 +31,62 @@ def place_fireball(coords: Tuple[int, int], action: Action) -> Tuple[int, int, A
     return (x, y, direction)
 
 
-class Player(entities.Player):
-    pass
+class CantMoveThereException(Exception):
+    """Exception lancée quand un joueur ne peut pas se rendre sur une case."""
+
+
+class Player:
+    """Représente la stratégie d'une équipe."""
+
+    def __init__(self, entity: entities.PlayerEntity):
+        """Initialise l'entité pour qu'elle utilise la stratégie."""
+        entity.play = lambda game: self.play(game)
+
+        self.player_entity = entity
+
+    def play(self, game) -> Action:
+        """Choisit la prochaine action du joueur, en renvoyant une constante d'action."""
+        return Action.WAIT
+
+    @property
+    def x(self) -> int:
+        """Coordonnée x du joueur."""
+        return self.player_entity.x
+
+    @property
+    def y(self) -> int:
+        """Coordonnée y du joueur."""
+        return self.player_entity.y
+
+    @property
+    def speed(self) -> float:
+        """Vitesse du joueur."""
+        return self.player_entity.speed
+
+    @property
+    def coins(self) -> int:
+        """Nombre de pièces du joueur."""
+        return self.player_entity.coins
+
+    @property
+    def super_fireball(self) -> int:
+        """Nombre de super boules de feu."""
+        return self.player_entity.super_fireball
+
+    @property
+    def shield(self) -> bool:
+        """Le joueur possède un bouclier."""
+        return self.player_entity.shield
+
+    @property
+    def action(self) -> Action:
+        """Action en cours."""
+        return self.player_entity.action
+
+    @property
+    def action_progress(self) -> Action:
+        """Avancement de l'action en cours."""
+        return self.player_entity.action_progress
 
 
 class Game:
@@ -57,64 +100,74 @@ class Game:
     MAX_PLAYERS = 4
 
     def __init__(
-        self, player_constructors: List[Optional[Callable[[], entities.Player]]]
+        self, player_constructors: List[Optional[Type[entities.PlayerEntity]]]
     ):
         """Initialise une partie et crée une carte."""
-        self.map = Grid()
+        # Initialisation de la grille
+        self.grid = Grid()
+
+        # Les entités du jeu
+        self.entities: Set[entities.Entity] = set()
         self.players: list[Player] = []
+
+        # Les matrices du jeu
+        self.background = deepcopy(self.grid.grid)
+        self.tile_grid = deepcopy(self.grid.grid)
+        self.entity_grid: List[List[Set[entities.Entity]]] = [
+            [set() for x in range(self.grid.size)] for y in range(self.grid.size)
+        ]
+
+        # L'état du jeu
         self.t = 0.0
         self.over = False
         self.winner: Optional[Player] = None
 
-        coords = [
-            (self.map.size - 2, 1),
-            (1, self.map.size - 2),
-            (self.map.size - 2, self.map.size - 2),
-            (1, 1),
-        ]
-        colors = [
-            Tile.PLAYER_GREEN,
-            Tile.PLAYER_YELLOW,
-            Tile.PLAYER_BLUE,
-            Tile.PLAYER_RED,
-        ]
-        self.background = deepcopy(self.map.grid)
-        self.grid = deepcopy(self.map.grid)
-        self.entities: Set[Entity] = set()
-        self.entity_grid = [
-            [set() for x in range(self.map.size)] for y in range(self.map.size)
-        ]
+        # Crée les joueurs et des objets
+        self.create_entities(player_constructors)
 
-        for player in player_constructors:
-            x, y = coords.pop()
-            p = player(x, y, 1.0, colors.pop())
-            self.entities.add(p)
-            self.players.append(p)
+    def create_entities(
+        self, player_constructors: List[Optional[Type[entities.PlayerEntity]]]
+    ):
+        """Ajoute les joueurs et les entitiés sur les grilles."""
+        # Les joueurs
+        for player_constructor, entity_constructor, coords in zip(
+            player_constructors,
+            entities.players,
+            [
+                (1, 1),
+                (self.grid.size - 2, self.grid.size - 2),
+                (1, self.grid.size - 2),
+                (self.grid.size - 2, 1),
+            ],
+        ):
+            x, y = coords
+            if player_constructor is not None:
+                p = entity_constructor(x, y)
+                self.entities.add(p)
+                self.players.append(player_constructor(p))
 
-        for y in range(self.map.size):
-            for x in range(self.map.size):
-                if self.grid[y][x] == Tile.COIN:
-                    self.entities.add(Coin(x, y))
+        for y in range(self.grid.size):
+            for x in range(self.grid.size):
+                if self.tile_grid[y][x] == Tile.COIN:
+                    self.entities.add(entities.Coin(x, y))
                     self.background[y][x] = Tile.FLOOR
-                elif self.grid[y][x] == Tile.SPEEDBOOST:
-                    self.entities.add(SpeedBoost(x, y))
+                elif self.tile_grid[y][x] == Tile.SPEEDBOOST:
+                    self.entities.add(entities.SpeedBoost(x, y))
                     self.background[y][x] = Tile.FLOOR
-                elif self.grid[y][x] == Tile.SPEEDPENALTY:
-                    self.entities.add(SpeedPenalty(x, y))
+                elif self.tile_grid[y][x] == Tile.SPEEDPENALTY:
+                    self.entities.add(entities.SpeedPenalty(x, y))
                     self.background[y][x] = Tile.FLOOR
-                elif self.grid[y][x] == Tile.SUPER_FIREBALL:
-                    self.entities.add(SuperFireball(x, y))
+                elif self.tile_grid[y][x] == Tile.SUPER_FIREBALL:
+                    self.entities.add(entities.SuperFireball(x, y))
                     self.background[y][x] = Tile.FLOOR
-                elif self.grid[y][x] == Tile.SHIELD:
-                    self.entities.add(Shield(x, y))
+                elif self.tile_grid[y][x] == Tile.SHIELD:
+                    self.entities.add(entities.Shield(x, y))
                     self.background[y][x] = Tile.FLOOR
 
         for entity in self.entities:
             self.entity_grid[entity.y][entity.x].add(entity)
             self.update_grid(entity.x, entity.y)
             self.entities.add(entity)
-
-        self.update(0.0)
 
     def update(self, elapsed_time: float):
         """Calcule toutes les updates qui ont eu lieu en `elapsed_time` secondes."""
@@ -144,12 +197,11 @@ class Game:
                     entity.update(self, dt)
                 self.update_grid(entity.x, entity.y)
 
-            players = list(filter(lambda e: isinstance(e, Player), self.entities))
-
             # Il ne reste qu'un joueur en vie ?
+            players = list(self.player_entities)
             if len(players) == 1:
                 winner = players[0]
-                print(f"Victoire du joueur {winner.color}")
+                print(f"Victoire du joueur {winner.TILE.name}")
                 self.over = True
                 self.winner = winner
             elif len(players) == 0:
@@ -162,27 +214,34 @@ class Game:
 
     def add_collectibles(self):
         """Ajoute des objets s'il n'y en a plus."""
-        if len(list(filter(lambda e: isinstance(e, SpeedBoost), self.entities))) == 0:
+        if (
+            len(
+                list(
+                    filter(lambda e: isinstance(e, entities.SpeedBoost), self.entities)
+                )
+            )
+            == 0
+        ):
             for _ in range(10):
-                x, y = randrange(self.map.size), randrange(self.map.size)
-                if self.grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
-                    collectible = SpeedBoost(x, y)
+                x, y = randrange(self.grid.size), randrange(self.grid.size)
+                if self.tile_grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
+                    collectible = entities.SpeedBoost(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
                     self.update_grid(collectible.x, collectible.y)
                     break
             for _ in range(10):
-                x, y = randrange(self.map.size), randrange(self.map.size)
-                if self.grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
-                    collectible = Shield(x, y)
+                x, y = randrange(self.grid.size), randrange(self.grid.size)
+                if self.tile_grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
+                    collectible = entities.Shield(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
                     self.update_grid(collectible.x, collectible.y)
                     break
             for _ in range(10):
-                x, y = randrange(self.map.size), randrange(self.map.size)
-                if self.grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
-                    collectible = Coin(x, y)
+                x, y = randrange(self.grid.size), randrange(self.grid.size)
+                if self.tile_grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
+                    collectible = entities.Coin(x, y)
                     self.entities.add(collectible)
                     self.entity_grid[y][x].add(collectible)
                     self.update_grid(collectible.x, collectible.y)
@@ -197,13 +256,13 @@ class Game:
             from_ = Tile.DAMAGED_FLOOR if halfstep else Tile.FLOOR
             to = Tile.LAVA if halfstep else Tile.DAMAGED_FLOOR
             if self.background[coords][coords] != to:
-                for y in range(self.map.size):
-                    for x in range(self.map.size):
+                for y in range(self.grid.size):
+                    for x in range(self.grid.size):
                         if (
                             x == coords
                             or y == coords
-                            or x == self.map.size - coords - 1
-                            or y == self.map.size - coords - 1
+                            or x == self.grid.size - coords - 1
+                            or y == self.grid.size - coords - 1
                         ) and self.background[y][x] == from_:
                             if to == Tile.LAVA:
                                 self.turn_to_lava(x, y)
@@ -214,30 +273,26 @@ class Game:
     def update_grid(self, x, y):
         """Met à jour la grille aux coordonnées données."""
         if len(self.entity_grid[y][x]) == 0:
-            self.grid[y][x] = self.background[y][x]
+            self.tile_grid[y][x] = self.background[y][x]
         else:
-            self.grid[y][x] = max(entity.TILE for entity in self.entity_grid[y][x])
+            self.tile_grid[y][x] = max(entity.TILE for entity in self.entity_grid[y][x])
 
-    def is_valid_action(self, player: entities.Player, action: entities.Action):
+    def is_valid_action(
+        self, player: Union[entities.PlayerEntity, Player], action: entities.Action
+    ):
         """Renvoie `True` si l'action `action` est jouable."""
+        if isinstance(player, Player):
+            return self.is_valid_action(player.player_entity, action)
+
         if action == Action.WAIT:
             return True
 
         # Un déplacement est possible s'il n'y a ni mur ni joueur
-        elif action in (
-            Action.MOVE_UP,
-            Action.MOVE_DOWN,
-            Action.MOVE_LEFT,
-            Action.MOVE_RIGHT,
-        ):
+        elif action.is_movement():
             x, y = action.apply((player.x, player.y))
             try:
-                if self.grid[y][x] in (
-                    Tile.WALL,
-                    Tile.PLAYER_RED,
-                    Tile.PLAYER_BLUE,
-                    Tile.PLAYER_YELLOW,
-                    Tile.PLAYER_GREEN,
+                if self.background[y][x] == Tile.WALL or any(
+                    isinstance(e, entities.PlayerEntity) for e in self.entity_grid[y][x]
                 ):
                     raise CantMoveThereException()
             except IndexError:
@@ -247,12 +302,7 @@ class Game:
             return True
 
         # Un tir d'arc est possible s'il n'est pas fait contre un mur
-        elif action in (
-            Action.ATTACK_UP,
-            Action.ATTACK_DOWN,
-            Action.ATTACK_LEFT,
-            Action.ATTACK_RIGHT,
-        ):
+        elif action.is_attack():
             if not self.can_player_attack(player):
                 return False
             if player.super_fireball > 0:
@@ -264,14 +314,6 @@ class Game:
 
     def can_place_fireball(self, player: Player, action):
         """Renvoie `True` si le joueur peut placer une boule de feu."""
-        x, y, _ = place_fireball((player.x, player.y), action)
-        try:
-            if self.grid[y][x] == Tile.WALL:
-                raise CantMoveThereException()
-        except IndexError:
-            return False
-        except CantMoveThereException:
-            return False
         return True
 
     def player_attacks(self, player: Player, action):
@@ -279,7 +321,7 @@ class Game:
 
         def throw_fireball(action):
             x, y, direction = place_fireball((player.x, player.y), action)
-            fireball = Fireball(x, y, direction, player)
+            fireball = entities.Fireball(x, y, direction, player)
             self.entities.add(fireball)
             self.entity_grid[fireball.y][fireball.x].add(fireball)
             self.update_grid(fireball.x, fireball.y)
@@ -301,18 +343,18 @@ class Game:
     def can_player_attack(self, player: Player):
         """Renvoie `True` si le joueur a une boule de feu disponible."""
         for entity in self.entities:
-            if isinstance(entity, Fireball) and entity.player == player:
+            if isinstance(entity, entities.Fireball) and entity.player == player:
                 return False
         return True
 
-    def collect(self, player: Player, collectible: CollectableEntity):
+    def collect(self, player: Player, collectible: entities.CollectableEntity):
         """Ramasse l'object `collectible` pour le joueur `player`."""
         collectible.collect(player)
         self.entities.remove(collectible)
         self.entity_grid[collectible.y][collectible.x].remove(collectible)
         self.update_grid(collectible.x, collectible.y)
 
-    def hit_player(self, fireball: Fireball, player: Player):
+    def hit_player(self, fireball: entities.Fireball, player: Player):
         """Inflige un point de dégât."""
         if player.shield:
             player.shield = False
@@ -321,14 +363,14 @@ class Game:
         else:
             self.remove_entity(player)
 
-    def remove_entity(self, entity: Entity):
+    def remove_entity(self, entity: entities.Entity):
         """Supprime l'entité du jeu."""
         if entity in self.entities:
             self.entities.remove(entity)
             self.entity_grid[entity.y][entity.x].remove(entity)
         self.update_grid(entity.x, entity.y)
 
-    def move_entity(self, entity: MovingEntity, old_x: int, old_y: int):
+    def move_entity(self, entity: entities.MovingEntity, old_x: int, old_y: int):
         """Déplace l'entité sur la grille des entités `entity_grid`."""
         self.entity_grid[old_y][old_x].remove(entity)
         self.entity_grid[entity.y][entity.x].add(entity)
@@ -338,6 +380,11 @@ class Game:
         """Transforme une case en lave."""
         self.background[y][x] = Tile.LAVA
         for entity in self.entity_grid[y][x].copy():
-            if not isinstance(entity, Fireball):
+            if not isinstance(entity, entities.Fireball):
                 self.remove_entity(entity)
         self.update_grid(x, y)
+
+    @property
+    def player_entities(self) -> List[entities.PlayerEntity]:
+        """Les `PlayerEntities` encore en vie."""
+        return filter(lambda e: isinstance(e, entities.PlayerEntity), self.entities)

@@ -1,5 +1,6 @@
 """Stratégie d'exemple: un joueur qui cherche des items."""
 
+from entities import PlayerEntity
 from game import Action, Game, Player, Tile
 
 
@@ -10,7 +11,9 @@ class IndianaJones(Player):
 
     def play(self, game: Game):
         """Cherche un joueur adjacent ou un item atteignable."""
-        explored = [[False for x in range(game.map.size)] for y in range(game.map.size)]
+        explored = [
+            [False for x in range(game.grid.size)] for y in range(game.grid.size)
+        ]
         explored[self.y][self.x] = True
         tracks = []
 
@@ -25,7 +28,7 @@ class IndianaJones(Player):
 
             # Si on a un joueur sur la case d'à côté, on l'attaque
             if any(
-                isinstance(e, Player) for e in game.entity_grid[y][x]
+                isinstance(e, PlayerEntity) for e in game.entity_grid[y][x]
             ) and game.is_valid_action(self, attack):
                 return attack
 
@@ -38,7 +41,11 @@ class IndianaJones(Player):
 
         while len(tracks) > 0:
             x, y, direction, dangerous = tracks.pop(0)
-            if game.grid[y][x] in (Tile.SHIELD, Tile.SPEEDBOOST, Tile.SUPER_FIREBALL):
+            if game.tile_grid[y][x] in (
+                Tile.SHIELD,
+                Tile.SPEEDBOOST,
+                Tile.SUPER_FIREBALL,
+            ):
                 return direction
 
             for d in (
@@ -49,7 +56,7 @@ class IndianaJones(Player):
             ):
                 new_x, new_y = d.apply((x, y))
                 if (
-                    game.grid[new_y][new_x] not in (Tile.WALL, Tile.LAVA)
+                    game.tile_grid[new_y][new_x] not in (Tile.WALL, Tile.LAVA)
                     and not explored[new_y][new_x]
                     and dangerous
                     >= (game.background[new_y][new_x] == Tile.DAMAGED_FLOOR)

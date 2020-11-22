@@ -4,7 +4,7 @@ import time
 import tkinter
 import tkinter.ttk as ttk
 from copy import copy, deepcopy
-from typing import Callable, List, Optional, Union
+from typing import List, Optional, Type, Union
 
 import entities
 import game
@@ -144,14 +144,14 @@ class PlayerPanel:
         assets_manager: AssetsManager,
         frame: ttk.Frame,
         i: int,
-        player: entities.Player,
+        player: game.Player,
     ):
         """Initialise les éléments tkinter."""
         self.assets_manager = assets_manager
         self.player = player
 
         self.player_icon = ttk.Label(frame, image=self.assets_manager.asset_player_red)
-        self.player_label = ttk.Label(frame, text=player.get_name())
+        self.player_label = ttk.Label(frame, text=player.name)
         self.speed_icon = ttk.Label(frame, image=self.assets_manager.asset_speedboost)
         self.speed_label = ttk.Label(frame, text=f"{player.speed:.2f}")
         self.super_fireball_icon = ttk.Label(
@@ -246,7 +246,7 @@ class GameInterface:
     def create_widgets(self):
         """Crée les widgets tk dans la fenêtre du jeu."""
         # Canvas
-        size = self.assets_manager.TILE_SIZE * self.game.map.size
+        size = self.assets_manager.TILE_SIZE * self.game.grid.size
         self.canvas = tkinter.Canvas(
             self.window, background="#eee", width=size, height=size
         )
@@ -292,8 +292,8 @@ class GameInterface:
         """Dessine le fond du plateau."""
         self.background = deepcopy(self.game.background)
         self.canvas.delete("background")
-        for y in range(self.game.map.size):
-            for x in range(self.game.map.size):
+        for y in range(self.game.grid.size):
+            for x in range(self.game.grid.size):
                 self.canvas.create_image(
                     x * self.assets_manager.TILE_SIZE,
                     y * self.assets_manager.TILE_SIZE,
@@ -331,7 +331,7 @@ class PlayerSelector:
     def __init__(
         self,
         assets_manager: AssetsManager,
-        players: List[Union[None, entities.Player]],
+        players: List[Union[None, game.Player]],
         frame: ttk.Frame,
         i: int,
     ):
@@ -352,7 +352,7 @@ class PlayerSelector:
         self.combobox.grid(row=i + 1, column=1)
 
     @property
-    def selected_constructor(self) -> Optional[Callable[[], entities.Player]]:
+    def selected_constructor(self) -> Optional[Type[game.Player]]:
         """Constructeur du joueur choisi."""
         value = self.combobox.get()
         for c in self.player_constructors:
@@ -425,7 +425,7 @@ class GameLauncher:
             return
         self.launch_many_games(players)
 
-    def launch_one_game(self, players: List[Optional[Callable[[], entities.Player]]]):
+    def launch_one_game(self, players: List[Optional[Type[game.Player]]]):
         """Lance une partie."""
         if self.game_launched:
             return
@@ -435,7 +435,7 @@ class GameLauncher:
         g = game.Game(players)
         GameInterface(self.master, self.assets_manager, g).start()
 
-    def launch_many_games(self, players: List[Optional[Callable[[], entities.Player]]]):
+    def launch_many_games(self, players: List[Optional[Type[game.Player]]]):
         """Lance 2020 parties simultanées."""
         if self.game_launched:
             return

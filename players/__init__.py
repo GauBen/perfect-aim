@@ -4,12 +4,12 @@ import importlib
 import inspect
 from glob import glob
 from pathlib import Path
-from typing import Callable, List
+from typing import List, Type
 
 from game import Player
 
 
-def list_player_constructors() -> List[Callable[[], Player]]:
+def list_player_constructors() -> List[Type[Player]]:
     """Liste les classes filles de Player."""
     constructors = []
     for file in glob("./players/*.py"):

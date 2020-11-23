@@ -63,7 +63,18 @@ class Action(Enum):
             return Action.ATTACK_RIGHT
         return self
 
+    def movement(self):
+        """Déplacement dans la direction."""
+        if self == Action.ATTACK_UP:
+            return Action.MOVE_UP
+        if self == Action.ATTACK_DOWN:
             return Action.MOVE_DOWN
+        if self == Action.ATTACK_LEFT:
+            return Action.MOVE_LEFT
+        if self == Action.ATTACK_RIGHT:
+            return Action.MOVE_RIGHT
+        return self
+
     def is_movement(self) -> bool:
         """Renvoie vrai si l'action est un déplacement."""
         return self in (
@@ -274,6 +285,7 @@ class Fireball(MovingEntity):
         # À la moitié de l'action on déplace la boule de feu
         elif self.action_progress < 0.5 <= self.action_progress + dt * self.speed:
             old_x, old_y = self.x, self.y
+            print(self.action)
             self.x, self.y = self.action.apply((self.x, self.y))
             self.action_progress = 0.5
 

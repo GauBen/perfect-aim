@@ -11,9 +11,7 @@ class IndianaJones(Player):
 
     def play(self, game: Game):
         """Cherche un joueur adjacent ou un item atteignable."""
-        explored = [
-            [False for x in range(game.grid.size)] for y in range(game.grid.size)
-        ]
+        explored = [[False for x in range(game.size)] for y in range(game.size)]
         explored[self.y][self.x] = True
         tracks = []
 

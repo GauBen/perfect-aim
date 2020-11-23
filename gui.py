@@ -246,7 +246,7 @@ class GameInterface:
     def create_widgets(self):
         """Crée les widgets tk dans la fenêtre du jeu."""
         # Canvas
-        size = self.assets_manager.TILE_SIZE * self.game.grid.size
+        size = self.assets_manager.TILE_SIZE * self.game.size
         self.canvas = tkinter.Canvas(
             self.window, background="#eee", width=size, height=size
         )
@@ -292,8 +292,8 @@ class GameInterface:
         """Dessine le fond du plateau."""
         self.background = deepcopy(self.game.background)
         self.canvas.delete("background")
-        for y in range(self.game.grid.size):
-            for x in range(self.game.grid.size):
+        for y in range(self.game.size):
+            for x in range(self.game.size):
                 self.canvas.create_image(
                     x * self.assets_manager.TILE_SIZE,
                     y * self.assets_manager.TILE_SIZE,

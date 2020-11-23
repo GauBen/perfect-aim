@@ -104,19 +104,13 @@ class Matrix:
 
 
 class Grid:
-    """Représente une carte du jeu."""
-
-    DEFAULT_SIZE = 21
-
-    def __init__(self, size: int = DEFAULT_SIZE):
-        """Génère une carte."""
-        assert size % 4 == 1, "La grille doit respecter un critère de taille."
-        self.size = size
-        self.grid = self.create_map(self.size)
+    """Générateur des cartes du jeu."""
 
     @staticmethod
-    def create_map(size: int) -> List[List[Tile]]:
+    def create_grid(size: int) -> List[List[Tile]]:
         """Génération d'une carte labyrinthe."""
+        assert size % 4 == 1, "La grille doit respecter un critère de taille."
+
         size = (size - 1) // 2 + 1
 
         # == Génération du labyrinthe ==
@@ -247,7 +241,7 @@ class Grid:
 
 # Si on lance ce fichier, un petit easter egg
 if __name__ == "__main__":
-    for row in Grid(21).grid:
+    for row in Grid.create_grid(21):
         for cell in row:
             print(
                 {

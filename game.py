@@ -84,28 +84,30 @@ class Game:
     MIN_PLAYERS = 2
     MAX_PLAYERS = 4
 
+    DEFAULT_GRID_SIZE = 21
+
     def __init__(
         self, player_constructors: List[Optional[Type[entities.PlayerEntity]]]
     ):
         """Initialise une partie et crée une carte."""
         # Initialisation de la grille
-        self.grid = Grid()
+        self.size = self.DEFAULT_GRID_SIZE
+        self.tile_grid = Grid.create_grid(self.size)
+
+        # L'état du jeu
+        self.t = 0.0
+        self.over = False
+        self.winner: Optional[Player] = None
 
         # Les entités du jeu
         self.entities: Set[entities.Entity] = set()
         self.players: list[Player] = []
 
         # Les matrices du jeu
-        self.background = deepcopy(self.grid.grid)
-        self.tile_grid = deepcopy(self.grid.grid)
+        self.background = deepcopy(self.tile_grid)
         self.entity_grid: List[List[Set[entities.Entity]]] = [
-            [set() for x in range(self.grid.size)] for y in range(self.grid.size)
+            [set() for x in range(self.size)] for y in range(self.size)
         ]
-
-        # L'état du jeu
-        self.t = 0.0
-        self.over = False
-        self.winner: Optional[Player] = None
 
         # Crée les joueurs et des objets
         self.create_entities(player_constructors)
@@ -120,9 +122,9 @@ class Game:
             entities.players,
             [
                 (1, 1),
-                (self.grid.size - 2, self.grid.size - 2),
-                (1, self.grid.size - 2),
-                (self.grid.size - 2, 1),
+                (self.size - 2, self.size - 2),
+                (1, self.size - 2),
+                (self.size - 2, 1),
             ],
         ):
             x, y = coords
@@ -131,28 +133,22 @@ class Game:
                 self.entities.add(p)
                 self.players.append(player_constructor(p))
 
-        for y in range(self.grid.size):
-            for x in range(self.grid.size):
-                if self.tile_grid[y][x] == Tile.COIN:
-                    self.entities.add(entities.Coin(x, y))
-                    self.background[y][x] = Tile.FLOOR
-                elif self.tile_grid[y][x] == Tile.SPEEDBOOST:
-                    self.entities.add(entities.SpeedBoost(x, y))
-                    self.background[y][x] = Tile.FLOOR
-                elif self.tile_grid[y][x] == Tile.SPEEDPENALTY:
-                    self.entities.add(entities.SpeedPenalty(x, y))
-                    self.background[y][x] = Tile.FLOOR
-                elif self.tile_grid[y][x] == Tile.SUPER_FIREBALL:
-                    self.entities.add(entities.SuperFireball(x, y))
-                    self.background[y][x] = Tile.FLOOR
-                elif self.tile_grid[y][x] == Tile.SHIELD:
-                    self.entities.add(entities.Shield(x, y))
+        d = {
+            Tile.COIN: entities.Coin,
+            Tile.SPEEDBOOST: entities.SpeedBoost,
+            Tile.SPEEDPENALTY: entities.SpeedPenalty,
+            Tile.SUPER_FIREBALL: entities.SuperFireball,
+            Tile.SHIELD: entities.Shield,
+        }
+        for y in range(self.size):
+            for x in range(self.size):
+                if self.tile_grid[y][x] in d:
+                    self.entities.add(d[self.tile_grid[y][x]](x, y))
                     self.background[y][x] = Tile.FLOOR
 
         for entity in self.entities:
             self.entity_grid[entity.y][entity.x].add(entity)
             self.update_grid(entity.x, entity.y)
-            self.entities.add(entity)
 
     def update(self, elapsed_time: float):
         """Calcule toutes les updates qui ont eu lieu en `elapsed_time` secondes."""

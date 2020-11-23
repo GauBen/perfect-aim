@@ -1,7 +1,7 @@
 """Classes du jeu, sans interface."""
 
 from copy import deepcopy
-from typing import List, Optional, Set, Tuple, Type, Union
+from typing import List, Optional, Set, Type, Union
 
 import entities
 from gamegrid import Grid, Tile
@@ -9,26 +9,6 @@ from gamegrid import Grid, Tile
 from random import randrange
 
 Action = entities.Action
-
-
-def place_fireball(coords: Tuple[int, int], action: Action) -> Tuple[int, int, Action]:
-    """
-    Donne les infos sur le placement d'une boule de feu.
-
-    Donne un triplet `(x, y, direction)` correspondant à une boule de feu placée depuis
-    les coordonnées `coords`, par l'action `action`.
-    """
-    x, y = coords
-    direction = Action.WAIT
-    if action == Action.ATTACK_UP:
-        direction = Action.MOVE_UP
-    elif action == Action.ATTACK_DOWN:
-        direction = Action.MOVE_DOWN
-    elif action == Action.ATTACK_LEFT:
-        direction = Action.MOVE_LEFT
-    elif action == Action.ATTACK_RIGHT:
-        direction = Action.MOVE_RIGHT
-    return (x, y, direction)
 
 
 class CantMoveThereException(Exception):
@@ -319,9 +299,8 @@ class Game:
     def player_attacks(self, player: entities.PlayerEntity, action):
         """Lance une boule de feu pour le joueur `player`."""
 
-        def throw_fireball(action):
-            x, y, direction = place_fireball((player.x, player.y), action)
-            fireball = entities.Fireball(x, y, direction, player)
+        def throw_fireball(action: entities.Action):
+            fireball = entities.Fireball(player.x, player.y, action.attack, player)
             self.entities.add(fireball)
             self.entity_grid[fireball.y][fireball.x].add(fireball)
             self.update_grid(fireball.x, fireball.y)

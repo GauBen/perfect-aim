@@ -3,7 +3,7 @@
 import time
 import tkinter
 import tkinter.ttk as ttk
-from copy import copy, deepcopy
+from copy import deepcopy
 from typing import List, Optional, Type, Union
 
 import entities
@@ -75,12 +75,40 @@ class AssetsManager:
         )
         self.asset_shield = tkinter.PhotoImage(file="./assets/shield.png")
 
-    def tile(self, tile: int) -> tkinter.PhotoImage:
+        self.walls: List[tkinter.PhotoImage] = []
+        self.walls_ref = {}
+        for i in range(16):
+            suffix = (
+                ("n" if i & 1 else "")
+                + ("s" if i & 2 else "")
+                + ("e" if i & 8 else "")
+                + ("w" if i & 4 else "")
+            )
+            name = (
+                "./assets/walls/wall"
+                + (f"-{suffix}" if len(suffix) > 0 else "")
+                + ".png"
+            )
+            self.walls.append(tkinter.PhotoImage(file=name))
+
+    def tile(self, background: List[List[Tile]], x: int, y: int) -> tkinter.PhotoImage:
         """Renvoie l'image correspondante."""
+        tile = background[y][x]
         if tile == Tile.FLOOR:
             return self.asset_floor
         if tile == Tile.WALL:
-            return self.asset_wall
+
+            asset_id = 0
+            if y > 0 and background[y - 1][x] == Tile.WALL:
+                asset_id += 1
+            if y < len(background) - 1 and background[y + 1][x] == Tile.WALL:
+                asset_id += 2
+            if x > 0 and background[y][x - 1] == Tile.WALL:
+                asset_id += 4
+            if x < len(background[y]) - 1 and background[y][x + 1] == Tile.WALL:
+                asset_id += 8
+            return self.walls[asset_id]
+
         if tile == Tile.LAVA:
             return self.asset_lava
         if tile == Tile.DAMAGED_FLOOR:
@@ -297,7 +325,7 @@ class GameInterface:
                 self.canvas.create_image(
                     x * self.assets_manager.TILE_SIZE,
                     y * self.assets_manager.TILE_SIZE,
-                    image=self.assets_manager.tile(self.background[y][x]),
+                    image=self.assets_manager.tile(self.background, x, y),
                     anchor=tkinter.NW,
                     tags="background",
                 )

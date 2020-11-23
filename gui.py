@@ -95,16 +95,16 @@ class AssetsManager:
             return self.asset_floor
         if tile == Tile.WALL:
 
-            flags = 0
+            neighbors = 0
             if y > 0 and background[y - 1][x] == Tile.WALL:
-                flags |= 1
+                neighbors |= 1
             if y < len(background) - 1 and background[y + 1][x] == Tile.WALL:
-                flags |= 2
+                neighbors |= 2
             if x > 0 and background[y][x - 1] == Tile.WALL:
-                flags |= 4
+                neighbors |= 4
             if x < len(background[y]) - 1 and background[y][x + 1] == Tile.WALL:
-                flags |= 8
-            return self.walls[flags]
+                neighbors |= 8
+            return self.walls[neighbors]
 
         if tile == Tile.LAVA:
             return self.asset_lava

@@ -198,6 +198,13 @@ class Game:
             # Si dt < elapsed_time, il reste des updates à traiter
             elapsed_time -= dt
 
+    def update_grid(self, x: int, y: int):
+        """Met à jour la grille aux coordonnées données."""
+        if len(self.entity_grid[y][x]) == 0:
+            self.tile_grid[y][x] = self.background[y][x]
+        else:
+            self.tile_grid[y][x] = max(entity.TILE for entity in self.entity_grid[y][x])
+
     def add_collectibles(self):
         """Ajoute des objets s'il n'y en a plus."""
         if (
@@ -256,16 +263,61 @@ class Game:
                                 self.background[y][x] = to
                                 self.update_grid(x, y)
 
-    def update_grid(self, x, y):
-        """Met à jour la grille aux coordonnées données."""
-        if len(self.entity_grid[y][x]) == 0:
-            self.tile_grid[y][x] = self.background[y][x]
+    def turn_to_lava(self, x: int, y: int):
+        """Transforme une case en lave."""
+        self.background[y][x] = Tile.LAVA
+        for entity in self.entity_grid[y][x].copy():
+            if not isinstance(entity, entities.Fireball):
+                self.remove_entity(entity)
+        self.update_grid(x, y)
+
+    def move_entity(self, entity: entities.MovingEntity, old_x: int, old_y: int):
+        """Déplace l'entité sur la grille des entités `entity_grid`."""
+        self.entity_grid[old_y][old_x].remove(entity)
+        self.entity_grid[entity.y][entity.x].add(entity)
+        self.update_grid(old_x, old_y)
+
+    def remove_entity(self, entity: entities.Entity):
+        """Supprime l'entité du jeu."""
+        if entity in self.entities:
+            self.entities.remove(entity)
+            self.entity_grid[entity.y][entity.x].remove(entity)
+        self.update_grid(entity.x, entity.y)
+
+    def player_attacks(self, player: entities.PlayerEntity, action: Action):
+        """Lance une boule de feu pour le joueur `player`."""
+
+        def throw_fireball(action: entities.Action):
+            fireball = entities.Fireball(player.x, player.y, action.movement(), player)
+            self.entities.add(fireball)
+            self.entity_grid[fireball.y][fireball.x].add(fireball)
+            self.update_grid(fireball.x, fireball.y)
+
+        if player.super_fireballs > 0:
+            for action in (
+                Action.ATTACK_UP,
+                Action.ATTACK_DOWN,
+                Action.ATTACK_LEFT,
+                Action.ATTACK_RIGHT,
+            ):
+                throw_fireball(action)
+            player.super_fireballs -= 1
+
         else:
-            self.tile_grid[y][x] = max(entity.TILE for entity in self.entity_grid[y][x])
+            throw_fireball(action)
+
+    def hit_player(self, fireball: entities.Fireball, player: Player):
+        """Inflige un point de dégât."""
+        if player.shield:
+            player.shield = False
+            self.remove_entity(fireball)
+            self.update_grid(player.x, player.y)
+        else:
+            self.remove_entity(player)
 
     def is_valid_action(
         self, player: Union[entities.PlayerEntity, Player], action: entities.Action
-    ):
+    ) -> bool:
         """Renvoie `True` si l'action `action` est jouable."""
         if isinstance(player, Player):
             return self.is_valid_action(player._player_entity, action)
@@ -289,80 +341,20 @@ class Game:
 
         # Un tir d'arc est possible s'il n'est pas fait contre un mur
         elif action.is_attack():
-            if player.super_fireballs > 0:
-                return True
-            if not self.can_player_attack(player):
-                return False
-            return True
+            return player.super_fireballs > 0 or self.can_player_attack(player)
 
         # Dans le doute c'est pas possible
         return False
 
-    def player_attacks(self, player: entities.PlayerEntity, action):
-        """Lance une boule de feu pour le joueur `player`."""
-
-        def throw_fireball(action: entities.Action):
-            fireball = entities.Fireball(player.x, player.y, action.movement(), player)
-            self.entities.add(fireball)
-            self.entity_grid[fireball.y][fireball.x].add(fireball)
-            self.update_grid(fireball.x, fireball.y)
-
-        if player.super_fireballs > 0:
-            for action in (
-                Action.ATTACK_UP,
-                Action.ATTACK_DOWN,
-                Action.ATTACK_LEFT,
-                Action.ATTACK_RIGHT,
-            ):
-                throw_fireball(action)
-            player.super_fireballs -= 1
-
-        else:
-            throw_fireball(action)
-
-    def can_player_attack(self, player: Player):
+    def can_player_attack(self, player: Union[entities.PlayerEntity, Player]) -> bool:
         """Renvoie `True` si le joueur a une boule de feu disponible."""
+        if isinstance(player, Player):
+            return self.can_player_attack(player._player_entity)
+
         for entity in self.entities:
             if isinstance(entity, entities.Fireball) and entity.player == player:
                 return False
         return True
-
-    def collect(self, player: Player, collectible: entities.CollectableEntity):
-        """Ramasse l'object `collectible` pour le joueur `player`."""
-        collectible.collect(player)
-        self.entities.remove(collectible)
-        self.entity_grid[collectible.y][collectible.x].remove(collectible)
-        self.update_grid(collectible.x, collectible.y)
-
-    def hit_player(self, fireball: entities.Fireball, player: Player):
-        """Inflige un point de dégât."""
-        if player.shield:
-            player.shield = False
-            self.remove_entity(fireball)
-            self.update_grid(player.x, player.y)
-        else:
-            self.remove_entity(player)
-
-    def remove_entity(self, entity: entities.Entity):
-        """Supprime l'entité du jeu."""
-        if entity in self.entities:
-            self.entities.remove(entity)
-            self.entity_grid[entity.y][entity.x].remove(entity)
-        self.update_grid(entity.x, entity.y)
-
-    def move_entity(self, entity: entities.MovingEntity, old_x: int, old_y: int):
-        """Déplace l'entité sur la grille des entités `entity_grid`."""
-        self.entity_grid[old_y][old_x].remove(entity)
-        self.entity_grid[entity.y][entity.x].add(entity)
-        self.update_grid(old_x, old_y)
-
-    def turn_to_lava(self, x, y):
-        """Transforme une case en lave."""
-        self.background[y][x] = Tile.LAVA
-        for entity in self.entity_grid[y][x].copy():
-            if not isinstance(entity, entities.Fireball):
-                self.remove_entity(entity)
-        self.update_grid(x, y)
 
     def next_action(self, entity: entities.PlayerEntity) -> Action:
         """La prochaine action de l'entité."""
@@ -370,6 +362,13 @@ class Game:
             if player._player_entity is entity:
                 return player.play(self)
         raise KeyError("Le joueur n'existe plus")
+
+    def collect(self, player: Player, collectible: entities.CollectableEntity):
+        """Ramasse l'object `collectible` pour le joueur `player`."""
+        collectible.collect(player)
+        self.entities.remove(collectible)
+        self.entity_grid[collectible.y][collectible.x].remove(collectible)
+        self.update_grid(collectible.x, collectible.y)
 
     @property
     def player_entities(self) -> List[entities.PlayerEntity]:

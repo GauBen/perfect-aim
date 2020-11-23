@@ -76,20 +76,17 @@ class AssetsManager:
         self.asset_shield = tkinter.PhotoImage(file="./assets/shield.png")
 
         self.walls: List[tkinter.PhotoImage] = []
-        self.walls_ref = {}
         for i in range(16):
             suffix = (
-                ("n" if i & 1 else "")
+                ("-" if i else "")
+                + ("n" if i & 1 else "")
                 + ("s" if i & 2 else "")
                 + ("e" if i & 8 else "")
                 + ("w" if i & 4 else "")
             )
-            name = (
-                "./assets/walls/wall"
-                + (f"-{suffix}" if len(suffix) > 0 else "")
-                + ".png"
+            self.walls.append(
+                tkinter.PhotoImage(file=f"./assets/walls/wall{suffix}.png")
             )
-            self.walls.append(tkinter.PhotoImage(file=name))
 
     def tile(self, background: List[List[Tile]], x: int, y: int) -> tkinter.PhotoImage:
         """Renvoie l'image correspondante."""
@@ -98,16 +95,16 @@ class AssetsManager:
             return self.asset_floor
         if tile == Tile.WALL:
 
-            asset_id = 0
+            flags = 0
             if y > 0 and background[y - 1][x] == Tile.WALL:
-                asset_id += 1
+                flags |= 1
             if y < len(background) - 1 and background[y + 1][x] == Tile.WALL:
-                asset_id += 2
+                flags |= 2
             if x > 0 and background[y][x - 1] == Tile.WALL:
-                asset_id += 4
+                flags |= 4
             if x < len(background[y]) - 1 and background[y][x + 1] == Tile.WALL:
-                asset_id += 8
-            return self.walls[asset_id]
+                flags |= 8
+            return self.walls[flags]
 
         if tile == Tile.LAVA:
             return self.asset_lava

@@ -2,7 +2,7 @@
 
 from enum import IntEnum
 from random import shuffle, random
-from typing import List
+from typing import List, Tuple
 
 
 class Tile(IntEnum):
@@ -127,7 +127,7 @@ class Grid:
         ]
 
         # On va générer des chemins
-        path = [(1, 1)]
+        path: List[Tuple[int, int]] = [(1, 1)]
         while len(path) > 0:
             # Tête d'exploration
             (x, y) = path[-1]

@@ -164,15 +164,13 @@ class PlayerEntity(MovingEntity):
         self.coins = 0
         self.super_fireball = 0
 
-        self.play = lambda game: Action.WAIT
-
     def update(self, game, dt: float):
         """Met à jour la position du joueur et choisit sa prochaine action."""
         # Fin d'une action, choix de la prochaine action
         if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
 
             # Choix de la prochaine action
-            action = self.play(game)
+            action = game.next_action(self)
             self.action_progress = 0
 
             # Si l'action est valide, on la joue

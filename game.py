@@ -41,10 +41,8 @@ class Player:
     NAME = "Donne-moi un nom !"
 
     def __init__(self, entity: entities.PlayerEntity):
-        """Initialise l'entité pour qu'elle utilise la stratégie."""
-        entity.play = lambda game: self.play(game)
-
-        self.player_entity = entity
+        """Représente la stratégie d'une équipe."""
+        self._player_entity = entity
 
     def play(self, game) -> Action:
         """Choisit la prochaine action du joueur, en renvoyant une constante d'action."""
@@ -53,47 +51,47 @@ class Player:
     @property
     def x(self) -> int:
         """Coordonnée x du joueur."""
-        return self.player_entity.x
+        return self._player_entity.x
 
     @property
     def y(self) -> int:
         """Coordonnée y du joueur."""
-        return self.player_entity.y
+        return self._player_entity.y
 
     @property
     def speed(self) -> float:
         """Vitesse du joueur."""
-        return self.player_entity.speed
+        return self._player_entity.speed
 
     @property
     def coins(self) -> int:
         """Nombre de pièces du joueur."""
-        return self.player_entity.coins
+        return self._player_entity.coins
 
     @property
     def super_fireball(self) -> int:
         """Nombre de super boules de feu."""
-        return self.player_entity.super_fireball
+        return self._player_entity.super_fireball
 
     @property
     def shield(self) -> bool:
         """Le joueur possède un bouclier."""
-        return self.player_entity.shield
+        return self._player_entity.shield
 
     @property
     def action(self) -> Action:
         """Action en cours."""
-        return self.player_entity.action
+        return self._player_entity.action
 
     @property
     def action_progress(self) -> Action:
         """Avancement de l'action en cours."""
-        return self.player_entity.action_progress
+        return self._player_entity.action_progress
 
     @property
     def color(self) -> Tile:
         """Couleur du joueur."""
-        return self.player_entity.TILE
+        return self._player_entity.TILE
 
 
 class Game:
@@ -205,16 +203,15 @@ class Game:
                 self.update_grid(entity.x, entity.y)
 
             # Il ne reste qu'un joueur en vie ?
-            players = list(self.player_entities)
-            if len(players) == 1:
-                winner = players[0]
+            player_entities = list(self.player_entities)
+            if len(player_entities) == 1:
+                winner = player_entities[0]
                 print(f"Victoire du joueur {winner.TILE.name}")
                 self.over = True
                 self.winner = winner
-            elif len(players) == 0:
+            elif len(player_entities) == 0:
                 print("Match nul")
                 self.over = True
-                # pass
 
             # Si dt < elapsed_time, il reste des updates à traiter
             elapsed_time -= dt
@@ -289,7 +286,7 @@ class Game:
     ):
         """Renvoie `True` si l'action `action` est jouable."""
         if isinstance(player, Player):
-            return self.is_valid_action(player.player_entity, action)
+            return self.is_valid_action(player._player_entity, action)
 
         if action == Action.WAIT:
             return True
@@ -390,6 +387,13 @@ class Game:
             if not isinstance(entity, entities.Fireball):
                 self.remove_entity(entity)
         self.update_grid(x, y)
+
+    def next_action(self, entity: entities.PlayerEntity) -> Action:
+        """La prochaine action de l'entité."""
+        for player in self.players:
+            if player._player_entity is entity:
+                return player.play(self)
+        raise KeyError("Le joueur n'existe plus")
 
     @property
     def player_entities(self) -> List[entities.PlayerEntity]:

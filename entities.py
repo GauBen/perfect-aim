@@ -104,6 +104,13 @@ class Entity:
         self.x = x
         self.y = y
 
+    def update(self, game, dt: float):
+        """Met à jour l'entité."""
+
+    def next_update_in(self, dt: float) -> float:
+        """Temps avant la prochaine mise à jour de l'entité."""
+        return float("inf")
+
     @property
     def visual_x(self) -> float:
         """Position x affichée de l'entité, utilisée pour les animations."""
@@ -113,13 +120,6 @@ class Entity:
     def visual_y(self) -> float:
         """Position y affichée de l'entité, utilisée pour les animations."""
         return float(self.y)
-
-    def update(self, game, dt: float):
-        """Met à jour l'entité."""
-
-    def next_update_in(self, dt: float) -> float:
-        """Temps avant la prochaine mise à jour de l'entité."""
-        return float("inf")
 
 
 class MovingEntity(Entity):

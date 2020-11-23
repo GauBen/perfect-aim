@@ -71,7 +71,7 @@ class Player:
     @property
     def super_fireball(self) -> int:
         """Nombre de super boules de feu."""
-        return self._player_entity.super_fireball
+        return self._player_entity.super_fireballs
 
     @property
     def shield(self) -> bool:
@@ -307,20 +307,16 @@ class Game:
 
         # Un tir d'arc est possible s'il n'est pas fait contre un mur
         elif action.is_attack():
+            if player.super_fireballs > 0:
+                return True
             if not self.can_player_attack(player):
                 return False
-            if player.super_fireball > 0:
-                return True
-            return self.can_place_fireball(player, action)
+            return True
 
         # Dans le doute c'est pas possible
         return False
 
-    def can_place_fireball(self, player: Player, action):
-        """Renvoie `True` si le joueur peut placer une boule de feu."""
-        return True
-
-    def player_attacks(self, player: Player, action):
+    def player_attacks(self, player: entities.PlayerEntity, action):
         """Lance une boule de feu pour le joueur `player`."""
 
         def throw_fireball(action):
@@ -330,16 +326,15 @@ class Game:
             self.entity_grid[fireball.y][fireball.x].add(fireball)
             self.update_grid(fireball.x, fireball.y)
 
-        if player.super_fireball > 0:
+        if player.super_fireballs > 0:
             for action in (
                 Action.ATTACK_UP,
                 Action.ATTACK_DOWN,
                 Action.ATTACK_LEFT,
                 Action.ATTACK_RIGHT,
             ):
-                if self.can_place_fireball(player, action):
-                    throw_fireball(action)
-            player.super_fireball -= 1
+                throw_fireball(action)
+            player.super_fireballs -= 1
 
         else:
             throw_fireball(action)

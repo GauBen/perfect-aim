@@ -162,7 +162,7 @@ class PlayerEntity(MovingEntity):
         super().__init__(x, y, self.INITIAL_SPEED)
         self.shield = False
         self.coins = 0
-        self.super_fireball = 0
+        self.super_fireballs = 0
 
     def update(self, game, dt: float):
         """Met à jour la position du joueur et choisit sa prochaine action."""
@@ -342,7 +342,7 @@ class SuperFireball(CollectableEntity):
 
     def collect(self, player: PlayerEntity):
         """Ajoute un sort au joueur."""
-        player.super_fireball += 1
+        player.super_fireballs += 1
 
 
 class Shield(CollectableEntity):

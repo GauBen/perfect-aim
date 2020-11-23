@@ -285,7 +285,6 @@ class Fireball(MovingEntity):
         # À la moitié de l'action on déplace la boule de feu
         elif self.action_progress < 0.5 <= self.action_progress + dt * self.speed:
             old_x, old_y = self.x, self.y
-            print(self.action)
             self.x, self.y = self.action.apply((self.x, self.y))
             self.action_progress = 0.5
 

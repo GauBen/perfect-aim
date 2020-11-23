@@ -8,6 +8,7 @@ from typing import List, Optional, Type, Union
 
 import entities
 import game
+from game import Action
 from gamegrid import Tile
 import players
 
@@ -88,6 +89,29 @@ class AssetsManager:
                 tkinter.PhotoImage(file=f"./assets/walls/wall{suffix}.png")
             )
 
+        d = {
+            Action.WAIT: "i",
+            Action.MOVE_UP: "n",
+            Action.MOVE_DOWN: "s",
+            Action.MOVE_LEFT: "w",
+            Action.MOVE_RIGHT: "e",
+        }
+        self.players = {
+            Tile.PLAYER_RED: {
+                action: [
+                    tkinter.PhotoImage(file=f"./assets/players/red-{d[action]}{i}.png")
+                    for i in (1, 2)
+                ]
+                for action in d
+            }
+        }
+        self.shielded_players = {
+            Tile.PLAYER_RED: [
+                tkinter.PhotoImage(file=f"./assets/players/red-shield-{i}.png")
+                for i in ("i", 1, 2)
+            ]
+        }
+
     def tile(self, background: List[List[Tile]], x: int, y: int) -> tkinter.PhotoImage:
         """Renvoie l'image correspondante."""
         tile = background[y][x]
@@ -114,6 +138,20 @@ class AssetsManager:
 
     def entity(self, entity: entities.Entity) -> tkinter.PhotoImage:  # noqa
         """Renvoie l'image correspondante."""
+        if isinstance(entity, entities.RedPlayer):
+            try:
+                if entity.shield:
+                    return self.shielded_players[entity.TILE][
+                        0
+                        if entity.action == Action.WAIT
+                        else int(entity.action_progress * 2) % 2 + 1
+                    ]
+                return self.players[entity.TILE][entity.action.movement()][
+                    int(entity.action_progress * 2) % 2
+                ]
+            except KeyError:
+                return self.asset_player_red
+
         if entity.TILE == Tile.PLAYER_RED:
             return self.asset_player_red
         if entity.TILE == Tile.PLAYER_BLUE:
@@ -333,6 +371,14 @@ class GameInterface:
         self.canvas.delete("entities")
         self.canvas.delete("hitboxes")
         for entity in sorted(self.game.entities.copy(), key=lambda entity: entity.TILE):
+            # if isinstance(entity, entities.MovingEntity):
+            #     self.canvas.create_image(
+            #         entity.x * self.assets_manager.TILE_SIZE,
+            #         entity.y * self.assets_manager.TILE_SIZE,
+            #         image=self.assets_manager.entity_hitbox(entity),
+            #         anchor=tkinter.NW,
+            #         tags="hitboxes",
+            #     )
             self.canvas.create_image(
                 int(entity.visual_x * self.assets_manager.TILE_SIZE),
                 int(entity.visual_y * self.assets_manager.TILE_SIZE),
@@ -340,14 +386,6 @@ class GameInterface:
                 anchor=tkinter.NW,
                 tags="entities",
             )
-            if isinstance(entity, entities.MovingEntity):
-                self.canvas.create_image(
-                    entity.x * self.assets_manager.TILE_SIZE,
-                    entity.y * self.assets_manager.TILE_SIZE,
-                    image=self.assets_manager.entity_hitbox(entity),
-                    anchor=tkinter.NW,
-                    tags="hitboxes",
-                )
 
 
 class PlayerSelector:

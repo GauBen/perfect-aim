@@ -165,7 +165,11 @@ class Game:
 
             # Temps jusqu'à la prochaine update
             dt = min(
-                [entity.next_update_in(elapsed_time) for entity in self.entities]
+                [
+                    entity.next_update_in(elapsed_time)
+                    for entity in self.entities
+                    if isinstance(entity, entities.MovingEntity)
+                ]
                 + [elapsed_time]
             )
             # dt vaut la plus petite durée avant un évènement

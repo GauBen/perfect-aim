@@ -178,7 +178,9 @@ class Game:
 
             # Mise à jour des entités
             for entity in self.entities.copy():
-                if entity in self.entities:
+                if entity in self.entities and isinstance(
+                    entity, entities.MovingEntity
+                ):
                     entity.update(self, dt)
                 self.update_grid(entity.x, entity.y)
 
@@ -207,7 +209,7 @@ class Game:
             == 0
         ):
             for _ in range(10):
-                x, y = randrange(self.grid.size), randrange(self.grid.size)
+                x, y = randrange(self.size), randrange(self.size)
                 if self.tile_grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
                     collectible = entities.SpeedBoost(x, y)
                     self.entities.add(collectible)
@@ -215,7 +217,7 @@ class Game:
                     self.update_grid(collectible.x, collectible.y)
                     break
             for _ in range(10):
-                x, y = randrange(self.grid.size), randrange(self.grid.size)
+                x, y = randrange(self.size), randrange(self.size)
                 if self.tile_grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
                     collectible = entities.Shield(x, y)
                     self.entities.add(collectible)
@@ -223,7 +225,7 @@ class Game:
                     self.update_grid(collectible.x, collectible.y)
                     break
             for _ in range(10):
-                x, y = randrange(self.grid.size), randrange(self.grid.size)
+                x, y = randrange(self.size), randrange(self.size)
                 if self.tile_grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
                     collectible = entities.Coin(x, y)
                     self.entities.add(collectible)
@@ -240,13 +242,13 @@ class Game:
             from_ = Tile.DAMAGED_FLOOR if halfstep else Tile.FLOOR
             to = Tile.LAVA if halfstep else Tile.DAMAGED_FLOOR
             if self.background[coords][coords] != to:
-                for y in range(self.grid.size):
-                    for x in range(self.grid.size):
+                for y in range(self.size):
+                    for x in range(self.size):
                         if (
                             x == coords
                             or y == coords
-                            or x == self.grid.size - coords - 1
-                            or y == self.grid.size - coords - 1
+                            or x == self.size - coords - 1
+                            or y == self.size - coords - 1
                         ) and self.background[y][x] == from_:
                             if to == Tile.LAVA:
                                 self.turn_to_lava(x, y)

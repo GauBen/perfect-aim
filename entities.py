@@ -104,9 +104,6 @@ class Entity:
         self.x = x
         self.y = y
 
-    def update(self, game, dt: float):
-        """Met à jour l'entité."""
-
     @property
     def visual_x(self) -> float:
         """Position x affichée de l'entité, utilisée pour les animations."""
@@ -128,10 +125,31 @@ class MovingEntity(Entity):
         self.action = Action.WAIT
         self.action_progress = 0.0
 
+    def update(self, game, dt: float):
+        """Met à jour l'entité."""
+        # À la fin de l'action, on la recommence
+        if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
+            self.action_progress = 0
+
+        # À la moitié de l'action on déplace l'entité
+        elif (
+            self.action.is_movement()
+            and self.action_progress < 0.5 <= self.action_progress + dt * self.speed
+        ):
+            old_x, old_y = self.x, self.y
+            self.x, self.y = self.action.apply((self.x, self.y))
+            self.action_progress = 0.5
+
+            game.move_entity(self, old_x, old_y)
+
+        # Rien de spécial
+        else:
+            self.action_progress += dt * self.speed
+
     def next_update_in(self, dt: float) -> float:
         """Temps en seconde avant la prochaine update pour cette entité."""
         # Update à la moitié de l'action
-        if self.action_progress < 0.5:
+        if self.action.is_movement() and self.action_progress < 0.5:
             return 0.5 / self.speed
 
         return 1 / self.speed
@@ -274,27 +292,15 @@ class Fireball(MovingEntity):
 
     def update(self, game, dt: float):
         """Met à jour les coordonnées de la boule de feu."""
-        # On recommence la même action
-        if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
-            self.action_progress = 0
+        super().update(game, dt)
 
-        # À la moitié de l'action on déplace la boule de feu
-        elif self.action_progress < 0.5 <= self.action_progress + dt * self.speed:
-            old_x, old_y = self.x, self.y
-            self.x, self.y = self.action.apply((self.x, self.y))
-            self.action_progress = 0.5
-
-            game.move_entity(self, old_x, old_y)
-
+        # La boule de feu vient de changer de coordonnées
+        if self.action_progress == 0.5:
             # Suppression de la boule de feu si elle tape un mur
             if game.background[self.y][self.x] == Tile.WALL:
                 game.remove_entity(self)
 
             self.hit_players(game)
-
-        # Rien de spécial
-        else:
-            self.action_progress += dt * self.speed
 
     def hit_players(self, game):
         """Inflige un point de dégât à tous les joueurs de la case."""

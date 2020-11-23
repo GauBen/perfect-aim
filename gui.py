@@ -81,8 +81,8 @@ class AssetsManager:
                 ("-" if i else "")
                 + ("n" if i & 1 else "")
                 + ("s" if i & 2 else "")
-                + ("e" if i & 8 else "")
                 + ("w" if i & 4 else "")
+                + ("e" if i & 8 else "")
             )
             self.walls.append(
                 tkinter.PhotoImage(file=f"./assets/walls/wall{suffix}.png")

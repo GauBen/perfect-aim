@@ -90,6 +90,11 @@ class Player:
         """Avancement de l'action en cours."""
         return self.player_entity.action_progress
 
+    @property
+    def color(self) -> Tile:
+        """Couleur du joueur."""
+        return self.player_entity.TILE
+
 
 class Game:
     """

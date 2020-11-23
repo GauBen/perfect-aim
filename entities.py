@@ -258,7 +258,7 @@ class Fireball(MovingEntity):
     TILE = Tile.FIREBALL
     INITIAL_SPEED = 4.0
 
-    def __init__(self, x, y, direction, player: PlayerEntity):
+    def __init__(self, x: int, y: int, direction: Action, player: PlayerEntity):
         """Initialise une boule de feu."""
         super().__init__(x, y, self.INITIAL_SPEED)
         self.action = direction

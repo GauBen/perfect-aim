@@ -157,7 +157,7 @@ class PlayerPanel:
         self.super_fireball_icon = ttk.Label(
             frame, image=self.assets_manager.asset_super_fireball
         )
-        self.super_fireball_label = ttk.Label(frame, text=f"{player.super_fireball}")
+        self.super_fireball_label = ttk.Label(frame, text=f"{player.super_fireballs}")
         self.coin_icon = ttk.Label(frame, image=self.assets_manager.asset_coin)
         self.coin_label = ttk.Label(frame, text=f"{player.coins}")
         self.action_label = ttk.Label(frame, text=player.action.value)
@@ -181,7 +181,7 @@ class PlayerPanel:
     def update(self):
         """Met à jour le panneau."""
         self.speed_label.configure(text=f"{self.player.speed:.2f}")
-        self.super_fireball_label.configure(text=f"{self.player.super_fireball}")
+        self.super_fireball_label.configure(text=f"{self.player.super_fireballs}")
         self.coin_label.configure(text=f"{self.player.coins}")
         self.action_label.configure(text=self.player.action.value)
         self.action_bar.configure(value=self.player.action_progress)

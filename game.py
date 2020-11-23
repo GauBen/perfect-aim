@@ -69,7 +69,7 @@ class Player:
         return self._player_entity.coins
 
     @property
-    def super_fireball(self) -> int:
+    def super_fireballs(self) -> int:
         """Nombre de super boules de feu."""
         return self._player_entity.super_fireballs
 

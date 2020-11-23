@@ -70,11 +70,7 @@ class Tile(IntEnum):
 
 
 class Matrix:
-    """
-    Opérations matricielles.
-
-    Sans vérification de taille et sans copie, au développeur de faire attention.
-    """
+    """Opérations matricielles basiques."""
 
     @staticmethod
     def rotate(m):
@@ -98,12 +94,12 @@ class Matrix:
 
     @staticmethod
     def vstack(m, n):
-        """Empile verticalement deux matrices."""
+        """Empile verticalement deux matrices, sans copie."""
         return m + n
 
     @staticmethod
     def hstack(m, n):
-        """Concatène horizontalement deux matrices."""
+        """Concatène horizontalement deux matrices, sans copie."""
         return [m[i] + n[i] for i in range(len(m))]
 
 

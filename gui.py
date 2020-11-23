@@ -307,8 +307,7 @@ class GameInterface:
         """Dessine les entités."""
         self.canvas.delete("entities")
         self.canvas.delete("hitboxes")
-        entities = copy(self.game.entities)
-        for entity in sorted(entities, key=lambda entity: entity.TILE):
+        for entity in sorted(self.game.entities.copy(), key=lambda entity: entity.TILE):
             self.canvas.create_image(
                 int(entity.visual_x * self.assets_manager.TILE_SIZE),
                 int(entity.visual_y * self.assets_manager.TILE_SIZE),
@@ -316,13 +315,14 @@ class GameInterface:
                 anchor=tkinter.NW,
                 tags="entities",
             )
-            self.canvas.create_image(
-                entity.x * self.assets_manager.TILE_SIZE,
-                entity.y * self.assets_manager.TILE_SIZE,
-                image=self.assets_manager.entity_hitbox(entity),
-                anchor=tkinter.NW,
-                tags="hitboxes",
-            )
+            if isinstance(entity, entities.MovingEntity):
+                self.canvas.create_image(
+                    entity.x * self.assets_manager.TILE_SIZE,
+                    entity.y * self.assets_manager.TILE_SIZE,
+                    image=self.assets_manager.entity_hitbox(entity),
+                    anchor=tkinter.NW,
+                    tags="hitboxes",
+                )
 
 
 class PlayerSelector:

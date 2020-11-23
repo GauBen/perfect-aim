@@ -151,7 +151,7 @@ class PlayerPanel:
         self.player = player
 
         self.player_icon = ttk.Label(frame, image=self.assets_manager.asset_player_red)
-        self.player_label = ttk.Label(frame, text=player.name)
+        self.player_label = ttk.Label(frame, text=player.NAME)
         self.speed_icon = ttk.Label(frame, image=self.assets_manager.asset_speedboost)
         self.speed_label = ttk.Label(frame, text=f"{player.speed:.2f}")
         self.super_fireball_icon = ttk.Label(
@@ -344,7 +344,7 @@ class PlayerSelector:
         )
         self.combobox = ttk.Combobox(
             frame,
-            values=tuple(c.__name__ for c in self.player_constructors) + ("<aucun>",),
+            values=tuple(c.NAME for c in self.player_constructors) + ("<aucun>",),
             state="readonly",
         )
         self.combobox.current(i % len(self.player_constructors))
@@ -356,7 +356,7 @@ class PlayerSelector:
         """Constructeur du joueur choisi."""
         value = self.combobox.get()
         for c in self.player_constructors:
-            if c.__name__ == value:
+            if c.NAME == value:
                 return c
         return None
 

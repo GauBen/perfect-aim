@@ -155,8 +155,6 @@ class PlayerEntity(MovingEntity):
     d'action.
     """
 
-    name = "Donne-moi un nom !"
-
     INITIAL_SPEED = 1.0
 
     def __init__(self, x: int, y: int):

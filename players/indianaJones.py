@@ -7,7 +7,7 @@ from game import Action, Game, Player, Tile
 class IndianaJones(Player):
     """Le célèbre aventurier."""
 
-    name = "Indiana Jones"
+    NAME = "Indiana Jones"
 
     def play(self, game: Game):
         """Cherche un joueur adjacent ou un item atteignable."""

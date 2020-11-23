@@ -38,6 +38,8 @@ class CantMoveThereException(Exception):
 class Player:
     """Représente la stratégie d'une équipe."""
 
+    NAME = "Donne-moi un nom !"
+
     def __init__(self, entity: entities.PlayerEntity):
         """Initialise l'entité pour qu'elle utilise la stratégie."""
         entity.play = lambda game: self.play(game)

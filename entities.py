@@ -230,7 +230,6 @@ class PlayerEntity(MovingEntity):
                 for entity in game.entity_grid[self.y][self.x].copy():
                     # Suppression du joueur s'il est transpercé par une boule de feu
                     if isinstance(entity, Fireball):
-                        print(f"{self.TILE.name} touché par {entity.player.TILE.name}")
                         game.hit_player(entity, self)
 
                     # Un item à ramasser ?
@@ -307,7 +306,6 @@ class Fireball(MovingEntity):
         # Suppression des joueurs transpercés par la boule de feu
         for entity in game.entity_grid[self.y][self.x].copy():
             if isinstance(entity, PlayerEntity):
-                print(f"{entity.TILE.name} touché par {self.player.TILE.name}")
                 game.hit_player(self, entity)
 
 

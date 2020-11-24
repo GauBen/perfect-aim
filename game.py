@@ -306,7 +306,7 @@ class Game:
         else:
             throw_fireball(action)
 
-    def hit_player(self, fireball: entities.Fireball, player: Player):
+    def hit_player(self, fireball: entities.Fireball, player: entities.PlayerEntity):
         """Inflige un point de dégât."""
         if player.shield:
             player.shield = False

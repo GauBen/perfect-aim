@@ -98,7 +98,7 @@ class Game:
         # L'état du jeu
         self.t = 0.0
         self.over = False
-        self.winner: Optional[Player] = None
+        self.winner: Optional[entities.PlayerEntity] = None
 
         # Les entités du jeu
         self.entities: Set[entities.Entity] = set()
@@ -189,11 +189,9 @@ class Game:
             player_entities = list(self.player_entities)
             if len(player_entities) == 1:
                 winner = player_entities[0]
-                print(f"Victoire du joueur {winner.TILE.name}")
                 self.over = True
                 self.winner = winner
             elif len(player_entities) == 0:
-                print("Match nul")
                 self.over = True
 
             # Si dt < elapsed_time, il reste des updates à traiter

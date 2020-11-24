@@ -221,17 +221,23 @@ class PlayerPanel:
 
         # Offset vertical
         n = i * 3
-        self.player_icon.grid(row=n + 0, column=0)
-        self.player_label.grid(row=n + 0, column=1, columnspan=5, sticky=tkinter.W)
-        self.speed_icon.grid(row=n + 1, column=0)
-        self.speed_label.grid(row=n + 1, column=1, sticky=tkinter.W)
-        self.super_fireball_icon.grid(row=n + 1, column=2)
-        self.super_fireball_label.grid(row=n + 1, column=3, sticky=tkinter.W)
-        self.coin_icon.grid(row=n + 1, column=4)
-        self.coin_label.grid(row=n + 1, column=5, sticky=tkinter.W)
-        self.action_label.grid(row=n + 2, column=0, columnspan=4)
+        self.player_icon.grid(row=n + 0, column=0, padx=8, pady=2)
+        self.player_label.grid(
+            row=n + 0, column=1, columnspan=5, sticky=tkinter.W, pady=2
+        )
+        self.speed_icon.grid(row=n + 1, column=0, padx=8, pady=2)
+        self.speed_label.grid(
+            row=n + 1, column=1, sticky=tkinter.W, padx=(0, 8), pady=2
+        )
+        self.super_fireball_icon.grid(row=n + 1, column=2, padx=8, pady=2)
+        self.super_fireball_label.grid(
+            row=n + 1, column=3, sticky=tkinter.W, padx=(0, 8), pady=2
+        )
+        self.coin_icon.grid(row=n + 1, column=4, padx=8, pady=2)
+        self.coin_label.grid(row=n + 1, column=5, sticky=tkinter.W, padx=(0, 8), pady=2)
+        self.action_label.grid(row=n + 2, column=0, columnspan=4, padx=4, pady=2)
         self.action_bar.grid(
-            row=n + 2, column=4, columnspan=2, sticky=tkinter.EW, padx=8
+            row=n + 2, column=4, columnspan=2, sticky=tkinter.EW, padx=4, pady=2
         )
 
     def update(self):
@@ -411,8 +417,8 @@ class PlayerSelector:
             state="readonly",
         )
         self.combobox.current(i % len(self.player_constructors))
-        self.icon.grid(row=i + 1, column=0)
-        self.combobox.grid(row=i + 1, column=1)
+        self.icon.grid(row=i + 1, column=0, padx=8, pady=4)
+        self.combobox.grid(row=i + 1, column=1, padx=8, pady=4)
 
     @property
     def selected_constructor(self) -> Optional[Type[game.Player]]:

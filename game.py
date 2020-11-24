@@ -123,8 +123,8 @@ class Game:
             [
                 (1, 1),
                 (self.size - 2, self.size - 2),
-                (1, self.size - 2),
                 (self.size - 2, 1),
+                (1, self.size - 2),
             ],
         ):
             x, y = coords

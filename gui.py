@@ -89,6 +89,12 @@ class AssetsManager:
                 tkinter.PhotoImage(file=f"./assets/walls/wall{suffix}.png")
             )
 
+        c = {
+            Tile.PLAYER_RED: "red",
+            Tile.PLAYER_BLUE: "blue",
+            Tile.PLAYER_YELLOW: "yellow",
+            Tile.PLAYER_GREEN: "green",
+        }
         d = {
             Action.WAIT: "i",
             Action.MOVE_UP: "n",
@@ -97,19 +103,23 @@ class AssetsManager:
             Action.MOVE_RIGHT: "e",
         }
         self.players = {
-            Tile.PLAYER_RED: {
+            player: {
                 action: [
-                    tkinter.PhotoImage(file=f"./assets/players/red-{d[action]}{i}.png")
+                    tkinter.PhotoImage(
+                        file=f"./assets/players/{c[player]}-{d[action]}{i}.png"
+                    )
                     for i in (1, 2)
                 ]
                 for action in d
             }
+            for player in c
         }
         self.shielded_players = {
-            Tile.PLAYER_RED: [
-                tkinter.PhotoImage(file=f"./assets/players/red-shield-{i}.png")
-                for i in ("i", 1, 2)
+            player: [
+                tkinter.PhotoImage(file=f"./assets/players/{c[player]}-shield-{i}.png")
+                for i in ("i", "1", "2")
             ]
+            for player in c
         }
 
     def tile(self, background: List[List[Tile]], x: int, y: int) -> tkinter.PhotoImage:
@@ -138,7 +148,7 @@ class AssetsManager:
 
     def entity(self, entity: entities.Entity) -> tkinter.PhotoImage:  # noqa
         """Renvoie l'image correspondante."""
-        if isinstance(entity, entities.RedPlayer):
+        if isinstance(entity, entities.PlayerEntity):
             try:
                 if entity.shield:
                     return self.shielded_players[entity.TILE][

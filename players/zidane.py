@@ -12,7 +12,7 @@ class Zidane(Player):
 
     def play(self, game: Game) -> Action:
         """Cherche le joueur le plus proche pour l'attaquer."""
-        # On cherche d'abord à attaque
+        # On cherche à attaquer un joueur tout droit dans une direction
         action = self.attack(game)
         if action != Action.WAIT:
             return action
@@ -21,7 +21,7 @@ class Zidane(Player):
         return self.chase(game)
 
     def attack(self, game: Game) -> Action:
-        """Attaque le joueur le plus proche."""
+        """Attaque le joueur le plus proche s'il est visible."""
         # On regarde si un joueur est en ligne de mire
         for action in (
             Action.ATTACK_UP,

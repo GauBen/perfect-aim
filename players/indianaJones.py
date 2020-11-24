@@ -10,63 +10,72 @@ class IndianaJones(Player):
     NAME = "Indiana Jones"
 
     def play(self, game: Game):
-        """Cherche un joueur adjacent ou un item atteignable."""
+        """Cherche les objets les plus proches et se mettre en sécurité."""
+        # Renvoie `True` si la destination est acceptable.
+        accept_target = lambda x, y: game.tile_grid[y][x].is_bonus()
+
+        # Renvoie `True` si la `tile` sur le chemin est sécurisée.
+        is_safe = (
+            lambda x, y: game.background[y][x] == Tile.FLOOR
+            and not game.tile_grid[y][x].is_dangerous()
+        )
+
+        # Si on est en danger, on cherche un endroit sécurisé
+        if game.background[self.y][self.x] == Tile.DAMAGED_FLOOR:
+            accept_target = is_safe
+            is_safe = lambda x, y: game.background[y][x] in (
+                Tile.FLOOR,
+                Tile.DAMAGED_FLOOR,
+            )
+
+        # Matrice des cases explorées par la recherche de chemin
         explored = [[False for x in range(game.size)] for y in range(game.size)]
         explored[self.y][self.x] = True
-        tracks = []
 
+        # Tous les chemins possibles sans demi-tour depuis la case actuelle
+        paths = []
+
+        # On regarde quelles sont les cases atteignables depuis la case actuelle
         for direction in (
             Action.MOVE_UP,
             Action.MOVE_DOWN,
             Action.MOVE_LEFT,
             Action.MOVE_RIGHT,
         ):
+            # Coordonnées de la case voisine
             x, y = direction.apply((self.x, self.y))
-            attack = direction.attack()
 
-            # Si on a un joueur sur la case d'à côté, on l'attaque
-            if any(
-                isinstance(e, PlayerEntity) for e in game.entity_grid[y][x]
-            ) and game.is_valid_action(self, attack):
-                return attack
-
-            # Sinon, on cherche les items
+            # Si on peut aller dans cette direction, on explore les possibilités offertes
             if game.is_valid_action(self, direction):
-                tracks.append(
-                    (x, y, direction, game.background[y][x] == Tile.DAMAGED_FLOOR)
-                )
+                # On retient quelle est la direction de départ
+                paths.append((x, y, direction))
                 explored[y][x] = True
 
-        while len(tracks) > 0:
-            x, y, direction, dangerous = tracks.pop(0)
-            if game.tile_grid[y][x] in (
-                Tile.SHIELD,
-                Tile.SPEEDBOOST,
-                Tile.SUPER_FIREBALL,
-            ):
+        # Tant qu'il existe des chemins possibles
+        while len(paths) > 0:
+
+            # On regarde un chemin envisageable
+            x, y, direction = paths.pop(0)
+
+            # Si sa destination est acceptable, on va dans la direction de départ
+            # pour s'y rendre
+            if accept_target(x, y):
                 return direction
 
+            # On regarde les 4 cases potentiellement atteignable depuis le bout du
+            # chemin considéré
             for d in (
                 Action.MOVE_UP,
                 Action.MOVE_DOWN,
                 Action.MOVE_LEFT,
                 Action.MOVE_RIGHT,
             ):
+                # On regarde la case voisine
                 new_x, new_y = d.apply((x, y))
-                if (
-                    game.tile_grid[new_y][new_x] not in (Tile.WALL, Tile.LAVA)
-                    and not explored[new_y][new_x]
-                    and dangerous
-                    >= (game.background[new_y][new_x] == Tile.DAMAGED_FLOOR)
-                ):
-                    tracks.append(
-                        (
-                            new_x,
-                            new_y,
-                            direction,
-                            game.background[new_y][new_x] == Tile.DAMAGED_FLOOR,
-                        )
-                    )  # Direction d'origine
+
+                # Si le chemin est sécurisé, on envisage d'y aller
+                if is_safe(new_x, new_y) and not explored[new_y][new_x]:
+                    paths.append((new_x, new_y, direction))  # Direction d'origine
                     explored[new_y][new_x] = True
 
         return Action.WAIT

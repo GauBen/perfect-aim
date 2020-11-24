@@ -92,5 +92,5 @@ class Zidane(Player):
                     paths.append((new_x, new_y, direction))
                     explored[new_y][new_x] = True
 
-        # On a toujours rien trouvé (on est piégé dans la lave !)
+        # On a toujours rien trouvé (on est piégé par la lave !)
         return Action.WAIT

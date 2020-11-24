@@ -48,7 +48,6 @@ class AssetsManager:
         self.asset_hitbox_blue = tkinter.PhotoImage(file="./assets/hitbox_blue.png")
         self.asset_hitbox_yellow = tkinter.PhotoImage(file="./assets/hitbox_yellow.png")
         self.asset_hitbox_green = tkinter.PhotoImage(file="./assets/hitbox_green.png")
-        self.asset_fireball = tkinter.PhotoImage(file="./assets/fireball.png")
         self.asset_hitbox_fireball = tkinter.PhotoImage(
             file="./assets/hitbox_fireball.png"
         )
@@ -105,6 +104,23 @@ class AssetsManager:
             ]
             for player in c
         }
+        self.dead = tkinter.PhotoImage(file=f"./assets/players/dead.png")
+
+        d = {
+            Action.MOVE_UP: "n",
+            Action.MOVE_DOWN: "s",
+            Action.MOVE_LEFT: "w",
+            Action.MOVE_RIGHT: "e",
+        }
+        self.fireball = {
+            action: [
+                tkinter.PhotoImage(
+                    file=f"./assets/fireballs/fireball-{d[action]}{i}.png"
+                )
+                for i in (1, 2)
+            ]
+            for action in d
+        }
 
     def tile(self, background: List[List[Tile]], x: int, y: int) -> tkinter.PhotoImage:
         """Renvoie l'image correspondante."""
@@ -144,6 +160,8 @@ class AssetsManager:
                 if not entity.action.is_attack()
                 else 0
             ]
+        if isinstance(entity, entities.Fireball):
+            return self.fireball[entity.action][int(entity.action_progress * 4) % 2]
 
         if entity.TILE == Tile.SPEEDBOOST:
             return self.asset_speedboost
@@ -155,12 +173,12 @@ class AssetsManager:
             return self.asset_super_fireball
         if entity.TILE == Tile.SHIELD:
             return self.asset_shield
-        if entity.TILE == Tile.FIREBALL:
-            return self.asset_fireball
         raise KeyError("Constante inconnue")
 
     def player_icon(self, player: game.Player):
         """L'icone associée au joueur, avec ou sans bouclier."""
+        if player.dead:
+            return self.dead
         if player.shield:
             return self.shielded_players[player.color][0]
         return self.players[player.color][Action.WAIT][1]

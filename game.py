@@ -23,6 +23,7 @@ class Player:
     def __init__(self, entity: entities.PlayerEntity):
         """Représente la stratégie d'une équipe."""
         self._player_entity = entity
+        self.dead = False
 
     def play(self, game) -> Action:
         """Choisit la prochaine action du joueur, en renvoyant une constante d'action."""
@@ -279,6 +280,8 @@ class Game:
 
     def remove_entity(self, entity: entities.Entity):
         """Supprime l'entité du jeu."""
+        if isinstance(entity, entities.PlayerEntity):
+            self.player_from_entity(entity).dead = True
         if entity in self.entities:
             self.entities.remove(entity)
             self.entity_grid[entity.y][entity.x].remove(entity)
@@ -306,14 +309,16 @@ class Game:
         else:
             throw_fireball(action)
 
-    def hit_player(self, fireball: entities.Fireball, player: entities.PlayerEntity):
+    def hit_player(
+        self, fireball: entities.Fireball, player_entity: entities.PlayerEntity
+    ):
         """Inflige un point de dégât."""
-        if player.shield:
-            player.shield = False
+        if player_entity.shield:
+            player_entity.shield = False
             self.remove_entity(fireball)
-            self.update_grid(player.x, player.y)
+            self.update_grid(player_entity.x, player_entity.y)
         else:
-            self.remove_entity(player)
+            self.remove_entity(player_entity)
 
     def is_valid_action(
         self, player: Union[entities.PlayerEntity, Player], action: entities.Action
@@ -358,10 +363,7 @@ class Game:
 
     def next_action(self, entity: entities.PlayerEntity) -> Action:
         """La prochaine action de l'entité."""
-        for player in self.players:
-            if player._player_entity is entity:
-                return player.play(self)
-        raise KeyError("Le joueur n'existe plus")
+        return self.player_from_entity(entity).play(self)
 
     def collect(self, player: Player, collectible: entities.CollectableEntity):
         """Ramasse l'object `collectible` pour le joueur `player`."""
@@ -369,6 +371,13 @@ class Game:
         self.entities.remove(collectible)
         self.entity_grid[collectible.y][collectible.x].remove(collectible)
         self.update_grid(collectible.x, collectible.y)
+
+    def player_from_entity(self, player_entity: entities.PlayerEntity):
+        """Renvoie la stratégie associée à une entité."""
+        for player in self.players:
+            if player._player_entity is player_entity:
+                return player
+        raise KeyError("Le joueur n'existe plus")
 
     @property
     def player_entities(self) -> List[entities.PlayerEntity]:

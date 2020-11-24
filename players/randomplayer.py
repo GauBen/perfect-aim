@@ -1,4 +1,4 @@
-"""Stratégie d'exemple: joueur qui joue au hasard."""
+"""Stratégie d'exemple : un joueur qui joue au hasard."""
 
 from random import choice
 
@@ -8,7 +8,7 @@ from game import Action, Player
 class RandomPlayer(Player):
     """Joueur qui joue au hasard."""
 
-    NAME = "Je joue au hasard"
+    NAME = "Joueur aléatoire"
 
     def play(self, game):
         """Choisit une action aléatoirement parmi toutes les actions possibles."""

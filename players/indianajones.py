@@ -1,6 +1,5 @@
-"""Stratégie d'exemple: un joueur qui cherche des items."""
+"""Stratégie d'exemple : un joueur qui cherche des items."""
 
-from entities import PlayerEntity
 from game import Action, Game, Player, Tile
 
 
@@ -11,18 +10,20 @@ class IndianaJones(Player):
 
     def play(self, game: Game):
         """Cherche les objets les plus proches et se mettre en sécurité."""
-        # Renvoie `True` si la destination est acceptable.
+        # Renvoie `True` si la destination est acceptable
         accept_target = lambda x, y: game.tile_grid[y][x].is_bonus()
 
-        # Renvoie `True` si la `tile` sur le chemin est sécurisée.
+        # Renvoie `True` si le chemin est sûr
         is_safe = (
             lambda x, y: game.background[y][x] == Tile.FLOOR
             and not game.tile_grid[y][x].is_dangerous()
         )
 
-        # Si on est en danger, on cherche un endroit sécurisé
+        # Si on est en danger, on cherche un endroit sûr
         if game.background[self.y][self.x] == Tile.DAMAGED_FLOOR:
             accept_target = is_safe
+
+            # N'importe quel endroit où on peut marcher est sûr
             is_safe = lambda x, y: game.background[y][x] in (
                 Tile.FLOOR,
                 Tile.DAMAGED_FLOOR,

@@ -14,11 +14,16 @@ class Zidane(Player):
         """Cherche le joueur le plus proche pour l'attaquer."""
         # On cherche à attaquer un joueur tout droit dans une direction
         action = self.attack(game)
-        if action != Action.WAIT:
-            return action
 
         # S'il n'y a personne à attaquer, on va vers le joueur le plus proche
-        return self.chase(game)
+        if action == Action.WAIT:
+            action = self.chase(game)
+
+        if game.is_valid_action(self, action):
+            return action
+
+        # Si l'action n'est pas valide, on attend
+        return Action.WAIT
 
     def attack(self, game: Game) -> Action:
         """Attaque le joueur le plus proche s'il est visible."""

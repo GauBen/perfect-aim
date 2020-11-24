@@ -38,11 +38,6 @@ class AssetsManager:
 
     def __init__(self):
         """Charge toutes les ressources du jeu."""
-        self.asset_floor = tkinter.PhotoImage(file="./assets/empty.png")
-        self.asset_lava = tkinter.PhotoImage(file="./assets/lava.png")
-        self.asset_damaged_floor = tkinter.PhotoImage(
-            file="./assets/damaged_ground.png"
-        )
 
         self.asset_hitbox_red = tkinter.PhotoImage(file="./assets/hitbox_red.png")
         self.asset_hitbox_blue = tkinter.PhotoImage(file="./assets/hitbox_blue.png")
@@ -59,6 +54,12 @@ class AssetsManager:
         )
         self.asset_shield = tkinter.PhotoImage(file="./assets/shield.png")
 
+        # Background
+        self.floor = tkinter.PhotoImage(file="./assets/background/floor.png")
+        self.lava = tkinter.PhotoImage(file="./assets/background/lava.png")
+        self.damaged_floor = tkinter.PhotoImage(
+            file="./assets/background/damaged-floor.png"
+        )
         self.walls: List[tkinter.PhotoImage] = []
         for i in range(16):
             suffix = (
@@ -69,9 +70,10 @@ class AssetsManager:
                 + ("e" if i & 8 else "")
             )
             self.walls.append(
-                tkinter.PhotoImage(file=f"./assets/walls/wall{suffix}.png")
+                tkinter.PhotoImage(file=f"./assets/background/wall{suffix}.png")
             )
 
+        # Players
         c = {
             Tile.PLAYER_RED: "red",
             Tile.PLAYER_BLUE: "blue",
@@ -106,6 +108,7 @@ class AssetsManager:
         }
         self.dead = tkinter.PhotoImage(file=f"./assets/players/dead.png")
 
+        # Fireballs
         d = {
             Action.MOVE_UP: "n",
             Action.MOVE_DOWN: "s",
@@ -126,7 +129,7 @@ class AssetsManager:
         """Renvoie l'image correspondante."""
         tile = background[y][x]
         if tile == Tile.FLOOR:
-            return self.asset_floor
+            return self.floor
         if tile == Tile.WALL:
 
             neighbors = 0
@@ -141,9 +144,9 @@ class AssetsManager:
             return self.walls[neighbors]
 
         if tile == Tile.LAVA:
-            return self.asset_lava
+            return self.lava
         if tile == Tile.DAMAGED_FLOOR:
-            return self.asset_damaged_floor
+            return self.damaged_floor
         raise KeyError("Constante inconnue")
 
     def entity(self, entity: entities.Entity) -> tkinter.PhotoImage:  # noqa

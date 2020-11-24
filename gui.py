@@ -161,6 +161,7 @@ class AssetsManager:
         raise KeyError("Constante inconnue")
 
     def player_icon(self, player: game.Player):
+        """L'icone associée au joueur, avec ou sans bouclier."""
         if player.shield:
             return self.shielded_players[player.color][0]
         return self.players[player.color][Action.WAIT][1]
@@ -222,12 +223,17 @@ class PlayerPanel:
         self.action_bar = ttk.Progressbar(frame, length=1, max=1.0, value=0.0)
 
         # Offset vertical
-        n = i * 3
-        self.player_icon.grid(row=n + 0, column=0, padx=8, pady=2)
+        n = i * 4
+        if i > 0:
+            ttk.Separator(frame, orient=tkinter.HORIZONTAL).grid(
+                row=n, column=0, columnspan=6, sticky=tkinter.EW, padx=16
+            )
+            n += 1
+        self.player_icon.grid(row=n + 0, column=0, padx=(0, 8), pady=(16, 2))
         self.player_label.grid(
-            row=n + 0, column=1, columnspan=5, sticky=tkinter.W, pady=2
+            row=n + 0, column=1, columnspan=5, sticky=tkinter.W, pady=(16, 2)
         )
-        self.speed_icon.grid(row=n + 1, column=0, padx=8, pady=2)
+        self.speed_icon.grid(row=n + 1, column=0, padx=(0, 8), pady=2)
         self.speed_label.grid(
             row=n + 1, column=1, sticky=tkinter.W, padx=(0, 8), pady=2
         )
@@ -237,9 +243,9 @@ class PlayerPanel:
         )
         self.coin_icon.grid(row=n + 1, column=4, padx=8, pady=2)
         self.coin_label.grid(row=n + 1, column=5, sticky=tkinter.W, padx=(0, 8), pady=2)
-        self.action_label.grid(row=n + 2, column=0, columnspan=4, padx=4, pady=2)
+        self.action_label.grid(row=n + 2, column=0, columnspan=4, padx=4, pady=(2, 16))
         self.action_bar.grid(
-            row=n + 2, column=4, columnspan=2, sticky=tkinter.EW, padx=4, pady=2
+            row=n + 2, column=4, columnspan=2, sticky=tkinter.EW, padx=4, pady=(2, 16)
         )
 
     def update(self):
@@ -336,7 +342,7 @@ class GameInterface:
         self.time_label.grid(column=2, row=1, sticky=tkinter.NSEW)
 
         # Les joueurs sur le côté
-        self.player_panels_frame = ttk.Frame(self.window)
+        self.player_panels_frame = ttk.Frame(self.window, padding=16)
         self.player_panels_frame.grid(column=3, row=0, rowspan=2, sticky=tkinter.EW)
         self.player_panels_frame.grid_columnconfigure(1, weight=1)
         self.player_panels_frame.grid_columnconfigure(3, weight=1)

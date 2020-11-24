@@ -38,14 +38,6 @@ class AssetsManager:
 
     def __init__(self):
         """Charge toutes les ressources du jeu."""
-        self.asset_speedboost = tkinter.PhotoImage(file="./assets/speedboost.png")
-        self.asset_speedpenalty = tkinter.PhotoImage(file="./assets/hourglass.png")
-        self.asset_coin = tkinter.PhotoImage(file="./assets/coin.png")
-        self.asset_super_fireball = tkinter.PhotoImage(
-            file="./assets/super_fireball.png"
-        )
-        self.asset_shield = tkinter.PhotoImage(file="./assets/shield.png")
-
         # Background
         self.floor = tkinter.PhotoImage(file="./assets/background/floor.png")
         self.lava = tkinter.PhotoImage(file="./assets/background/lava.png")
@@ -117,6 +109,19 @@ class AssetsManager:
             for action in d
         }
 
+        # Collectibles
+        self.speedboost = tkinter.PhotoImage(
+            file="./assets/collectibles/speedboost.png"
+        )
+        self.speedpenalty = tkinter.PhotoImage(
+            file="./assets/collectibles/hourglass.png"
+        )
+        self.coin = tkinter.PhotoImage(file="./assets/collectibles/coin.png")
+        self.super_fireball = tkinter.PhotoImage(
+            file="./assets/collectibles/super_fireball.png"
+        )
+        self.shield = tkinter.PhotoImage(file="./assets/collectibles/shield.png")
+
     def tile(self, background: List[List[Tile]], x: int, y: int) -> tkinter.PhotoImage:
         """Renvoie l'image correspondante."""
         tile = background[y][x]
@@ -159,15 +164,15 @@ class AssetsManager:
             return self.fireball[entity.action][int(entity.action_progress * 4) % 2]
 
         if entity.TILE == Tile.SPEEDBOOST:
-            return self.asset_speedboost
+            return self.speedboost
         if entity.TILE == Tile.SPEEDPENALTY:
-            return self.asset_speedpenalty
+            return self.speedpenalty
         if entity.TILE == Tile.COIN:
-            return self.asset_coin
+            return self.coin
         if entity.TILE == Tile.SUPER_FIREBALL:
-            return self.asset_super_fireball
+            return self.super_fireball
         if entity.TILE == Tile.SHIELD:
-            return self.asset_shield
+            return self.shield
         raise KeyError("Constante inconnue")
 
     def player_icon(self, player: game.Player):
@@ -221,15 +226,15 @@ class PlayerPanel:
             frame, image=self.assets_manager.player_icon(self.player)
         )
         self.player_label = ttk.Label(frame, text=self.player.NAME)
-        self.speed_icon = ttk.Label(frame, image=self.assets_manager.asset_speedboost)
+        self.speed_icon = ttk.Label(frame, image=self.assets_manager.speedboost)
         self.speed_label = ttk.Label(frame, text=f"{self.player.speed:.2f}")
         self.super_fireball_icon = ttk.Label(
-            frame, image=self.assets_manager.asset_super_fireball
+            frame, image=self.assets_manager.super_fireball
         )
         self.super_fireball_label = ttk.Label(
             frame, text=f"{self.player.super_fireballs}"
         )
-        self.coin_icon = ttk.Label(frame, image=self.assets_manager.asset_coin)
+        self.coin_icon = ttk.Label(frame, image=self.assets_manager.coin)
         self.coin_label = ttk.Label(frame, text=f"{self.player.coins}")
         self.action_label = ttk.Label(frame, text=self.player.action.value)
         self.action_bar = ttk.Progressbar(frame, length=1, max=1.0, value=0.0)

@@ -2,7 +2,7 @@
 
 from random import choice
 
-from game import Action, Player
+from game import Action, Game, Player
 
 
 class RandomPlayer(Player):
@@ -10,7 +10,7 @@ class RandomPlayer(Player):
 
     NAME = "Joueur aléatoire"
 
-    def play(self, game):
+    def play(self, game: Game):
         """Choisit une action aléatoirement parmi toutes les actions possibles."""
         c = choice(list(Action))
         while not game.is_valid_action(self, c):

@@ -150,7 +150,7 @@ class AssetsManager:
                     if entity.action == Action.WAIT
                     else int(entity.action_progress * 4) % 2 + 1
                 ]
-            return self.players[entity.TILE][entity.action.movement()][
+            return self.players[entity.TILE][entity.action.to_movement()][
                 int(entity.action_progress * 4) % 2
                 if not entity.action.is_attack()
                 else 0

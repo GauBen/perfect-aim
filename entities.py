@@ -51,7 +51,7 @@ class Action(Enum):
             return Action.ATTACK_LEFT
         return Action.WAIT
 
-    def attack(self):
+    def to_attack(self):
         """Attaque dans la direction."""
         if self == Action.MOVE_UP:
             return Action.ATTACK_UP
@@ -63,7 +63,7 @@ class Action(Enum):
             return Action.ATTACK_RIGHT
         return self
 
-    def movement(self):
+    def to_movement(self):
         """Déplacement dans la direction."""
         if self == Action.ATTACK_UP:
             return Action.MOVE_UP

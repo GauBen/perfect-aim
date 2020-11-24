@@ -291,7 +291,9 @@ class Game:
         """Lance une boule de feu pour le joueur `player`."""
 
         def throw_fireball(action: entities.Action):
-            fireball = entities.Fireball(player.x, player.y, action.movement(), player)
+            fireball = entities.Fireball(
+                player.x, player.y, action.to_movement(), player
+            )
             self.entities.add(fireball)
             self.entity_grid[fireball.y][fireball.x].add(fireball)
             self.update_grid(fireball.x, fireball.y)

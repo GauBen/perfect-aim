@@ -38,14 +38,6 @@ class AssetsManager:
 
     def __init__(self):
         """Charge toutes les ressources du jeu."""
-
-        self.asset_hitbox_red = tkinter.PhotoImage(file="./assets/hitbox_red.png")
-        self.asset_hitbox_blue = tkinter.PhotoImage(file="./assets/hitbox_blue.png")
-        self.asset_hitbox_yellow = tkinter.PhotoImage(file="./assets/hitbox_yellow.png")
-        self.asset_hitbox_green = tkinter.PhotoImage(file="./assets/hitbox_green.png")
-        self.asset_hitbox_fireball = tkinter.PhotoImage(
-            file="./assets/hitbox_fireball.png"
-        )
         self.asset_speedboost = tkinter.PhotoImage(file="./assets/speedboost.png")
         self.asset_speedpenalty = tkinter.PhotoImage(file="./assets/hourglass.png")
         self.asset_coin = tkinter.PhotoImage(file="./assets/coin.png")
@@ -301,6 +293,61 @@ class GameInterface:
         self.draw_background()
         self.update()
 
+    def create_widgets(self):
+        """Crée les widgets tk dans la fenêtre du jeu."""
+        # Canvas
+        size = self.assets_manager.TILE_SIZE * self.game.size
+        self.canvas = tkinter.Canvas(
+            self.window, background="#eee", width=size, height=size
+        )
+        self.canvas.grid(column=0, row=0, columnspan=3)
+
+        # Gestion du temps en bas
+        self.time_scale_label = ttk.Label(self.window, text="x 1.0 / 0 s")
+        self.time_scale_var = tkinter.DoubleVar(value=1.0)
+        self.time_scale = ttk.Scale(
+            self.window,
+            from_=0.0,
+            to=10.0,
+            orient=tkinter.HORIZONTAL,
+            variable=self.time_scale_var,
+            command=lambda _: self.time_scale_label.config(
+                text=f"Paused ({self.game.t:.1f} s)"
+                if (x := self.time_scale_var.get()) == 0
+                else f"x {x:.1f} / {self.game.t:.1f} s"
+            ),
+        )
+        self.time_scale.grid(column=0, row=1, sticky=tkinter.NSEW)
+        self.time_scale_label.grid(column=1, row=1, sticky=tkinter.NSEW)
+
+        self.checkbox_value = tkinter.StringVar(value="off")
+        self.checkbox = ttk.Checkbutton(
+            self.window,
+            text="Voir les hitboxes",
+            onvalue="on",
+            offvalue="off",
+            variable=self.checkbox_value,
+        )
+        self.checkbox.grid(column=2, row=1, sticky=tkinter.NSEW)
+
+        # Les joueurs sur le côté
+        self.player_panels_frame = ttk.Frame(self.window, padding=16)
+        self.player_panels_frame.grid(column=3, row=0, rowspan=2, sticky=tkinter.EW)
+        self.player_panels_frame.grid_columnconfigure(1, weight=1)
+        self.player_panels_frame.grid_columnconfigure(3, weight=1)
+        self.player_panels_frame.grid_columnconfigure(5, weight=1)
+        self.window.grid_columnconfigure(3, weight=1)
+
+        self.player_panels = [
+            PlayerPanel(
+                self.assets_manager,
+                self.player_panels_frame,
+                i,
+                self.game.players[i],
+            )
+            for i in range(len(self.game.players))
+        ]
+
     def start(self):
         """Lance la boucle du jeu."""
 
@@ -321,7 +368,9 @@ class GameInterface:
     def update(self):
         """Met à jour la fenêtre."""
         # Le timer
-        self.time_label.config(text=f"{self.game.t:.1f} s")
+        self.time_scale_label.config(
+            text=f"x {self.time_scale_var.get():.1f} / {self.game.t:.1f} s"
+        )
 
         # Les stats
         for p in self.player_panels:
@@ -333,51 +382,6 @@ class GameInterface:
 
         # Les entités
         self.draw_entities()
-
-    def create_widgets(self):
-        """Crée les widgets tk dans la fenêtre du jeu."""
-        # Canvas
-        size = self.assets_manager.TILE_SIZE * self.game.size
-        self.canvas = tkinter.Canvas(
-            self.window, background="#eee", width=size, height=size
-        )
-        self.canvas.grid(column=0, row=0, columnspan=3)
-
-        # Gestion du temps en bas
-        self.time_scale_label = ttk.Label(self.window, text="x 1.0")
-        self.time_label = ttk.Label(self.window, text="0 s")
-        self.time_scale_var = tkinter.DoubleVar(value=1.0)
-        self.time_scale = ttk.Scale(
-            self.window,
-            from_=0.0,
-            to=10.0,
-            orient=tkinter.HORIZONTAL,
-            variable=self.time_scale_var,
-            command=lambda _: self.time_scale_label.config(
-                text="Paused" if (x := self.time_scale_var.get()) == 0 else f"x {x:.1f}"
-            ),
-        )
-        self.time_scale.grid(column=0, row=1, sticky=tkinter.NSEW)
-        self.time_scale_label.grid(column=1, row=1, sticky=tkinter.NSEW)
-        self.time_label.grid(column=2, row=1, sticky=tkinter.NSEW)
-
-        # Les joueurs sur le côté
-        self.player_panels_frame = ttk.Frame(self.window, padding=16)
-        self.player_panels_frame.grid(column=3, row=0, rowspan=2, sticky=tkinter.EW)
-        self.player_panels_frame.grid_columnconfigure(1, weight=1)
-        self.player_panels_frame.grid_columnconfigure(3, weight=1)
-        self.player_panels_frame.grid_columnconfigure(5, weight=1)
-        self.window.grid_columnconfigure(3, weight=1)
-
-        self.player_panels = [
-            PlayerPanel(
-                self.assets_manager,
-                self.player_panels_frame,
-                i,
-                self.game.players[i],
-            )
-            for i in range(len(self.game.players))
-        ]
 
     def draw_background(self):
         """Dessine le fond du plateau."""
@@ -398,18 +402,21 @@ class GameInterface:
         """Dessine les entités."""
         self.canvas.delete("entities")
         self.canvas.delete("hitboxes")
+
+        def x(entity: entities.Entity):
+            if self.checkbox_value.get() == "on":
+                return entity.x
+            return entity.visual_x
+
+        def y(entity: entities.Entity):
+            if self.checkbox_value.get() == "on":
+                return entity.y
+            return entity.visual_y
+
         for entity in sorted(self.game.entities.copy(), key=lambda entity: entity.TILE):
-            # if isinstance(entity, entities.MovingEntity):
-            #     self.canvas.create_image(
-            #         entity.x * self.assets_manager.TILE_SIZE,
-            #         entity.y * self.assets_manager.TILE_SIZE,
-            #         image=self.assets_manager.entity_hitbox(entity),
-            #         anchor=tkinter.NW,
-            #         tags="hitboxes",
-            #     )
             self.canvas.create_image(
-                int(entity.visual_x * self.assets_manager.TILE_SIZE),
-                int(entity.visual_y * self.assets_manager.TILE_SIZE),
+                int(x(entity) * self.assets_manager.TILE_SIZE),
+                int(y(entity) * self.assets_manager.TILE_SIZE),
                 image=self.assets_manager.entity(entity),
                 anchor=tkinter.NW,
                 tags="entities",

@@ -149,27 +149,16 @@ class AssetsManager:
     def entity(self, entity: entities.Entity) -> tkinter.PhotoImage:  # noqa
         """Renvoie l'image correspondante."""
         if isinstance(entity, entities.PlayerEntity):
-            try:
-                if entity.shield:
-                    return self.shielded_players[entity.TILE][
-                        0
-                        if entity.action == Action.WAIT
-                        else int(entity.action_progress * 2) % 2 + 1
-                    ]
-                return self.players[entity.TILE][entity.action.movement()][
-                    int(entity.action_progress * 2) % 2
+            if entity.shield:
+                return self.shielded_players[entity.TILE][
+                    0
+                    if entity.action == Action.WAIT
+                    else int(entity.action_progress * 2) % 2 + 1
                 ]
-            except KeyError:
-                return self.asset_player_red
+            return self.players[entity.TILE][entity.action.movement()][
+                int(entity.action_progress * 2) % 2
+            ]
 
-        if entity.TILE == Tile.PLAYER_RED:
-            return self.asset_player_red
-        if entity.TILE == Tile.PLAYER_BLUE:
-            return self.asset_player_blue
-        if entity.TILE == Tile.PLAYER_YELLOW:
-            return self.asset_player_yellow
-        if entity.TILE == Tile.PLAYER_GREEN:
-            return self.asset_player_green
         if entity.TILE == Tile.SPEEDBOOST:
             return self.asset_speedboost
         if entity.TILE == Tile.SPEEDPENALTY:
@@ -183,6 +172,11 @@ class AssetsManager:
         if entity.TILE == Tile.FIREBALL:
             return self.asset_fireball
         raise KeyError("Constante inconnue")
+
+    def player_icon(self, player: game.Player):
+        if player.shield:
+            return self.shielded_players[player.color][0]
+        return self.players[player.color][Action.WAIT][1]
 
     def entity_hitbox(self, entity: entities.Entity) -> tkinter.PhotoImage:  # noqa
         """Renvoie l'image correspondante."""
@@ -223,17 +217,21 @@ class PlayerPanel:
         self.assets_manager = assets_manager
         self.player = player
 
-        self.player_icon = ttk.Label(frame, image=self.assets_manager.asset_player_red)
-        self.player_label = ttk.Label(frame, text=player.NAME)
+        self.player_icon = ttk.Label(
+            frame, image=self.assets_manager.player_icon(self.player)
+        )
+        self.player_label = ttk.Label(frame, text=self.player.NAME)
         self.speed_icon = ttk.Label(frame, image=self.assets_manager.asset_speedboost)
-        self.speed_label = ttk.Label(frame, text=f"{player.speed:.2f}")
+        self.speed_label = ttk.Label(frame, text=f"{self.player.speed:.2f}")
         self.super_fireball_icon = ttk.Label(
             frame, image=self.assets_manager.asset_super_fireball
         )
-        self.super_fireball_label = ttk.Label(frame, text=f"{player.super_fireballs}")
+        self.super_fireball_label = ttk.Label(
+            frame, text=f"{self.player.super_fireballs}"
+        )
         self.coin_icon = ttk.Label(frame, image=self.assets_manager.asset_coin)
-        self.coin_label = ttk.Label(frame, text=f"{player.coins}")
-        self.action_label = ttk.Label(frame, text=player.action.value)
+        self.coin_label = ttk.Label(frame, text=f"{self.player.coins}")
+        self.action_label = ttk.Label(frame, text=self.player.action.value)
         self.action_bar = ttk.Progressbar(frame, length=1, max=1.0, value=0.0)
 
         # Offset vertical
@@ -253,6 +251,7 @@ class PlayerPanel:
 
     def update(self):
         """Met à jour le panneau."""
+        self.player_icon.configure(image=self.assets_manager.player_icon(self.player))
         self.speed_label.configure(text=f"{self.player.speed:.2f}")
         self.super_fireball_label.configure(text=f"{self.player.super_fireballs}")
         self.coin_label.configure(text=f"{self.player.coins}")

@@ -383,3 +383,7 @@ class Game:
     def player_entities(self) -> List[entities.PlayerEntity]:
         """Les `PlayerEntities` encore en vie."""
         return filter(lambda e: isinstance(e, entities.PlayerEntity), self.entities)
+
+
+if __name__ == "__main__":
+    print("Le lanceur du jeu est le fichier ./main.py")

@@ -367,3 +367,7 @@ class Shield(CollectableEntity):
     def collect(self, player: PlayerEntity):
         """Protège le joueur jusqu'au prochain coup."""
         player.shield = True
+
+
+if __name__ == "__main__":
+    print("Le lanceur du jeu est le fichier ./main.py")

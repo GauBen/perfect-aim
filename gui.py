@@ -544,3 +544,7 @@ class GameLauncher:
         if self.game_launched:
             return
         self.game_launched = True
+
+
+if __name__ == "__main__":
+    print("Le lanceur du jeu est le fichier ./main.py")

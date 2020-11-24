@@ -39,7 +39,6 @@ class AssetsManager:
     def __init__(self):
         """Charge toutes les ressources du jeu."""
         self.asset_floor = tkinter.PhotoImage(file="./assets/empty.png")
-        self.asset_wall = tkinter.PhotoImage(file="./assets/wall.png")
         self.asset_lava = tkinter.PhotoImage(file="./assets/lava.png")
         self.asset_damaged_floor = tkinter.PhotoImage(
             file="./assets/damaged_ground.png"

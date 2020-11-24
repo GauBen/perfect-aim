@@ -138,10 +138,12 @@ class AssetsManager:
                 return self.shielded_players[entity.TILE][
                     0
                     if entity.action == Action.WAIT
-                    else int(entity.action_progress * 2) % 2 + 1
+                    else int(entity.action_progress * 4) % 2 + 1
                 ]
             return self.players[entity.TILE][entity.action.movement()][
-                int(entity.action_progress * 2) % 2
+                int(entity.action_progress * 4) % 2
+                if not entity.action.is_attack()
+                else 0
             ]
 
         if entity.TILE == Tile.SPEEDBOOST:

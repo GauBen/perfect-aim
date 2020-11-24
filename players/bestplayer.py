@@ -11,6 +11,6 @@ class BestPlayer(Player):
 
     NAME = "Les Meilleurs"
 
-    def play(self, game: Game):
+    def play(self, game: Game) -> Action:
         """Choisit la meilleure action possible dans la situation donnée en paramètre."""
         return Action.WAIT

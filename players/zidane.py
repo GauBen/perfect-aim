@@ -1,7 +1,6 @@
 """Stratégie d'exemple : un joueur très offensif."""
 
 from entities import PlayerEntity
-from random import choice
 
 from game import Action, Game, Player, Tile
 
@@ -11,8 +10,18 @@ class Zidane(Player):
 
     NAME = "Zidane"
 
-    def play(self, game: Game):
+    def play(self, game: Game) -> Action:
         """Cherche le joueur le plus proche pour l'attaquer."""
+        # On cherche d'abord à attaque
+        action = self.attack(game)
+        if action != Action.WAIT:
+            return action
+
+        # S'il n'y a personne à attaquer, on va vers le joueur le plus proche
+        return self.chase(game)
+
+    def attack(self, game: Game) -> Action:
+        """Attaque le joueur le plus proche."""
         # On regarde si un joueur est en ligne de mire
         for action in (
             Action.ATTACK_UP,
@@ -39,6 +48,11 @@ class Zidane(Player):
 
                 x, y = action.to_movement().apply((x, y))
 
+        # On a rien trouvé
+        return Action.WAIT
+
+    def chase(self, game: Game) -> Action:
+        """Se rend vers le joueur le plus proche."""
         # Aucun joueur en vue, on va vers le joueur le plus proche
         # (Voir IndianaJones pour le détail)
         explored = [[False for x in range(game.size)] for y in range(game.size)]
@@ -78,4 +92,5 @@ class Zidane(Player):
                     paths.append((new_x, new_y, direction))
                     explored[new_y][new_x] = True
 
+        # On a toujours rien trouvé (on est piégé dans la lave !)
         return Action.WAIT

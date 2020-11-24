@@ -8,7 +8,7 @@ class IndianaJones(Player):
 
     NAME = "Indiana Jones"
 
-    def play(self, game: Game):
+    def play(self, game: Game) -> Action:
         """Cherche les objets les plus proches et se mettre en sécurité."""
         # Renvoie `True` si la destination est acceptable
         accept_target = lambda x, y: game.tile_grid[y][x].is_bonus()

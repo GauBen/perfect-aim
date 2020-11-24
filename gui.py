@@ -44,22 +44,7 @@ class AssetsManager:
         self.asset_damaged_floor = tkinter.PhotoImage(
             file="./assets/damaged_ground.png"
         )
-        self.asset_player_red = tkinter.PhotoImage(file="./assets/player_red.png")
-        self.asset_player_red_shield = tkinter.PhotoImage(
-            file="./assets/player_red_shield.png"
-        )
-        self.asset_player_blue = tkinter.PhotoImage(file="./assets/player_blue.png")
-        self.asset_player_blue_shield = tkinter.PhotoImage(
-            file="./assets/player_blue_shield.png"
-        )
-        self.asset_player_yellow = tkinter.PhotoImage(file="./assets/player_yellow.png")
-        self.asset_player_yellow_shield = tkinter.PhotoImage(
-            file="./assets/player_yellow_shield.png"
-        )
-        self.asset_player_green = tkinter.PhotoImage(file="./assets/player_green.png")
-        self.asset_player_green_shield = tkinter.PhotoImage(
-            file="./assets/player_green_shield.png"
-        )
+
         self.asset_hitbox_red = tkinter.PhotoImage(file="./assets/hitbox_red.png")
         self.asset_hitbox_blue = tkinter.PhotoImage(file="./assets/hitbox_blue.png")
         self.asset_hitbox_yellow = tkinter.PhotoImage(file="./assets/hitbox_yellow.png")
@@ -410,9 +395,15 @@ class PlayerSelector:
         """Crée les widgets tkinter."""
         self.player_constructors = players
         self.assets_manager = assets_manager
+        color = [
+            Tile.PLAYER_RED,
+            Tile.PLAYER_BLUE,
+            Tile.PLAYER_YELLOW,
+            Tile.PLAYER_GREEN,
+        ][i]
         self.icon = ttk.Label(
             frame,
-            image=self.assets_manager.asset_player_red,
+            image=self.assets_manager.players[color][Action.WAIT][1],
         )
         self.combobox = ttk.Combobox(
             frame,

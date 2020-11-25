@@ -1,12 +1,11 @@
 """Classes du jeu, sans interface."""
 
 from copy import deepcopy
+from random import randrange
 from typing import List, Optional, Set, Type, Union
 
 import entities
 from gamegrid import Grid, Tile
-
-from random import randrange
 
 Action = entities.Action
 

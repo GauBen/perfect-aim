@@ -23,7 +23,7 @@ class Player:
 
     def __init__(self, entity: entities.PlayerEntity):
         """Représente la stratégie d'une équipe."""
-        self._player_entity = entity
+        self.player_entity = entity
         self.dead = False
 
     def play(self, game: Game) -> Action:
@@ -33,47 +33,47 @@ class Player:
     @property
     def x(self) -> int:
         """Coordonnée x du joueur."""
-        return self._player_entity.x
+        return self.player_entity.x
 
     @property
     def y(self) -> int:
         """Coordonnée y du joueur."""
-        return self._player_entity.y
+        return self.player_entity.y
 
     @property
     def speed(self) -> float:
         """Vitesse du joueur."""
-        return self._player_entity.speed
+        return self.player_entity.speed
 
     @property
     def coins(self) -> int:
         """Nombre de pièces du joueur."""
-        return self._player_entity.coins
+        return self.player_entity.coins
 
     @property
     def super_fireballs(self) -> int:
         """Nombre de super boules de feu."""
-        return self._player_entity.super_fireballs
+        return self.player_entity.super_fireballs
 
     @property
     def shield(self) -> bool:
         """Le joueur possède un bouclier."""
-        return self._player_entity.shield
+        return self.player_entity.shield
 
     @property
     def action(self) -> Action:
         """Action en cours."""
-        return self._player_entity.action
+        return self.player_entity.action
 
     @property
     def action_progress(self) -> Action:
         """Avancement de l'action en cours."""
-        return self._player_entity.action_progress
+        return self.player_entity.action_progress
 
     @property
     def color(self) -> Tile:
         """Couleur du joueur."""
-        return self._player_entity.TILE
+        return self.player_entity.TILE
 
 
 class Game:
@@ -326,7 +326,7 @@ class Game:
     ) -> bool:
         """Renvoie `True` si l'action `action` est jouable."""
         if isinstance(player, Player):
-            return self.is_action_valid(player._player_entity, action)
+            return self.is_action_valid(player.player_entity, action)
 
         if action == Action.WAIT:
             return True
@@ -355,7 +355,7 @@ class Game:
     def can_player_attack(self, player: Union[entities.PlayerEntity, Player]) -> bool:
         """Renvoie `True` si le joueur a une boule de feu disponible."""
         if isinstance(player, Player):
-            return self.can_player_attack(player._player_entity)
+            return self.can_player_attack(player.player_entity)
 
         for entity in self.entities:
             if isinstance(entity, entities.Fireball) and entity.player == player:
@@ -364,7 +364,12 @@ class Game:
 
     def next_action(self, entity: entities.PlayerEntity) -> Action:
         """La prochaine action de l'entité."""
-        return self.player_from_entity(entity).play(deepcopy(self))
+        clone = deepcopy(self)
+        player = self.player_from_entity(entity)
+        player.player_entity = next(
+            entity for entity in clone.entities if entity.TILE == player.color
+        )
+        return player.play(clone)
 
     def collect(self, player: Player, collectible: entities.CollectableEntity):
         """Ramasse l'object `collectible` pour le joueur `player`."""
@@ -376,7 +381,7 @@ class Game:
     def player_from_entity(self, player_entity: entities.PlayerEntity):
         """Renvoie la stratégie associée à une entité."""
         for player in self.players:
-            if player._player_entity is player_entity:
+            if player.color == player_entity.TILE:
                 return player
         raise KeyError("Le joueur n'existe plus")
 

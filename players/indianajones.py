@@ -47,7 +47,7 @@ class IndianaJones(Player):
             x, y = direction.apply((self.x, self.y))
 
             # Si on peut aller dans cette direction, on explore les possibilités offertes
-            if game.is_valid_action(self, direction):
+            if game.is_action_valid(self, direction):
                 # On retient quelle est la direction de départ
                 paths.append((x, y, direction))
                 explored[y][x] = True

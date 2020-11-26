@@ -319,12 +319,12 @@ class Game:
         else:
             self.remove_entity(player_entity)
 
-    def is_valid_action(
+    def is_action_valid(
         self, player: Union[entities.PlayerEntity, Player], action: entities.Action
     ) -> bool:
         """Renvoie `True` si l'action `action` est jouable."""
         if isinstance(player, Player):
-            return self.is_valid_action(player._player_entity, action)
+            return self.is_action_valid(player._player_entity, action)
 
         if action == Action.WAIT:
             return True

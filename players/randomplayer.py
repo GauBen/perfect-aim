@@ -13,6 +13,6 @@ class RandomPlayer(Player):
     def play(self, game: Game) -> Action:
         """Choisit une action aléatoirement parmi toutes les actions possibles."""
         c = choice(list(Action))
-        while not game.is_valid_action(self, c):
+        while not game.is_action_valid(self, c):
             c = choice(list(Action))
         return c

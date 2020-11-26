@@ -19,7 +19,7 @@ class Zidane(Player):
         if action == Action.WAIT:
             action = self.chase(game)
 
-        if game.is_valid_action(self, action):
+        if game.is_action_valid(self, action):
             return action
 
         # Si l'action n'est pas valide, on attend
@@ -71,7 +71,7 @@ class Zidane(Player):
             Action.MOVE_RIGHT,
         ):
             x, y = direction.apply((self.x, self.y))
-            if game.is_valid_action(self, direction):
+            if game.is_action_valid(self, direction):
                 paths.append((x, y, direction))
                 explored[y][x] = True
 

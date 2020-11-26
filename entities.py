@@ -299,14 +299,10 @@ class Fireball(MovingEntity):
             if game.background[self.y][self.x] == Tile.WALL:
                 game.remove_entity(self)
 
-            self.hit_players(game)
-
-    def hit_players(self, game):
-        """Inflige un point de dégât à tous les joueurs de la case."""
-        # Suppression des joueurs transpercés par la boule de feu
-        for entity in game.entity_grid[self.y][self.x].copy():
-            if isinstance(entity, PlayerEntity):
-                game.hit_player(self, entity)
+            # Suppression des joueurs transpercés par la boule de feu
+            for entity in game.entity_grid[self.y][self.x].copy():
+                if isinstance(entity, PlayerEntity):
+                    game.hit_player(self, entity)
 
 
 class CollectableEntity(Entity):

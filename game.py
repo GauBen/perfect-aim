@@ -1,5 +1,7 @@
 """Classes du jeu, sans interface."""
 
+from __future__ import annotations
+
 from copy import deepcopy
 from random import randrange
 from typing import List, Optional, Set, Type, Union
@@ -24,7 +26,7 @@ class Player:
         self._player_entity = entity
         self.dead = False
 
-    def play(self, game) -> Action:
+    def play(self, game: Game) -> Action:
         """Choisit la prochaine action du joueur, en renvoyant une constante d'action."""
         return Action.WAIT
 

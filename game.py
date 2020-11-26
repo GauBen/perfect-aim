@@ -101,7 +101,7 @@ class Game:
 
         # Les entités du jeu
         self.entities: Set[entities.Entity] = set()
-        self.players: list[Player] = []
+        self.players: List[Player] = []
 
         # Les matrices du jeu
         self.background = deepcopy(self.tile_grid)

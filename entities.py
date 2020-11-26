@@ -200,7 +200,7 @@ class PlayerEntity(MovingEntity):
             self.action_progress = 0
 
             # Si l'action est valide, on la joue
-            if game.is_valid_action(self, action):
+            if game.is_action_valid(self, action):
                 self.action = action
 
                 if self.action.is_attack():
@@ -218,7 +218,7 @@ class PlayerEntity(MovingEntity):
             self.action_progress = 0.5
 
             # Si le déplacement est toujours valide, il est effectué
-            if game.is_valid_action(self, self.action):
+            if game.is_action_valid(self, self.action):
                 old_x, old_y = self.x, self.y
                 self.x, self.y = self.action.apply((self.x, self.y))
                 game.move_entity(self, old_x, old_y)

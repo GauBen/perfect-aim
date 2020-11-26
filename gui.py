@@ -362,7 +362,7 @@ class GameInterface:
             # print(u)
             dt = u * self.time_scale_var.get()
             if dt > 0:
-                self.game.update(dt)
+                self.game._update(dt)
             self.update()
             if not self.game.over:
                 self.master.after(10, update)

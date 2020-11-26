@@ -1,8 +1,13 @@
 """Les entités du jeu."""
+from __future__ import annotations
+
 from enum import Enum
-from typing import List, Tuple, Type
+from typing import TYPE_CHECKING, List, Tuple, Type
 
 from gamegrid import Tile
+
+if TYPE_CHECKING:
+    from game import Game
 
 
 class Action(Enum):
@@ -31,7 +36,7 @@ class Action(Enum):
             return x + 1, y
         return x, y
 
-    def swap(self):
+    def swap(self) -> Action:
         """Donne la direction opposée de l'action."""
         if self == Action.MOVE_UP:
             return Action.MOVE_DOWN
@@ -51,7 +56,7 @@ class Action(Enum):
             return Action.ATTACK_LEFT
         return Action.WAIT
 
-    def to_attack(self):
+    def to_attack(self) -> Action:
         """Attaque dans la direction."""
         if self == Action.MOVE_UP:
             return Action.ATTACK_UP
@@ -63,7 +68,7 @@ class Action(Enum):
             return Action.ATTACK_RIGHT
         return self
 
-    def to_movement(self):
+    def to_movement(self) -> Action:
         """Déplacement dans la direction."""
         if self == Action.ATTACK_UP:
             return Action.MOVE_UP
@@ -125,7 +130,7 @@ class MovingEntity(Entity):
         self.action = Action.WAIT
         self.action_progress = 0.0
 
-    def update(self, game, dt: float):
+    def update(self, game: Game, dt: float):
         """Met à jour l'entité."""
         # À la fin de l'action, on la recommence
         if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
@@ -190,7 +195,7 @@ class PlayerEntity(MovingEntity):
         self.coins = 0
         self.super_fireballs = 0
 
-    def update(self, game, dt: float):
+    def update(self, game: Game, dt: float):
         """Met à jour la position du joueur et choisit sa prochaine action."""
         # Fin d'une action, choix de la prochaine action
         if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
@@ -289,7 +294,7 @@ class Fireball(MovingEntity):
         self.action = direction
         self.player = player
 
-    def update(self, game, dt: float):
+    def update(self, game: Game, dt: float):
         """Met à jour les coordonnées de la boule de feu."""
         super().update(game, dt)
 

@@ -362,7 +362,7 @@ class Game:
 
     def next_action(self, entity: entities.PlayerEntity) -> Action:
         """La prochaine action de l'entité."""
-        return self.player_from_entity(entity).play(self)
+        return self.player_from_entity(entity).play(deepcopy(self))
 
     def collect(self, player: Player, collectible: entities.CollectableEntity):
         """Ramasse l'object `collectible` pour le joueur `player`."""

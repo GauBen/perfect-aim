@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
+from copy import copy, deepcopy
 from random import randrange
-from typing import List, Optional, Set, Type, Union
+from time import perf_counter
+from typing import Dict, List, Optional, Set, Type, Union
 
 import entities
 from gamegrid import Grid, Tile
@@ -21,14 +22,29 @@ class Player:
 
     NAME = "Donne-moi un nom !"
 
-    def __init__(self, entity: entities.PlayerEntity):
+    def __init__(self):
         """Représente la stratégie d'une équipe."""
-        self.player_entity = entity
-        self.dead = False
+        self.game: Optional[Game] = None
+        self.player_entity: Optional[entities.PlayerEntity] = None
+
+    def next_action(self, game: Game, player_entity: entities.PlayerEntity):
+        """Renvoie l'action suivante du joueur."""
+        self.game = game
+        self.player_entity = player_entity
+        t = perf_counter()
+        action = self.play(game)
+        dt = perf_counter() - t
+        if dt >= 0.010:
+            print(f"/!\\ Temps de 10ms dépassé pour {self.NAME} : {dt} s")
+        return action
 
     def play(self, game: Game) -> Action:
         """Choisit la prochaine action du joueur, en renvoyant une constante d'action."""
         return Action.WAIT
+
+    def is_action_valid(self, action: Action) -> bool:
+        """Vérifie qu'une action est valide."""
+        return self.game.is_action_valid(self, action)
 
     @property
     def x(self) -> int:
@@ -73,7 +89,7 @@ class Player:
     @property
     def color(self) -> Tile:
         """Couleur du joueur."""
-        return self.player_entity.TILE
+        return self.player_entity.color
 
 
 class Game:
@@ -103,7 +119,7 @@ class Game:
 
         # Les entités du jeu
         self.entities: Set[entities.Entity] = set()
-        self.players: List[Player] = []
+        self.players: Dict[Tile, Player] = {}
 
         # Les matrices du jeu
         self.background = deepcopy(self.tile_grid)
@@ -114,9 +130,7 @@ class Game:
         # Crée les joueurs et des objets
         self.create_entities(player_constructors)
 
-    def create_entities(
-        self, player_constructors: List[Optional[Type[entities.PlayerEntity]]]
-    ):
+    def create_entities(self, player_constructors: List[Optional[Type[Player]]]):
         """Ajoute les joueurs et les entitiés sur les grilles."""
         # Les joueurs
         for player_constructor, entity_constructor, coords in zip(
@@ -133,7 +147,9 @@ class Game:
             if player_constructor is not None:
                 p = entity_constructor(x, y)
                 self.entities.add(p)
-                self.players.append(player_constructor(p))
+                self.players[p.color] = player_constructor()
+                # On initialise le joueur, mais on ignore son action
+                self.next_action(p)
 
         d = {
             Tile.COIN: entities.Coin,
@@ -279,8 +295,6 @@ class Game:
 
     def remove_entity(self, entity: entities.Entity):
         """Supprime l'entité du jeu."""
-        if isinstance(entity, entities.PlayerEntity):
-            self.player_from_entity(entity).dead = True
         if entity in self.entities:
             self.entities.remove(entity)
             self.entity_grid[entity.y][entity.x].remove(entity)
@@ -291,7 +305,7 @@ class Game:
 
         def throw_fireball(action: entities.Action):
             fireball = entities.Fireball(
-                player.x, player.y, action.to_movement(), player
+                player.x, player.y, action.to_movement(), player.color
             )
             self.entities.add(fireball)
             self.entity_grid[fireball.y][fireball.x].add(fireball)
@@ -354,22 +368,17 @@ class Game:
 
     def can_player_attack(self, player: Union[entities.PlayerEntity, Player]) -> bool:
         """Renvoie `True` si le joueur a une boule de feu disponible."""
-        if isinstance(player, Player):
-            return self.can_player_attack(player.player_entity)
-
         for entity in self.entities:
-            if isinstance(entity, entities.Fireball) and entity.player == player:
+            if isinstance(entity, entities.Fireball) and entity.sender == player.color:
                 return False
         return True
 
     def next_action(self, entity: entities.PlayerEntity) -> Action:
-        """La prochaine action de l'entité."""
+        """Renvoie la prochaine action du joueur."""
         clone = deepcopy(self)
-        player = self.player_from_entity(entity)
-        player.player_entity = next(
-            entity for entity in clone.entities if entity.TILE == player.color
+        return self.players[entity.color].next_action(
+            clone, clone.player_entity_from_color(entity.color)
         )
-        return player.play(clone)
 
     def collect(self, player: Player, collectible: entities.CollectableEntity):
         """Ramasse l'object `collectible` pour le joueur `player`."""
@@ -378,17 +387,50 @@ class Game:
         self.entity_grid[collectible.y][collectible.x].remove(collectible)
         self.update_grid(collectible.x, collectible.y)
 
-    def player_from_entity(self, player_entity: entities.PlayerEntity):
-        """Renvoie la stratégie associée à une entité."""
-        for player in self.players:
-            if player.color == player_entity.TILE:
-                return player
-        raise KeyError("Le joueur n'existe plus")
+    def player_entity_from_color(self, color: Tile):
+        """Cherche l'entité associée à la couleur d'une joueur."""
+        if not color.is_player():
+            raise ValueError("L'argument n'est pas un joueur.")
+        try:
+            return next(
+                entity
+                for entity in self.entities
+                if isinstance(entity, entities.PlayerEntity) and entity.color == color
+            )
+        except StopIteration:
+            raise KeyError("Le joueur n'est plus dans le jeu.")
 
     @property
     def player_entities(self) -> List[entities.PlayerEntity]:
         """Les `PlayerEntities` encore en vie."""
         return filter(lambda e: isinstance(e, entities.PlayerEntity), self.entities)
+
+    def __deepcopy__(self, memo: Dict[int, object]):
+        """Assure une copie profonde efficace de l'objet."""
+        clone: Game = self.__class__.__new__(self.__class__)
+
+        # Propriétés simples
+        clone.over = self.over
+        clone.size = self.size
+        clone.t = self.t
+        clone.winner = None
+
+        # Objets profonds
+        clone.players = self.players
+        clone.background = [[tile for tile in row] for row in self.background]
+        clone.tile_grid = [[tile for tile in row] for row in self.tile_grid]
+        clone.entity_grid = [
+            [set() for _ in range(clone.size)] for _ in range(clone.size)
+        ]
+        clone.entities = set()
+        for entity in self.entities:
+            e = copy(entity)
+            clone.entities.add(e)
+            clone.entity_grid[e.y][e.x].add(e)
+            if entity == self.winner:
+                clone.winner = e
+
+        return clone
 
 
 if __name__ == "__main__":

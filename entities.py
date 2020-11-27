@@ -249,6 +249,11 @@ class PlayerEntity(MovingEntity):
         else:
             self.action_progress += dt * self.speed
 
+    @property
+    def color(self) -> Tile:
+        """La couleur du joueur."""
+        return self.TILE
+
 
 class RedPlayer(PlayerEntity):
     """Le joueur rouge."""
@@ -288,11 +293,11 @@ class Fireball(MovingEntity):
     TILE = Tile.FIREBALL
     INITIAL_SPEED = 4.0
 
-    def __init__(self, x: int, y: int, direction: Action, player: PlayerEntity):
+    def __init__(self, x: int, y: int, direction: Action, sender: Tile):
         """Initialise une boule de feu."""
         super().__init__(x, y, self.INITIAL_SPEED)
         self.action = direction
-        self.player = player
+        self.sender = sender
 
     def update(self, game: Game, dt: float):
         """Met à jour les coordonnées de la boule de feu."""

@@ -175,13 +175,15 @@ class AssetsManager:
             return self.shield
         raise KeyError("Constante inconnue")
 
-    def player_icon(self, player: game.Player):
-        """L'icone associée au joueur, avec ou sans bouclier."""
-        if player.dead:
+    def player_icon(self, game: game.Game, color: Tile):
+        """L'icône associée au joueur, avec ou sans bouclier."""
+        try:
+            player = game.player_entity_from_color(color)
+            if player.shield:
+                return self.shielded_players[player.color][0]
+            return self.players[player.color][Action.WAIT][1]
+        except KeyError:
             return self.dead
-        if player.shield:
-            return self.shielded_players[player.color][0]
-        return self.players[player.color][Action.WAIT][1]
 
     def entity_hitbox(self, entity: entities.Entity) -> tkinter.PhotoImage:  # noqa
         """Renvoie l'image correspondante."""
@@ -216,27 +218,32 @@ class PlayerPanel:
         assets_manager: AssetsManager,
         frame: ttk.Frame,
         i: int,
-        player: game.Player,
+        game: game.Game,
+        player_entity: entities.PlayerEntity,
     ):
         """Initialise les éléments tkinter."""
         self.assets_manager = assets_manager
-        self.player = player
+        self.game = game
+        self.player_entity = player_entity
 
         self.player_icon = ttk.Label(
-            frame, image=self.assets_manager.player_icon(self.player)
+            frame,
+            image=self.assets_manager.player_icon(self.game, self.player_entity.color),
         )
-        self.player_label = ttk.Label(frame, text=self.player.NAME)
+        self.player_label = ttk.Label(
+            frame, text=self.game.players[self.player_entity.color].NAME
+        )
         self.speed_icon = ttk.Label(frame, image=self.assets_manager.speedboost)
-        self.speed_label = ttk.Label(frame, text=f"{self.player.speed:.2f}")
+        self.speed_label = ttk.Label(frame, text=f"{self.player_entity.speed:.2f}")
         self.super_fireball_icon = ttk.Label(
             frame, image=self.assets_manager.super_fireball
         )
         self.super_fireball_label = ttk.Label(
-            frame, text=f"{self.player.super_fireballs}"
+            frame, text=f"{self.player_entity.super_fireballs}"
         )
         self.coin_icon = ttk.Label(frame, image=self.assets_manager.coin)
-        self.coin_label = ttk.Label(frame, text=f"{self.player.coins}")
-        self.action_label = ttk.Label(frame, text=self.player.action.value)
+        self.coin_label = ttk.Label(frame, text=f"{self.player_entity.coins}")
+        self.action_label = ttk.Label(frame, text=self.player_entity.action.value)
         self.action_bar = ttk.Progressbar(frame, length=1, max=1.0, value=0.0)
 
         # Offset vertical
@@ -267,12 +274,16 @@ class PlayerPanel:
 
     def update(self):
         """Met à jour le panneau."""
-        self.player_icon.configure(image=self.assets_manager.player_icon(self.player))
-        self.speed_label.configure(text=f"{self.player.speed:.2f}")
-        self.super_fireball_label.configure(text=f"{self.player.super_fireballs}")
-        self.coin_label.configure(text=f"{self.player.coins}")
-        self.action_label.configure(text=self.player.action.value)
-        self.action_bar.configure(value=self.player.action_progress)
+        self.player_icon.configure(
+            image=self.assets_manager.player_icon(self.game, self.player_entity.color)
+        )
+        self.speed_label.configure(text=f"{self.player_entity.speed:.2f}")
+        self.super_fireball_label.configure(
+            text=f"{self.player_entity.super_fireballs}"
+        )
+        self.coin_label.configure(text=f"{self.player_entity.coins}")
+        self.action_label.configure(text=self.player_entity.action.value)
+        self.action_bar.configure(value=self.player_entity.action_progress)
 
 
 class GameInterface:
@@ -343,14 +354,16 @@ class GameInterface:
         self.player_panels_frame.grid_columnconfigure(5, weight=1)
         self.window.grid_columnconfigure(3, weight=1)
 
+        player_entities = list(self.game.player_entities)
         self.player_panels = [
             PlayerPanel(
                 self.assets_manager,
                 self.player_panels_frame,
                 i,
-                self.game.players[i],
+                self.game,
+                player_entities[i],
             )
-            for i in range(len(self.game.players))
+            for i in range(len(player_entities))
         ]
 
     def start(self):
@@ -434,7 +447,7 @@ class PlayerSelector:
     def __init__(
         self,
         assets_manager: AssetsManager,
-        players: List[Union[None, game.Player]],
+        players: List[Optional[Type[game.Player]]],
         frame: ttk.Frame,
         i: int,
     ):

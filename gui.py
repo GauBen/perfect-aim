@@ -4,7 +4,7 @@ import time
 import tkinter
 import tkinter.ttk as ttk
 from copy import deepcopy
-from typing import List, Optional, Type, Union
+from typing import List, Optional, Type
 
 import entities
 import game

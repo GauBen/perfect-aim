@@ -403,7 +403,10 @@ class Game:
     @property
     def player_entities(self) -> List[entities.PlayerEntity]:
         """Les `PlayerEntities` encore en vie."""
-        return filter(lambda e: isinstance(e, entities.PlayerEntity), self.entities)
+        return sorted(
+            filter(lambda e: isinstance(e, entities.PlayerEntity), self.entities),
+            key=lambda player: player.color,
+        )
 
     def __deepcopy__(self, memo: Dict[int, object]):
         """Assure une copie profonde efficace de l'objet."""

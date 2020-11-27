@@ -103,6 +103,8 @@ class Game:
     MAX_PLAYERS = 4
 
     DEFAULT_GRID_SIZE = 21
+    LAVA_FLOOD_START_TIME = 65.0
+    LAVA_STEP_DURATION = 5.0
 
     def __init__(
         self, player_constructors: List[Optional[Type[entities.PlayerEntity]]]
@@ -212,10 +214,6 @@ class Game:
             if self.over:
                 return
 
-            # Génération du terrain
-            self.add_lava()
-            self.add_collectibles()
-
             # Temps jusqu'à la prochaine update
             dt = min(
                 [
@@ -223,10 +221,15 @@ class Game:
                     for entity in self.entities
                     if isinstance(entity, entities.MovingEntity)
                 ]
-                + [elapsed_time]
+                + [elapsed_time, int(self.t + 1.0) - self.t]
             )
             # dt vaut la plus petite durée avant un évènement
             # (changement de case par exemple)
+
+            # Mise à jour du terrain
+            self.add_lava(dt)
+            self.add_collectibles()
+
             self.t += dt
 
             # Mise à jour des entités
@@ -255,6 +258,37 @@ class Game:
             self.tile_grid[y][x] = self.background[y][x]
         else:
             self.tile_grid[y][x] = max(entity.TILE for entity in self.entity_grid[y][x])
+
+    def add_lava(self, dt: float):
+        """Ajoute de la lave après un certain temps."""
+        if self.t + dt >= self.LAVA_FLOOD_START_TIME and int(
+            self.t / self.LAVA_STEP_DURATION
+        ) < int((self.t + dt) / self.LAVA_STEP_DURATION):
+            # Étape de l'inondation
+            step = int(
+                (self.t + dt - self.LAVA_FLOOD_START_TIME) / self.LAVA_STEP_DURATION
+            )
+            lava = step % 2 == 1
+            ring = 1 + step // 2
+            if ring >= self.size // 2:
+                return
+
+            for y in range(ring, self.size - ring):
+                for x in range(ring, self.size - ring):
+                    if (
+                        ring < x < self.size - ring - 1
+                        and ring < y < self.size - ring - 1
+                    ):
+                        continue
+                    if lava and self.background[y][x] == Tile.DAMAGED_FLOOR:
+                        self.background[y][x] = Tile.LAVA
+                        for entity in self.entity_grid[y][x].copy():
+                            if not isinstance(entity, entities.Fireball):
+                                self.remove_entity(entity)
+                        self.update_grid(x, y)
+                    elif not lava and self.background[y][x] == Tile.FLOOR:
+                        self.background[y][x] = Tile.DAMAGED_FLOOR
+                        self.update_grid(x, y)
 
     def add_collectibles(self):
         """Ajoute des objets s'il n'y en a plus."""
@@ -290,37 +324,6 @@ class Game:
                     self.entity_grid[y][x].add(collectible)
                     self.update_grid(collectible.x, collectible.y)
                     break
-
-    def add_lava(self):
-        """Ajoute de la lave après un certain temps."""
-        if self.t >= 65.0:
-            step = int((self.t - 65.0) / 10.0)
-            halfstep = (self.t - 65.0 - step * 10.0) > 5.0
-            coords = 1 + step
-            from_ = Tile.DAMAGED_FLOOR if halfstep else Tile.FLOOR
-            to = Tile.LAVA if halfstep else Tile.DAMAGED_FLOOR
-            if self.background[coords][coords] != to:
-                for y in range(self.size):
-                    for x in range(self.size):
-                        if (
-                            x == coords
-                            or y == coords
-                            or x == self.size - coords - 1
-                            or y == self.size - coords - 1
-                        ) and self.background[y][x] == from_:
-                            if to == Tile.LAVA:
-                                self.turn_to_lava(x, y)
-                            else:
-                                self.background[y][x] = to
-                                self.update_grid(x, y)
-
-    def turn_to_lava(self, x: int, y: int):
-        """Transforme une case en lave."""
-        self.background[y][x] = Tile.LAVA
-        for entity in self.entity_grid[y][x].copy():
-            if not isinstance(entity, entities.Fireball):
-                self.remove_entity(entity)
-        self.update_grid(x, y)
 
     def move_entity(self, entity: entities.MovingEntity, old_x: int, old_y: int):
         """Déplace l'entité sur la grille des entités `entity_grid`."""

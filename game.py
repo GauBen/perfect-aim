@@ -35,7 +35,7 @@ class Player:
         action = self.play(game)
         dt = perf_counter() - t
         if dt >= 0.010:
-            print(f"/!\\ Temps de 10ms dépassé pour {self.NAME} : {dt} s")
+            print(f"/!\\ Temps de 10 ms dépassé pour {self.NAME} : {dt} s")
         return action
 
     def play(self, game: Game) -> Action:

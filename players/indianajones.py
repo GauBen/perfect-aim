@@ -24,10 +24,7 @@ class IndianaJones(Player):
             accept_target = is_safe
 
             # N'importe quel endroit où on peut marcher est sûr
-            is_safe = lambda x, y: game.background[y][x] in (
-                Tile.FLOOR,
-                Tile.DAMAGED_FLOOR,
-            )
+            is_safe = lambda x, y: game.background[y][x].is_floor()
 
         # Matrice des cases explorées par la recherche de chemin
         explored = [[False for x in range(game.size)] for y in range(game.size)]
@@ -47,7 +44,7 @@ class IndianaJones(Player):
             x, y = direction.apply((self.x, self.y))
 
             # Si on peut aller dans cette direction, on explore les possibilités offertes
-            if game.is_action_valid(self, direction):
+            if self.is_action_valid(direction):
                 # On retient quelle est la direction de départ
                 paths.append((x, y, direction))
                 explored[y][x] = True

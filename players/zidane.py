@@ -19,7 +19,7 @@ class Zidane(Player):
         if action == Action.WAIT:
             action = self.chase(game)
 
-        if game.is_action_valid(self, action):
+        if self.is_action_valid(action):
             return action
 
         # Si l'action n'est pas valide, on attend
@@ -71,7 +71,7 @@ class Zidane(Player):
             Action.MOVE_RIGHT,
         ):
             x, y = direction.apply((self.x, self.y))
-            if game.is_action_valid(self, direction):
+            if self.is_action_valid(direction):
                 paths.append((x, y, direction))
                 explored[y][x] = True
 
@@ -90,10 +90,7 @@ class Zidane(Player):
                 Action.MOVE_RIGHT,
             ):
                 new_x, new_y = d.apply((x, y))
-                if (
-                    game.background[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR)
-                    and not explored[new_y][new_x]
-                ):
+                if game.background[y][x].is_floor() and not explored[new_y][new_x]:
                     paths.append((new_x, new_y, direction))
                     explored[new_y][new_x] = True
 

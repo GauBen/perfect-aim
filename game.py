@@ -130,6 +130,41 @@ class Game:
         # Crée les joueurs et des objets
         self.create_entities(player_constructors)
 
+    def __deepcopy__(self, memo: Dict[int, object]):
+        """Assure une copie profonde efficace de l'objet."""
+        clone: Game = self.__class__.__new__(self.__class__)
+
+        # Propriétés simples
+        clone.over = self.over
+        clone.size = self.size
+        clone.t = self.t
+        clone.winner = None
+
+        # Objets profonds
+        clone.players = self.players
+        clone.background = [[tile for tile in row] for row in self.background]
+        clone.tile_grid = [[tile for tile in row] for row in self.tile_grid]
+        clone.entity_grid = [
+            [set() for _ in range(clone.size)] for _ in range(clone.size)
+        ]
+        clone.entities = set()
+        for entity in self.entities:
+            e = copy(entity)
+            clone.entities.add(e)
+            clone.entity_grid[e.y][e.x].add(e)
+            if entity == self.winner:
+                clone.winner = e
+
+        return clone
+
+    @property
+    def player_entities(self) -> List[entities.PlayerEntity]:
+        """Les `PlayerEntities` encore en vie."""
+        return sorted(
+            filter(lambda e: isinstance(e, entities.PlayerEntity), self.entities),
+            key=lambda player: player.color,
+        )
+
     def create_entities(self, player_constructors: List[Optional[Type[Player]]]):
         """Ajoute les joueurs et les entitiés sur les grilles."""
         # Les joueurs
@@ -300,6 +335,20 @@ class Game:
             self.entity_grid[entity.y][entity.x].remove(entity)
         self.update_grid(entity.x, entity.y)
 
+    def next_action(self, entity: entities.PlayerEntity) -> Action:
+        """Renvoie la prochaine action du joueur."""
+        clone = deepcopy(self)
+        return self.players[entity.color].next_action(
+            clone, clone.player_entity_from_color(entity.color)
+        )
+
+    def collect(self, player: Player, collectible: entities.CollectableEntity):
+        """Ramasse l'object `collectible` pour le joueur `player`."""
+        collectible.collect(player)
+        self.entities.remove(collectible)
+        self.entity_grid[collectible.y][collectible.x].remove(collectible)
+        self.update_grid(collectible.x, collectible.y)
+
     def player_attacks(self, player: entities.PlayerEntity, action: Action):
         """Lance une boule de feu pour le joueur `player`."""
 
@@ -335,6 +384,13 @@ class Game:
         else:
             self.remove_entity(player_entity)
 
+    def can_player_attack(self, player: Union[entities.PlayerEntity, Player]) -> bool:
+        """Renvoie `True` si le joueur a une boule de feu disponible."""
+        for entity in self.entities:
+            if isinstance(entity, entities.Fireball) and entity.sender == player.color:
+                return False
+        return True
+
     def is_action_valid(
         self, player: Union[entities.PlayerEntity, Player], action: entities.Action
     ) -> bool:
@@ -366,28 +422,7 @@ class Game:
         # Dans le doute c'est pas possible
         return False
 
-    def can_player_attack(self, player: Union[entities.PlayerEntity, Player]) -> bool:
-        """Renvoie `True` si le joueur a une boule de feu disponible."""
-        for entity in self.entities:
-            if isinstance(entity, entities.Fireball) and entity.sender == player.color:
-                return False
-        return True
-
-    def next_action(self, entity: entities.PlayerEntity) -> Action:
-        """Renvoie la prochaine action du joueur."""
-        clone = deepcopy(self)
-        return self.players[entity.color].next_action(
-            clone, clone.player_entity_from_color(entity.color)
-        )
-
-    def collect(self, player: Player, collectible: entities.CollectableEntity):
-        """Ramasse l'object `collectible` pour le joueur `player`."""
-        collectible.collect(player)
-        self.entities.remove(collectible)
-        self.entity_grid[collectible.y][collectible.x].remove(collectible)
-        self.update_grid(collectible.x, collectible.y)
-
-    def player_entity_from_color(self, color: Tile):
+    def player_entity_from_color(self, color: Tile) -> entities.PlayerEntity:
         """Cherche l'entité associée à la couleur d'une joueur."""
         if not color.is_player():
             raise ValueError("L'argument n'est pas un joueur.")
@@ -399,41 +434,6 @@ class Game:
             )
         except StopIteration:
             raise KeyError("Le joueur n'est plus dans le jeu.")
-
-    @property
-    def player_entities(self) -> List[entities.PlayerEntity]:
-        """Les `PlayerEntities` encore en vie."""
-        return sorted(
-            filter(lambda e: isinstance(e, entities.PlayerEntity), self.entities),
-            key=lambda player: player.color,
-        )
-
-    def __deepcopy__(self, memo: Dict[int, object]):
-        """Assure une copie profonde efficace de l'objet."""
-        clone: Game = self.__class__.__new__(self.__class__)
-
-        # Propriétés simples
-        clone.over = self.over
-        clone.size = self.size
-        clone.t = self.t
-        clone.winner = None
-
-        # Objets profonds
-        clone.players = self.players
-        clone.background = [[tile for tile in row] for row in self.background]
-        clone.tile_grid = [[tile for tile in row] for row in self.tile_grid]
-        clone.entity_grid = [
-            [set() for _ in range(clone.size)] for _ in range(clone.size)
-        ]
-        clone.entities = set()
-        for entity in self.entities:
-            e = copy(entity)
-            clone.entities.add(e)
-            clone.entity_grid[e.y][e.x].add(e)
-            if entity == self.winner:
-                clone.winner = e
-
-        return clone
 
 
 if __name__ == "__main__":

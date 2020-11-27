@@ -130,27 +130,6 @@ class MovingEntity(Entity):
         self.action = Action.WAIT
         self.action_progress = 0.0
 
-    def update(self, game: Game, dt: float):
-        """Met à jour l'entité."""
-        # À la fin de l'action, on la recommence
-        if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
-            self.action_progress = 0
-
-        # À la moitié de l'action on déplace l'entité
-        elif (
-            self.action.is_movement()
-            and self.action_progress < 0.5 <= self.action_progress + dt * self.speed
-        ):
-            old_x, old_y = self.x, self.y
-            self.x, self.y = self.action.apply((self.x, self.y))
-            self.action_progress = 0.5
-
-            game.move_entity(self, old_x, old_y)
-
-        # Rien de spécial
-        else:
-            self.action_progress += dt * self.speed
-
     @property
     def time_before_next_update(self) -> float:
         """Temps en seconde avant la prochaine update pour cette entité."""
@@ -178,6 +157,27 @@ class MovingEntity(Entity):
             return self.y - int(self.action_progress >= 0.5) + self.action_progress
         return float(self.y)
 
+    def update(self, game: Game, dt: float):
+        """Met à jour l'entité."""
+        # À la fin de l'action, on la recommence
+        if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
+            self.action_progress = 0
+
+        # À la moitié de l'action on déplace l'entité
+        elif (
+            self.action.is_movement()
+            and self.action_progress < 0.5 <= self.action_progress + dt * self.speed
+        ):
+            old_x, old_y = self.x, self.y
+            self.x, self.y = self.action.apply((self.x, self.y))
+            self.action_progress = 0.5
+
+            game.move_entity(self, old_x, old_y)
+
+        # Rien de spécial
+        else:
+            self.action_progress += dt * self.speed
+
 
 class PlayerEntity(MovingEntity):
     """
@@ -195,6 +195,11 @@ class PlayerEntity(MovingEntity):
         self.shield = False
         self.coins = 0
         self.super_fireballs = 0
+
+    @property
+    def color(self) -> Tile:
+        """La couleur du joueur."""
+        return self.TILE
 
     def update(self, game: Game, dt: float):
         """Met à jour la position du joueur et choisit sa prochaine action."""
@@ -249,11 +254,6 @@ class PlayerEntity(MovingEntity):
         # Rien de spécial, on avance dans l'action
         else:
             self.action_progress += dt * self.speed
-
-    @property
-    def color(self) -> Tile:
-        """La couleur du joueur."""
-        return self.TILE
 
 
 class RedPlayer(PlayerEntity):

@@ -151,7 +151,8 @@ class MovingEntity(Entity):
         else:
             self.action_progress += dt * self.speed
 
-    def next_update_in(self) -> float:
+    @property
+    def time_before_next_update(self) -> float:
         """Temps en seconde avant la prochaine update pour cette entité."""
         # Update à la moitié de l'action
         if self.action.is_movement() and self.action_progress < 0.5:

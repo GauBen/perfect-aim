@@ -29,6 +29,10 @@ class Tile(IntEnum):
 
     FIREBALL = 41
 
+    def is_floor(self) -> bool:
+        """Renvoie vrai si `self` correspond à du sol."""
+        return self in (Tile.FLOOR, Tile.DAMAGED_FLOOR)
+
     def is_background(self) -> bool:
         """Renvoie vrai si `self` correspond au fond du plateau."""
         return self in (Tile.FLOOR, Tile.WALL, Tile.LAVA, Tile.DAMAGED_FLOOR)

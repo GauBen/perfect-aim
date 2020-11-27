@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from copy import copy, deepcopy
-from random import randrange
+from random import shuffle
 from time import perf_counter
 from typing import Dict, List, Optional, Set, Type, Union
 
@@ -292,37 +292,35 @@ class Game:
 
     def add_collectibles(self):
         """Ajoute des objets s'il n'y en a plus."""
-        if (
-            len(
-                list(
-                    filter(lambda e: isinstance(e, entities.SpeedBoost), self.entities)
-                )
-            )
-            == 0
-        ):
-            for _ in range(10):
-                x, y = randrange(self.size), randrange(self.size)
-                if self.tile_grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
-                    collectible = entities.SpeedBoost(x, y)
-                    self.entities.add(collectible)
-                    self.entity_grid[y][x].add(collectible)
-                    self.update_grid(collectible.x, collectible.y)
-                    break
-            for _ in range(10):
-                x, y = randrange(self.size), randrange(self.size)
-                if self.tile_grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
-                    collectible = entities.Shield(x, y)
-                    self.entities.add(collectible)
-                    self.entity_grid[y][x].add(collectible)
-                    self.update_grid(collectible.x, collectible.y)
-                    break
-            for _ in range(10):
-                x, y = randrange(self.size), randrange(self.size)
-                if self.tile_grid[y][x] in (Tile.FLOOR, Tile.DAMAGED_FLOOR):
-                    collectible = entities.Coin(x, y)
-                    self.entities.add(collectible)
-                    self.entity_grid[y][x].add(collectible)
-                    self.update_grid(collectible.x, collectible.y)
+        d = {
+            Tile.SPEEDBOOST: 0,
+            Tile.SPEEDPENALTY: 0,
+            Tile.COIN: 0,
+            Tile.SUPER_FIREBALL: 0,
+            Tile.SHIELD: 0,
+        }
+        for entity in self.entities:
+            if entity.TILE.is_collectible():
+                d[entity.TILE] += 1
+        if d[Tile.SPEEDBOOST] + d[Tile.SUPER_FIREBALL] + d[Tile.SHIELD] <= 1:
+            c = [entities.SpeedBoost, entities.SuperFireball, entities.Coin]
+            if d[Tile.COIN] < d[Tile.SPEEDPENALTY]:
+                c = [entities.SpeedBoost, entities.Shield, entities.Coin]
+            elif d[Tile.COIN] > d[Tile.SPEEDPENALTY]:
+                c = [entities.SpeedBoost, entities.SuperFireball, entities.SpeedPenalty]
+
+            coords = [
+                (x, y) for x in range(1, self.size - 1) for y in range(1, self.size - 1)
+            ]
+            shuffle(coords)
+            while len(coords) > 0:
+                x, y = coords.pop()
+                if self.tile_grid[y][x].is_floor():
+                    entity = c.pop()(x, y)
+                    self.entities.add(entity)
+                    self.entity_grid[y][x].add(entity)
+                    self.update_grid(x, y)
+                if len(c) == 0:
                     break
 
     def move_entity(self, entity: entities.MovingEntity, old_x: int, old_y: int):

@@ -314,9 +314,9 @@ class GameInterface:
         # Canvas
         size = self.assets_manager.TILE_SIZE * self.game.size
         self.canvas = tkinter.Canvas(
-            self.window, background="#eee", width=size, height=size
+            self.window, background="#f00", width=size, height=size
         )
-        self.canvas.grid(column=0, row=0, columnspan=3)
+        self.canvas.grid(column=0, row=0, columnspan=3, padx=8, pady=8)
 
         # Gestion du temps en bas
         self.time_scale_label = ttk.Label(self.window, text="x 1.0 / 0 s")
@@ -408,8 +408,8 @@ class GameInterface:
         for y in range(self.game.size):
             for x in range(self.game.size):
                 self.canvas.create_image(
-                    x * self.assets_manager.TILE_SIZE,
-                    y * self.assets_manager.TILE_SIZE,
+                    x * self.assets_manager.TILE_SIZE + 1,
+                    y * self.assets_manager.TILE_SIZE + 1,
                     image=self.assets_manager.tile(self.background, x, y),
                     anchor=tkinter.NW,
                     tags="background",
@@ -433,8 +433,8 @@ class GameInterface:
 
         for entity in sorted(self.game.entities.copy(), key=lambda entity: entity.TILE):
             self.canvas.create_image(
-                int(x(entity) * self.assets_manager.TILE_SIZE),
-                int(y(entity) * self.assets_manager.TILE_SIZE),
+                int(x(entity) * self.assets_manager.TILE_SIZE) + 1,
+                int(y(entity) * self.assets_manager.TILE_SIZE) + 1,
                 image=self.assets_manager.entity(entity),
                 anchor=tkinter.NW,
                 tags="entities",

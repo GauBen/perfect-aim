@@ -211,7 +211,7 @@ class PlayerEntity(MovingEntity):
             self.action_progress = 0.0
 
             # Si l'action est valide, on la joue
-            if game.is_action_valid(self, action):
+            if isinstance(action, Action) and game.is_action_valid(self, action):
                 self.action = action
 
                 if self.action.is_attack():

@@ -45,7 +45,7 @@ class Zidane(Player):
                     for entity in game.entity_grid[y][x]
                 ):
                     # Si on a des boules de feu disponibles, on attaque
-                    if game.can_player_attack(self):
+                    if self.can_attack():
                         return action
 
                     # Sinon on le chasse

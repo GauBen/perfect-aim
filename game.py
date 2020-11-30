@@ -5,7 +5,7 @@ from __future__ import annotations
 from copy import copy, deepcopy
 from random import shuffle
 from time import perf_counter
-from typing import Dict, List, Optional, Set, Type, Union
+from typing import Dict, List, Optional, Set, Type
 
 import entities
 from gamegrid import Grid, Tile
@@ -44,7 +44,11 @@ class Player:
 
     def is_action_valid(self, action: Action) -> bool:
         """Vérifie qu'une action est valide."""
-        return self.game.is_action_valid(self, action)
+        return self.game.is_action_valid(self.player_entity, action)
+
+    def can_attack(self) -> bool:
+        """Renvoie vrai si le joueur peut attaquer."""
+        return self.game.can_player_attack(self.player_entity)
 
     @property
     def x(self) -> int:
@@ -241,7 +245,7 @@ class Game:
         else:
             self.remove_entity(player_entity)
 
-    def can_player_attack(self, player: Union[entities.PlayerEntity, Player]) -> bool:
+    def can_player_attack(self, player: entities.PlayerEntity) -> bool:
         """Renvoie `True` si le joueur a une boule de feu disponible."""
         for entity in self.entities:
             if isinstance(entity, entities.Fireball) and entity.sender == player.color:
@@ -249,12 +253,9 @@ class Game:
         return True
 
     def is_action_valid(
-        self, player: Union[entities.PlayerEntity, Player], action: entities.Action
+        self, player: entities.PlayerEntity, action: entities.Action
     ) -> bool:
         """Renvoie `True` si l'action `action` est jouable."""
-        if isinstance(player, Player):
-            return self.is_action_valid(player.player_entity, action)
-
         if action == Action.WAIT:
             return True
 

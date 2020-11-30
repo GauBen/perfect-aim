@@ -161,7 +161,7 @@ class MovingEntity(Entity):
         """Met à jour l'entité."""
         # À la fin de l'action, on la recommence
         if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
-            self.action_progress = 0
+            self.action_progress = 0.0
 
         # À la moitié de l'action on déplace l'entité
         elif (
@@ -208,7 +208,7 @@ class PlayerEntity(MovingEntity):
 
             # Choix de la prochaine action
             action = game.next_action(self)
-            self.action_progress = 0
+            self.action_progress = 0.0
 
             # Si l'action est valide, on la joue
             if game.is_action_valid(self, action):

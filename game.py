@@ -82,7 +82,7 @@ class Player:
         return self.player_entity.action
 
     @property
-    def action_progress(self) -> Action:
+    def action_progress(self) -> float:
         """Avancement de l'action en cours."""
         return self.player_entity.action_progress
 
@@ -130,80 +130,7 @@ class Game:
         ]
 
         # Crée les joueurs et des objets
-        self.create_entities(player_constructors)
-
-    def __deepcopy__(self, memo: Dict[int, object]):
-        """Assure une copie profonde efficace de l'objet."""
-        clone: Game = self.__class__.__new__(self.__class__)
-
-        # Propriétés simples
-        clone.over = self.over
-        clone.size = self.size
-        clone.t = self.t
-        clone.winner = None
-
-        # Objets profonds
-        clone.players = self.players
-        clone.background = [[tile for tile in row] for row in self.background]
-        clone.tile_grid = [[tile for tile in row] for row in self.tile_grid]
-        clone.entity_grid = [
-            [set() for _ in range(clone.size)] for _ in range(clone.size)
-        ]
-        clone.entities = set()
-        for entity in self.entities:
-            e = copy(entity)
-            clone.entities.add(e)
-            clone.entity_grid[e.y][e.x].add(e)
-            if entity == self.winner:
-                clone.winner = e
-
-        return clone
-
-    @property
-    def player_entities(self) -> List[entities.PlayerEntity]:
-        """Les `PlayerEntities` encore en vie."""
-        return sorted(
-            filter(lambda e: isinstance(e, entities.PlayerEntity), self.entities),
-            key=lambda player: player.color,
-        )
-
-    def create_entities(self, player_constructors: List[Optional[Type[Player]]]):
-        """Ajoute les joueurs et les entitiés sur les grilles."""
-        # Les joueurs
-        for player_constructor, entity_constructor, coords in zip(
-            player_constructors,
-            entities.players,
-            [
-                (1, 1),
-                (self.size - 2, self.size - 2),
-                (self.size - 2, 1),
-                (1, self.size - 2),
-            ],
-        ):
-            x, y = coords
-            if player_constructor is not None:
-                p = entity_constructor(x, y)
-                self.entities.add(p)
-                self.players[p.color] = player_constructor()
-                # On initialise le joueur, mais on ignore son action
-                self.next_action(p)
-
-        d = {
-            Tile.COIN: entities.Coin,
-            Tile.SPEEDBOOST: entities.SpeedBoost,
-            Tile.SPEEDPENALTY: entities.SpeedPenalty,
-            Tile.SUPER_FIREBALL: entities.SuperFireball,
-            Tile.SHIELD: entities.Shield,
-        }
-        for y in range(self.size):
-            for x in range(self.size):
-                if self.tile_grid[y][x] in d:
-                    self.entities.add(d[self.tile_grid[y][x]](x, y))
-                    self.background[y][x] = Tile.FLOOR
-
-        for entity in self.entities:
-            self.entity_grid[entity.y][entity.x].add(entity)
-            self.update_grid(entity.x, entity.y)
+        self._create_entities(player_constructors)
 
     def update(self, elapsed_time: float):
         """Calcule toutes les updates qui ont eu lieu en `elapsed_time` secondes."""
@@ -227,8 +154,8 @@ class Game:
             # (changement de case par exemple)
 
             # Mise à jour du terrain
-            self.add_lava(dt)
-            self.add_collectibles()
+            self._add_lava(dt)
+            self._add_collectibles()
 
             self.t += dt
 
@@ -238,7 +165,7 @@ class Game:
                     entity, entities.MovingEntity
                 ):
                     entity.update(self, dt)
-                self.update_grid(entity.x, entity.y)
+                self._update_grid(entity.x, entity.y)
 
             # Il ne reste qu'un joueur en vie ?
             player_entities = list(self.player_entities)
@@ -252,89 +179,18 @@ class Game:
             # Si dt < elapsed_time, il reste des updates à traiter
             elapsed_time -= dt
 
-    def update_grid(self, x: int, y: int):
-        """Met à jour la grille aux coordonnées données."""
-        if len(self.entity_grid[y][x]) == 0:
-            self.tile_grid[y][x] = self.background[y][x]
-        else:
-            self.tile_grid[y][x] = max(entity.TILE for entity in self.entity_grid[y][x])
-
-    def add_lava(self, dt: float):
-        """Ajoute de la lave après un certain temps."""
-        if self.t + dt >= self.LAVA_FLOOD_START_TIME and int(
-            self.t / self.LAVA_STEP_DURATION
-        ) < int((self.t + dt) / self.LAVA_STEP_DURATION):
-            # Étape de l'inondation
-            step = int(
-                (self.t + dt - self.LAVA_FLOOD_START_TIME) / self.LAVA_STEP_DURATION
-            )
-            lava = step % 2 == 1
-            ring = 1 + step // 2
-            if ring >= self.size // 2:
-                return
-
-            for y in range(ring, self.size - ring):
-                for x in range(ring, self.size - ring):
-                    if (
-                        ring < x < self.size - ring - 1
-                        and ring < y < self.size - ring - 1
-                    ):
-                        continue
-                    if lava and self.background[y][x] == Tile.DAMAGED_FLOOR:
-                        self.background[y][x] = Tile.LAVA
-                        for entity in self.entity_grid[y][x].copy():
-                            if not isinstance(entity, entities.Fireball):
-                                self.remove_entity(entity)
-                        self.update_grid(x, y)
-                    elif not lava and self.background[y][x] == Tile.FLOOR:
-                        self.background[y][x] = Tile.DAMAGED_FLOOR
-                        self.update_grid(x, y)
-
-    def add_collectibles(self):
-        """Ajoute des objets s'il n'y en a plus."""
-        d = {
-            Tile.SPEEDBOOST: 0,
-            Tile.SPEEDPENALTY: 0,
-            Tile.COIN: 0,
-            Tile.SUPER_FIREBALL: 0,
-            Tile.SHIELD: 0,
-        }
-        for entity in self.entities:
-            if entity.TILE.is_collectible():
-                d[entity.TILE] += 1
-        if d[Tile.SPEEDBOOST] + d[Tile.SUPER_FIREBALL] + d[Tile.SHIELD] <= 1:
-            c = [entities.SpeedBoost, entities.SuperFireball, entities.Coin]
-            if d[Tile.COIN] < d[Tile.SPEEDPENALTY]:
-                c = [entities.SpeedBoost, entities.Shield, entities.Coin]
-            elif d[Tile.COIN] > d[Tile.SPEEDPENALTY]:
-                c = [entities.SpeedBoost, entities.SuperFireball, entities.SpeedPenalty]
-
-            coords = [
-                (x, y) for x in range(1, self.size - 1) for y in range(1, self.size - 1)
-            ]
-            shuffle(coords)
-            while len(coords) > 0:
-                x, y = coords.pop()
-                if self.tile_grid[y][x].is_floor():
-                    entity = c.pop()(x, y)
-                    self.entities.add(entity)
-                    self.entity_grid[y][x].add(entity)
-                    self.update_grid(x, y)
-                if len(c) == 0:
-                    break
-
     def move_entity(self, entity: entities.MovingEntity, old_x: int, old_y: int):
         """Déplace l'entité sur la grille des entités `entity_grid`."""
         self.entity_grid[old_y][old_x].remove(entity)
         self.entity_grid[entity.y][entity.x].add(entity)
-        self.update_grid(old_x, old_y)
+        self._update_grid(old_x, old_y)
 
     def remove_entity(self, entity: entities.Entity):
         """Supprime l'entité du jeu."""
         if entity in self.entities:
             self.entities.remove(entity)
             self.entity_grid[entity.y][entity.x].remove(entity)
-        self.update_grid(entity.x, entity.y)
+        self._update_grid(entity.x, entity.y)
 
     def next_action(self, entity: entities.PlayerEntity) -> Action:
         """Renvoie la prochaine action du joueur."""
@@ -348,7 +204,7 @@ class Game:
         collectible.collect(player)
         self.entities.remove(collectible)
         self.entity_grid[collectible.y][collectible.x].remove(collectible)
-        self.update_grid(collectible.x, collectible.y)
+        self._update_grid(collectible.x, collectible.y)
 
     def player_attacks(self, player: entities.PlayerEntity, action: Action):
         """Lance une boule de feu pour le joueur `player`."""
@@ -359,7 +215,7 @@ class Game:
             )
             self.entities.add(fireball)
             self.entity_grid[fireball.y][fireball.x].add(fireball)
-            self.update_grid(fireball.x, fireball.y)
+            self._update_grid(fireball.x, fireball.y)
 
         if player.super_fireballs > 0:
             for action in (
@@ -381,7 +237,7 @@ class Game:
         if player_entity.shield:
             player_entity.shield = False
             self.remove_entity(fireball)
-            self.update_grid(player_entity.x, player_entity.y)
+            self._update_grid(player_entity.x, player_entity.y)
         else:
             self.remove_entity(player_entity)
 
@@ -435,6 +291,151 @@ class Game:
             )
         except StopIteration:
             raise KeyError("Le joueur n'est plus dans le jeu.")
+
+    @property
+    def player_entities(self) -> List[entities.PlayerEntity]:
+        """Les `PlayerEntities` encore en vie."""
+        return sorted(
+            filter(lambda e: isinstance(e, entities.PlayerEntity), self.entities),
+            key=lambda player: player.color,
+        )
+
+    def _update_grid(self, x: int, y: int):
+        """Met à jour la grille aux coordonnées données."""
+        if len(self.entity_grid[y][x]) == 0:
+            self.tile_grid[y][x] = self.background[y][x]
+        else:
+            self.tile_grid[y][x] = max(entity.TILE for entity in self.entity_grid[y][x])
+
+    def _create_entities(self, player_constructors: List[Optional[Type[Player]]]):
+        """Ajoute les joueurs et les entitiés sur les grilles."""
+        # Les joueurs
+        for player_constructor, entity_constructor, coords in zip(
+            player_constructors,
+            entities.players,
+            [
+                (1, 1),
+                (self.size - 2, self.size - 2),
+                (self.size - 2, 1),
+                (1, self.size - 2),
+            ],
+        ):
+            x, y = coords
+            if player_constructor is not None:
+                p = entity_constructor(x, y)
+                self.entities.add(p)
+                self.players[p.color] = player_constructor()
+                # On initialise le joueur, mais on ignore son action
+                self.next_action(p)
+
+        # Les objets
+        d = {
+            Tile.COIN: entities.Coin,
+            Tile.SPEEDBOOST: entities.SpeedBoost,
+            Tile.SPEEDPENALTY: entities.SpeedPenalty,
+            Tile.SUPER_FIREBALL: entities.SuperFireball,
+            Tile.SHIELD: entities.Shield,
+        }
+        for y in range(self.size):
+            for x in range(self.size):
+                if self.tile_grid[y][x] in d:
+                    self.entities.add(d[self.tile_grid[y][x]](x, y))
+                    self.background[y][x] = Tile.FLOOR
+
+        for entity in self.entities:
+            self.entity_grid[entity.y][entity.x].add(entity)
+            self._update_grid(entity.x, entity.y)
+
+    def _add_lava(self, dt: float):
+        """Ajoute de la lave après un certain temps."""
+        if self.t + dt >= self.LAVA_FLOOD_START_TIME and int(
+            self.t / self.LAVA_STEP_DURATION
+        ) < int((self.t + dt) / self.LAVA_STEP_DURATION):
+            # Étape de l'inondation
+            step = int(
+                (self.t + dt - self.LAVA_FLOOD_START_TIME) / self.LAVA_STEP_DURATION
+            )
+            lava = step % 2 == 1
+            ring = 1 + step // 2
+            if ring >= self.size // 2:
+                return
+
+            for y in range(ring, self.size - ring):
+                for x in range(ring, self.size - ring):
+                    if (
+                        ring < x < self.size - ring - 1
+                        and ring < y < self.size - ring - 1
+                    ):
+                        continue
+                    if lava and self.background[y][x] == Tile.DAMAGED_FLOOR:
+                        self.background[y][x] = Tile.LAVA
+                        for entity in self.entity_grid[y][x].copy():
+                            if not isinstance(entity, entities.Fireball):
+                                self.remove_entity(entity)
+                        self._update_grid(x, y)
+                    elif not lava and self.background[y][x] == Tile.FLOOR:
+                        self.background[y][x] = Tile.DAMAGED_FLOOR
+                        self._update_grid(x, y)
+
+    def _add_collectibles(self):
+        """Ajoute des objets s'il n'y en a plus."""
+        d = {
+            Tile.SPEEDBOOST: 0,
+            Tile.SPEEDPENALTY: 0,
+            Tile.COIN: 0,
+            Tile.SUPER_FIREBALL: 0,
+            Tile.SHIELD: 0,
+        }
+        for entity in self.entities:
+            if entity.TILE.is_collectible():
+                d[entity.TILE] += 1
+        if d[Tile.SPEEDBOOST] + d[Tile.SUPER_FIREBALL] + d[Tile.SHIELD] <= 1:
+            c = [entities.SpeedBoost, entities.SuperFireball, entities.Coin]
+            if d[Tile.COIN] < d[Tile.SPEEDPENALTY]:
+                c = [entities.SpeedBoost, entities.Shield, entities.Coin]
+            elif d[Tile.COIN] > d[Tile.SPEEDPENALTY]:
+                c = [entities.SpeedBoost, entities.SuperFireball, entities.SpeedPenalty]
+
+            coords = [
+                (x, y) for x in range(1, self.size - 1) for y in range(1, self.size - 1)
+            ]
+            shuffle(coords)
+            while len(coords) > 0:
+                x, y = coords.pop()
+                if self.tile_grid[y][x].is_floor():
+                    entity = c.pop()(x, y)
+                    self.entities.add(entity)
+                    self.entity_grid[y][x].add(entity)
+                    self._update_grid(x, y)
+                if len(c) == 0:
+                    break
+
+    def __deepcopy__(self, memo: Dict[int, object]):
+        """Assure une copie profonde efficace de l'objet."""
+        clone: Game = self.__class__.__new__(self.__class__)
+
+        # Propriétés simples
+        clone.over = self.over
+        clone.size = self.size
+        clone.t = self.t
+        clone.winner = None
+
+        # Objets profonds
+        clone.players = self.players
+        clone.background = [[tile for tile in row] for row in self.background]
+        clone.tile_grid = [[tile for tile in row] for row in self.tile_grid]
+        clone.entity_grid = [
+            [set() for _ in range(clone.size)] for _ in range(clone.size)
+        ]
+        clone.entities = set()
+        for entity in self.entities:
+            e = copy(entity)
+            clone.entities.add(e)
+            clone.entity_grid[e.y][e.x].add(e)
+            if entity == self.winner:
+                clone.winner = e
+
+        return clone
 
 
 if __name__ == "__main__":

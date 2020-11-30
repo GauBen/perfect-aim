@@ -80,15 +80,6 @@ class Action(Enum):
             return Action.MOVE_RIGHT
         return self
 
-    def is_movement(self) -> bool:
-        """Renvoie vrai si l'action est un déplacement."""
-        return self in (
-            Action.MOVE_UP,
-            Action.MOVE_DOWN,
-            Action.MOVE_LEFT,
-            Action.MOVE_RIGHT,
-        )
-
     def is_attack(self) -> bool:
         """Renvoie vrai si l'action est une attaque."""
         return self in (
@@ -96,6 +87,15 @@ class Action(Enum):
             Action.ATTACK_DOWN,
             Action.ATTACK_LEFT,
             Action.ATTACK_RIGHT,
+        )
+
+    def is_movement(self) -> bool:
+        """Renvoie vrai si l'action est un déplacement."""
+        return self in (
+            Action.MOVE_UP,
+            Action.MOVE_DOWN,
+            Action.MOVE_LEFT,
+            Action.MOVE_RIGHT,
         )
 
 

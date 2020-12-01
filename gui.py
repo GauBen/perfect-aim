@@ -4,7 +4,7 @@ import tkinter
 import tkinter.ttk as ttk
 from copy import deepcopy
 from time import perf_counter
-from typing import List, Optional, Type
+from typing import Callable, List, Optional, Type
 
 import entities
 import game
@@ -298,43 +298,15 @@ class GameInterface:
         self.canvas = tkinter.Canvas(
             self.window, background="#eee", width=size, height=size
         )
-        self.canvas.grid(column=0, row=0, columnspan=3, padx=8, pady=8)
-
-        # Gestion du temps en bas
-        self.time_scale_label = ttk.Label(self.window, text="x 1.0 / 0 s")
-        self.time_scale_var = tkinter.DoubleVar(value=1.0)
-        self.time_scale = ttk.Scale(
-            self.window,
-            from_=0.0,
-            to=10.0,
-            orient=tkinter.HORIZONTAL,
-            variable=self.time_scale_var,
-            command=lambda _: self.time_scale_label.config(
-                text=f"Paused ({self.game.t:.1f} s)"
-                if (x := self.time_scale_var.get()) == 0
-                else f"x {x:.1f} / {self.game.t:.1f} s"
-            ),
-        )
-        self.time_scale.grid(column=0, row=1, sticky=tkinter.NSEW)
-        self.time_scale_label.grid(column=1, row=1, sticky=tkinter.NSEW)
-
-        self.checkbox_value = tkinter.StringVar(value="off")
-        self.checkbox = ttk.Checkbutton(
-            self.window,
-            text="Voir les hitboxes",
-            onvalue="on",
-            offvalue="off",
-            variable=self.checkbox_value,
-        )
-        self.checkbox.grid(column=2, row=1, sticky=tkinter.NSEW)
+        self.canvas.grid(column=0, row=0, rowspan=2, padx=8, pady=8)
 
         # Les joueurs sur le côté
         self.player_panels_frame = ttk.Frame(self.window, padding=16)
-        self.player_panels_frame.grid(column=3, row=0, rowspan=2, sticky=tkinter.EW)
+        self.player_panels_frame.grid(column=1, row=0, sticky=tkinter.EW)
         self.player_panels_frame.grid_columnconfigure(1, weight=1)
         self.player_panels_frame.grid_columnconfigure(3, weight=1)
         self.player_panels_frame.grid_columnconfigure(5, weight=1)
-        self.window.grid_columnconfigure(3, weight=1)
+        self.window.grid_columnconfigure(1, weight=1)
 
         player_entities = list(self.game.player_entities)
         self.player_panels = [
@@ -348,18 +320,79 @@ class GameInterface:
             for i in range(len(player_entities))
         ]
 
-    def start(self):
+        # Contrôles en bas à droite
+        self.control_frame = ttk.Frame(self.window, padding=8)
+        self.control_frame.grid(column=1, row=1, sticky=tkinter.S + tkinter.EW)
+        self.control_frame.grid_columnconfigure(0, weight=1)
+        self.control_frame.grid_columnconfigure(1, weight=1)
+
+        self.time_label = ttk.Label(
+            self.control_frame, text="0 s", font=("", 12, "bold")
+        )
+        self.time_label.grid(column=0, row=0, pady=4, columnspan=2)
+
+        self.time_scale_label = ttk.Label(self.control_frame, text="x 1.0", width=6)
+        self.time_scale_var = tkinter.DoubleVar(value=1.0)
+        self.time_scale = ttk.Scale(
+            self.control_frame,
+            from_=0.0,
+            to=10.0,
+            orient=tkinter.HORIZONTAL,
+            variable=self.time_scale_var,
+            command=lambda _: self.time_scale_label.config(
+                text=f"Paused"
+                if (x := self.time_scale_var.get()) == 0
+                else f"x {x:.1f}"
+            ),
+        )
+        self.time_scale.grid(column=0, row=1, padx=4, sticky=tkinter.E)
+        self.time_scale_label.grid(column=1, row=1, padx=4, sticky=tkinter.W)
+
+        self.checkbox_value = tkinter.StringVar(value="off")
+        self.checkbox = ttk.Checkbutton(
+            self.control_frame,
+            text="Voir les hitboxes",
+            onvalue="on",
+            offvalue="off",
+            variable=self.checkbox_value,
+        )
+        self.checkbox.grid(column=0, row=2, columnspan=2, pady=4)
+
+        self.restart_button = ttk.Button(self.control_frame, text="Recommencer")
+        self.settings_button = ttk.Button(self.control_frame, text="Retour")
+        self.restart_button.grid(column=0, row=3, padx=4, sticky=tkinter.E)
+        self.settings_button.grid(column=1, row=3, padx=4, sticky=tkinter.W)
+
+    def start(self, restart_callback: Callable, settings_callback: Callable):
         """Lance la boucle du jeu."""
         t = perf_counter()
         last = t
+        stop = False
+
+        def restart():
+            nonlocal stop
+            stop = True
+            self.window.destroy()
+            restart_callback()
+
+        def settings():
+            nonlocal stop
+            stop = True
+            self.window.destroy()
+            settings_callback()
+
+        self.restart_button.config(command=restart)
+        self.settings_button.config(command=settings)
 
         def update():
             """Provoque la mise à jour du jeu et de la fenêtre."""
+            if stop:
+                return
+
             nonlocal t, last
             t = perf_counter()
             dt = t - last
             last = t
-            print(1 / dt)
 
             if self.time_scale_var.get() > 0:
                 self.game.update(dt * self.time_scale_var.get())
@@ -370,14 +403,15 @@ class GameInterface:
                     max(1, int(1000 / 60 - 1000 * (perf_counter() - last))), update
                 )
 
+            elif self.game.over:
+                self.game_over()
+
         update()
 
     def update(self):
         """Met à jour la fenêtre."""
         # Le timer
-        self.time_scale_label.config(
-            text=f"x {self.time_scale_var.get():.1f} / {self.game.t:.1f} s"
-        )
+        self.time_label.config(text=f"{self.game.t:.1f} s")
 
         # Les stats
         for p in self.player_panels:
@@ -428,6 +462,21 @@ class GameInterface:
                 anchor=tkinter.NW,
                 tags="entities",
             )
+
+    def game_over(self):
+        """Affiche le nom du gagnant."""
+        if self.game.winner is None:
+            self.time_label.config(text="Match nul")
+        else:
+            self.time_label.config(
+                text=f"Victoire de",
+                image=self.assets_manager.players[self.game.winner.color][Action.WAIT][
+                    1
+                ],
+                compound=tkinter.RIGHT,
+            )
+        self.time_scale.config(state=tkinter.DISABLED)
+        self.checkbox.config(state=tkinter.DISABLED)
 
 
 class PlayerSelector:
@@ -544,7 +593,16 @@ class GameLauncher:
 
         self.master.withdraw()
         g = game.Game(players)
-        GameInterface(self.master, self.assets_manager, g).start()
+
+        def settings():
+            self.game_launched = False
+            self.master.deiconify()
+
+        def restart():
+            self.game_launched = False
+            self.launch_one_game(players)
+
+        GameInterface(self.master, self.assets_manager, g).start(restart, settings)
 
     def launch_many_games(self, players: List[Optional[Type[game.Player]]]):
         """Lance 2020 parties simultanées."""

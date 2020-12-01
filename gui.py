@@ -235,9 +235,9 @@ class PlayerPanel:
                 row=n, column=0, columnspan=6, sticky=tkinter.EW, padx=16
             )
             n += 1
-        self.player_icon.grid(row=n + 0, column=0, padx=(0, 8), pady=(16, 2))
+        self.player_icon.grid(row=n + 0, column=0, padx=(0, 8), pady=(12, 2))
         self.player_label.grid(
-            row=n + 0, column=1, columnspan=5, sticky=tkinter.W, pady=(16, 2)
+            row=n + 0, column=1, columnspan=5, sticky=tkinter.W, pady=(12, 2)
         )
         self.speed_icon.grid(row=n + 1, column=0, padx=(0, 8), pady=2)
         self.speed_label.grid(
@@ -249,9 +249,9 @@ class PlayerPanel:
         )
         self.coin_icon.grid(row=n + 1, column=4, padx=8, pady=2)
         self.coin_label.grid(row=n + 1, column=5, sticky=tkinter.W, padx=(0, 8), pady=2)
-        self.action_label.grid(row=n + 2, column=0, columnspan=4, padx=4, pady=(2, 16))
+        self.action_label.grid(row=n + 2, column=0, columnspan=4, padx=4, pady=(2, 12))
         self.action_bar.grid(
-            row=n + 2, column=4, columnspan=2, sticky=tkinter.EW, padx=4, pady=(2, 16)
+            row=n + 2, column=4, columnspan=2, sticky=tkinter.EW, padx=4, pady=(2, 12)
         )
 
     def update(self):
@@ -294,6 +294,10 @@ class GameInterface:
     def create_widgets(self):
         """Crée les widgets tk dans la fenêtre du jeu."""
         # Canvas
+        self.window.grid_columnconfigure(1, weight=1)
+        self.window.grid_rowconfigure(0, weight=1)
+        self.window.grid_rowconfigure(1, weight=1)
+
         size = self.assets_manager.TILE_SIZE * self.game.size
         self.canvas = tkinter.Canvas(
             self.window, background="#eee", width=size, height=size
@@ -306,7 +310,6 @@ class GameInterface:
         self.player_panels_frame.grid_columnconfigure(1, weight=1)
         self.player_panels_frame.grid_columnconfigure(3, weight=1)
         self.player_panels_frame.grid_columnconfigure(5, weight=1)
-        self.window.grid_columnconfigure(1, weight=1)
 
         player_entities = list(self.game.player_entities)
         self.player_panels = [
@@ -322,7 +325,7 @@ class GameInterface:
 
         # Contrôles en bas à droite
         self.control_frame = ttk.Frame(self.window, padding=8)
-        self.control_frame.grid(column=1, row=1, sticky=tkinter.S + tkinter.EW)
+        self.control_frame.grid(column=1, row=1, sticky=tkinter.EW)
         self.control_frame.grid_columnconfigure(0, weight=1)
         self.control_frame.grid_columnconfigure(1, weight=1)
 
@@ -331,7 +334,7 @@ class GameInterface:
         )
         self.time_label.grid(column=0, row=0, pady=4, columnspan=2)
 
-        self.time_scale_label = ttk.Label(self.control_frame, text="x 1.0", width=6)
+        self.time_scale_label = ttk.Label(self.control_frame, text="x 1.0", width=8)
         self.time_scale_var = tkinter.DoubleVar(value=1.0)
         self.time_scale = ttk.Scale(
             self.control_frame,
@@ -340,9 +343,7 @@ class GameInterface:
             orient=tkinter.HORIZONTAL,
             variable=self.time_scale_var,
             command=lambda _: self.time_scale_label.config(
-                text=f"Paused"
-                if (x := self.time_scale_var.get()) == 0
-                else f"x {x:.1f}"
+                text=f"Pause" if (x := self.time_scale_var.get()) == 0 else f"x {x:.1f}"
             ),
         )
         self.time_scale.grid(column=0, row=1, padx=4, sticky=tkinter.E)
@@ -531,6 +532,8 @@ class GameLauncher:
 
         self.assets_manager = AssetsManager()
         self.player_constructors = players.list_player_constructors()
+
+        self.master.iconphoto(True, self.assets_manager.fireball[Action.MOVE_RIGHT][0])
 
         self.game_launched = False
         self.create_launcher()

@@ -119,7 +119,7 @@ Les valeurs de retour possibles sont `WAIT`, `MOVE_UP`, `MOVE_DOWN`, `MOVE_LEFT`
 Les informations disponibles sont les suivantes :
 
 -   `x` et `y (int)` les coordonnées du joueur, respectivement horizontale et verticale. `(0, 0)` est le mur en haut à gauche.
--   `speed (float)` la vitesse du joueur, qui correspond au nombre d'actions que votre joueur effectuer par seconde (`1.0` au début du jeu). Cette valeur est incrémentée de `0.25` à chaque bonus de vitesse collecté. (Et `-0.25` par malus.)
+-   `speed (float)` la vitesse du joueur, qui correspond au nombre d'actions que votre joueur effectue par seconde (`1.0` au début du jeu). Cette valeur est incrémentée de `0.25` à chaque bonus de vitesse collecté. (Et `-0.25` par malus.)
 -   `coins (int)` le nombre de pièces du joueur.
 -   `super_fireballs (int)` le nombre de super boules de feu collectées. La prochaine attaque en consommera une s'il y en a une disponible.
 -   `shield (bool)` la présence d'un bouclier. Vrai si le joueur est protégé de la prochaine boule de feu qu'il reçoit.

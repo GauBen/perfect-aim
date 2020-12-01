@@ -16,16 +16,16 @@ Perfect Aim est composé :
 Le plateau est une matrice bidimensionnelle.
 Il se compose :
 
--   De sol, une case vide dans laquelle un joueur peut aller
--   De murs, une case dans laquelle les joueurs ne peuvent pas aller
--   De lave, une case dans laquelle tout joueur qui s'y rend meurt
--   De sol endommagé, une case de sol qui devient de la lave dans les 5 secondes
+-   De sol, les cases vides dans lesquelles les joueurs peuvent aller
+-   De murs, les cases dans lesquelles les joueurs ne peuvent pas aller
+-   De lave, les cases qui tuent tout joueur qui s'y rend
+-   De sol endommagé, le sol qui va devenir de la lave dans les 5 secondes
 
 Voici un plateau de jeu avec tous ces éléments, ainsi que des objets et des joueurs :
 
 ![Une partie assez avancée](./doc/background.png)
 
-Le sol commence à s'endommager par l'extérieur à partir de 65 secondes de jeu. Toutes les 10 secondes la zone de jeu est réduite d'une case depuis tous les côtés.
+Le sol commence à s'endommager par l'extérieur à partir de 65 secondes de jeu. Toutes les 10 secondes la zone de jeu est réduite d'une case depuis tous les côtés. Tout le terrain est recouvert de lave au bout de 2 min 30.
 
 Au début de la partie, le plateau est parfaitement symétrique.
 
@@ -33,7 +33,7 @@ Au début de la partie, le plateau est parfaitement symétrique.
 
 ![Joueur rouge](./assets/players/red-i2.png) ![Joueur bleu](./assets/players/blue-i2.png) ![Joueur jaune](./assets/players/yellow-i2.png) ![Joueur vert](./assets/players/green-i2.png)
 
-Un joueur est une entité dont les actions sont déterminées par les programmes des participants. Au début de la partie, un joueur effectue une action toutes les secondes. Cette cadence peut être accélérée grâce à des objets.
+Un joueur est une entité dont les actions sont déterminées par les programmes des participants. Au début de la partie, un joueur effectue une action toutes les secondes. Cette cadence peut être accélérée ou ralentie grâce à des objets.
 
 Une action d'un joueur est : se déplacer dans une des 4 directions, attaquer dans une des 4 directions, ou attendre sur sa case.
 
@@ -41,13 +41,17 @@ Deux joueurs ne peuvent pas se trouver sur la même case en même temps. Si deux
 
 ### Les objets
 
+-   Lorsqu'un joueur se trouve sur une case contenant un objet, il le ramasse obligatoirement.
+-   Des objets sont régénérés sur le plateau s'il n'y en a plus.
+-   Il y a au plus un objet par case.
+
 ![Bonus de vitesse](./assets/collectibles/speedboost.png) **Bonus de vitesse**
 
-Le ramasser confère un bonus de `0.25` actions par seconde en plus.
+Le ramasser confère un bonus de `0.25` action par seconde en plus, permanent. Les bonus et malus de vitesse sont cumulables.
 
 ![Malus de vitesse](./assets/collectibles/hourglass.png) **Malus de vitesse**
 
-Le ramasser confère un malus de `0.25` actions par seconde en moins. Par conséquent, il annule un bonus de vitesse. La vitesse minimale d'un joueur est `0.5`.
+Le ramasser confère un malus de `0.25` action par seconde en moins, permanent. Par conséquent, il annule un bonus de vitesse. La vitesse minimale d'un joueur est `0.5` action par seconde.
 
 ![Pièce](./assets/collectibles/coin.png) **Pièce d'or**
 
@@ -55,9 +59,7 @@ Une pièce d'or, qui n'offre aucun avantage au joueur. Elles sont utilisées pou
 
 ![Super boule de feu](./assets/collectibles/super_fireball.png) **Super boule de feu**
 
-Un sort qui permet de lancer 4 boules de feu dans toutes les directions. Ce sort est cumulable.
-
-**Des objets sont régénérés sur le plateau s'il n'y en a plus.**
+Un sort qui permet de lancer 4 boules de feu dans toutes les directions. Ce sort est cumulable. Si un joueur possède un ou plusieurs sorts de super boule de feu, un sera obligatoirement consommé à la prochaine attaque.
 
 ![Bouclier](./assets/collectibles/shield.png) **Bouclier**
 
@@ -74,13 +76,15 @@ Voici les règles associées aux boules de feu :
 -   Elles éliminent un joueur sans bouclier, et sont éliminées par un joueur avec bouclier.
 -   Elles n'intéragissent pas avec les objets au sol et les autres boules de feu.
 -   Deux joueurs sont susceptibles de s'entretuer s'ils s'attaquent en même temps.
--   Un joueur ne peut attaquer que s'il n'y a plus de boules de feu qu'il a envoyées sur le terrain, ou qu'il a un sort de super boules de feu.
+-   Un joueur ne peut attaquer que s'il n'y a plus de boules de feu qu'il a envoyées sur le terrain, ou qu'il a un sort de super boule de feu.
 
 ![Trois joueurs attaquent en même temps](./doc/fireballs.png)
 
 ## API du jeu
 
-La fonction `play` est appelée à intervalle régulier pour demander au joueur quelle action jouer.
+Les programmes des participants sont à écrire dans le dossier `./players`. Ce dossier contient des stratégies d'exemple qui permettent d'avoir des exemples concrets de l'utilisation de l'API du jeu.
+
+La méthode `play` est appelée à intervalle régulier pour demander au joueur quelle action jouer.
 
 ```python
 class BestPlayer(Player):
@@ -95,8 +99,8 @@ class BestPlayer(Player):
 
 Les paramètres d'appel sont :
 
--   Le joueur `self`, instance de la classe `Player`
--   Le jeu `game`, instance de la classe `Game`
+-   `self` le joueur, instance de la classe `Player`.
+-   `game` le jeu, instance de la classe `Game`.
 
 Les valeurs de retour possibles sont `WAIT`, `MOVE_UP`, `MOVE_DOWN`, `MOVE_LEFT`, `MOVE_RIGHT`, `ATTACK_UP`, `ATTACK_DOWN`, `ATTACK_LEFT`, `ATTACK_RIGHT`. (À préfixer avec `Action.`.)
 
@@ -131,25 +135,28 @@ Méthodes disponibles :
 -   `can_attack() -> bool` : renvoie vrai si on peut attaquer.
 
 ```python
-if self.is_action_valid(Action.MOVE_UP):
+if self.can_attack():
+    return Action.ATTACK_UP
+elif self.is_action_valid(Action.MOVE_UP):
     print("Cap au Nord capitaine !")
     return Action.MOVE_UP
 ```
 
 Les actions possèdent des méthodes pour les manipuler facilement :
 
--   `apply(coords)` où coords est une paire de coordonnées : applique un déplacement
--   `swap()` : donne la direction inverse
--   `to_attack()` : transforme un déplacement en attaque
--   `to_movement()` : transforme une attaque en déplacement
--   `is_attack()` : vrai si c'est une attaque
--   `is_movement()` : devine
+-   `apply(coords: Tuple[int, int]) -> Tuple[int, int]` où `coords` est une paire de coordonnées : applique un déplacement aux coordonnées
+-   `swap() -> Action` : donne la direction inverse
+-   `to_attack() -> Action` : transforme un déplacement en attaque
+-   `to_movement() -> Action` : transforme une attaque en déplacement
+-   `is_attack() -> bool` : vrai si c'est une attaque
+-   `is_movement() -> bool` : devine ;)
 
 Par exemple :
 
 ```python
 coords = (1, 1)
 # Action.MOVE_RIGHT.apply(coords) == (1, 2)
+# Action.MOVE_RIGHT.apply(Action.MOVE_RIGHT.apply(coords)) == (1, 3)
 
 a = Action.ATTACK_UP
 # a.swap() == Action.ATTACK_DOWN
@@ -171,11 +178,32 @@ Valeurs simples :
 -   `t (float)` le temps de jeu écoulé depuis le début de la partie, en secondes.
 -   `size (int)` la dimension de la grille.
 
-#### `game.tile_grid (List[List[Tile]])`
+On a `game.size == 21`.
 
-La représentation la plus simple du jeu est `tile_grid`. C'est une matrice bidimensionnelle de `Tile` où `Tile` est l'énumération de tous les objets du jeu possibles.
+#### Représentation simple
+
+La représentation la plus simple du jeu est `tile_grid (List[List[Tile]])`. C'est une matrice bidimensionnelle de `Tile` où `Tile` est l'énumération de tous les objets du jeu possibles.
 
 Par exemple, comme le jeu est toujours entouré d'un mur, on a `game.tile_grid[0][0] == Tile.WALL`.
+
+```python
+[[WALL,  WALL,        WALL,   WALL,   ...],
+ [WALL,  PLAYER_RED,  FLOOR,  COIN,   ...],
+ [WALL,  FLOOR,       WALL,   FLOOR,  ...],
+ [WALL,  FLOOR,       WALL,   FLOOR,  ...],
+ ...                                      ]
+
+# Première ligne
+# game.tile_grid[1] == [WALL, PLAYER_RED, FLOOR, COIN, ...]
+
+# Accès aux cases
+# game.tile_grid[0][0] == Tile.WALL
+# game.tile_grid[1][1] == Tile.PLAYER_RED
+# game.tile_grid[1][3] == Tile.COIN
+
+# Point de départ du joueur bleu
+# game.tile_grid[game.size - 1][game.size - 1] == Tile.PLAYER_BLUE
+```
 
 Les valeurs possibles de `Tile` sont :
 
@@ -198,12 +226,12 @@ S'il y a une superposition (par exemple `DAMAGED_FLOOR`, `SPEEDBOOST`, `FIREBALL
 
 Il existe des méthodes pour savoir rapidement si un élément de la classe `Tile` est dans une certaine catégorie :
 
--   `is_floor()` : `FLOOR` et `DAMAGED_FLOOR`
--   `is_background()` : `FLOOR`, `WALL`, `LAVA` et `DAMAGED_FLOOR`
--   `is_collectible()` : un des 5 objets ramassables
--   `is_bonus()` : un des 3 objets qui offrent un bonus de statistique
--   `is_player()` : un des 4 joueurs
--   `is_dangerous()` : `LAVA`, `DAMAGED_FLOOR`, les joueurs et `FIREBALL`
+-   `is_floor() -> bool` : `FLOOR` et `DAMAGED_FLOOR`
+-   `is_background() -> bool` : `FLOOR`, `WALL`, `LAVA` et `DAMAGED_FLOOR`
+-   `is_collectible() -> bool` : un des 5 objets ramassables
+-   `is_bonus() -> bool` : `SPEEDBOOST`, `SUPER_FIREBALL` et `SHIELD`
+-   `is_player() -> bool` : un des 4 joueurs
+-   `is_dangerous() -> bool` : `LAVA`, `DAMAGED_FLOOR`, les joueurs et `FIREBALL`
 
 Par exemple :
 
@@ -221,7 +249,7 @@ Voici des exemples plus complets :
 ```python
 def play(self, game: Game) -> Action:
     # ...
-    if game.tile_grid[self.y][self.x + 1] == Tile.DAMAGED_FLOOR:
+    if game.tile_grid[self.y][self.x + 1].is_dangerous():
         print("Je ne dois pas aller à droite, c'est dangereux !")
     # ...
 ```
@@ -241,7 +269,8 @@ def play(self, game: Game) -> Action:
               Action.MOVE_LEFT, Action.MOVE_RIGHT):
 
         # La case adjacente au joueur dans la direction `a`
-        x, y = a.apply((self.x, self.y))
+        coords = (self.x, self.y)
+        x, y = a.apply(coords)
 
         # S'il y a un joueur sur cette case, on attaque dans cette direction
         if game.tile_grid[y][x].is_player():
@@ -253,6 +282,86 @@ def play(self, game: Game) -> Action:
 #### Representation complète
 
 Pour avoir une représentation complète du jeu, il faut utiliser conjointement `background (List[List[Tile]])` et `entity_grid (List[List[Set[Entity]]])`. Ce sont deux matrices bidimensionnelles, comme `tile_grid`, mais elles permettent de connaître les éléments superposés, ainsi que des détails sur eux.
+
+`background` est une matrice que ne contient que des éléments du fond : `FLOOR`, `WALL`, `LAVA`, `DAMAGED_FLOOR`.
+
+Cela permet par exemple de savoir quelle est la case sous son joueur :
+
+```python
+# tile_grid ne permet pas de savoir sur quelle case on est, car on a toujours
+# game.tile_grid[self.y][self.x].is_player() == True
+# car PLAYER_* est après FLOOR et DAMAGED_FLOOR dans la liste donnée plus haut
+if game.background[self.y][self.x] == Tile.DAMAGED_FLOOR:
+    print("Je ferais mieux d'aller ailleurs")
+```
+
+Pour connaître les entités sur un case il faut alors utiliser `entity_grid`, qui est une matrice bidimensionnelle d'ensembles d'entités. Les entités sont des sous-classes de `entities.Entity`.
+
+L'arborescence est la suivante :
+
+-   `Entity`
+    -   `MovingEntity`
+        -   `PlayerEntity`
+            -   `RedPlayer`
+            -   `BluePlayer`
+            -   `YellowPlayer`
+            -   `GreenPlayer`
+        -   `Fireball`
+    -   `CollectableEntity`
+        -   `Coin`
+        -   `SpeedBoost`
+        -   `SpeedPenalty`
+        -   `SuperFireball`
+        -   `Shield`
+
+Les attributs des instances de ces classes sont les suivants :
+
+-   Toutes les entités possèdent des coordonnées `x` et `y (int)`.
+-   Toutes les entités possèdent une constante `TILE (Tile)`, ce qui permet d'utiliser `TILE.is_*()` par exemple.
+-   Les entités mobiles ont en plus `speed (float)`, `action (Action)` et `action_progress (float)`, respectivement la vitesse, l'action en cours et l'avancement de l'action en cours (entre 0 et 1).
+-   Les joueurs ont en plus une couleur `color (Tile)`, une constante parmi `Tile.PLAYER_RED`, `_BLUE`, `_YELLOW`, `_GREEN`.
+
+Par exemple, regardons à droite jusqu'au bout du couloir :
+
+```python
+# Coordonnées de la case voisine
+x, y = Action.MOVE_RIGHT.apply((self.x, self.y))
+
+# On regarde jusqu'au prochain mur
+while game.background[y][x] != Tile.WALL:
+
+    # On regarde l'ensemble des entités sur la case
+    for entity in game.entity_grid[y][x]:
+
+        # Quelques exemples
+        if isinstance(entity, entities.PlayerEntity):
+            # On attaque un joueur, on affiche sa couleur
+            print(f"À l'attaque de {entity.color.name} !")
+            return Action.ATTACK_RIGHT
+
+        elif (
+            isinstance(entity, entities.Fireball)
+            # C'est une entité mobile, on peut savoir où elle va
+            and entity.action == Action.MOVE_LEFT
+        ):
+            print("On se fait attaquer !")
+            return Action.MOVE_LEFT
+
+        elif (
+            isinstance(entity, entities.CollectableEntity)
+            # Est-ce que c'est un bonus ?
+            and entity.TILE.is_bonus()
+        ):
+            print("Oh un bonus :)")
+            return Action.MOVE_RIGHT
+
+    # On va sur la case suivante
+    x, y = Action.MOVE_RIGHT.apply((x, y))
+```
+
+### Stratégies d'exemple
+
+Avec cette doc vous savez tout ce qu'il faut pour gagner ! Vous pouvez lire le code des stratégie d'exemple, comme `IndianaJones`, qui est une bonne base pour commencer si vous ne savez pas où aller.
 
 ## Crédits
 

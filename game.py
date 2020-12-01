@@ -247,6 +247,8 @@ class Game:
 
     def can_player_attack(self, player: entities.PlayerEntity) -> bool:
         """Renvoie `True` si le joueur a une boule de feu disponible."""
+        if player.super_fireballs > 0:
+            return True
         for entity in self.entities:
             if isinstance(entity, entities.Fireball) and entity.sender == player.color:
                 return False
@@ -275,7 +277,7 @@ class Game:
 
         # Un tir d'arc est possible s'il n'est pas fait contre un mur
         elif action.is_attack():
-            return player.super_fireballs > 0 or self.can_player_attack(player)
+            return self.can_player_attack(player)
 
         # Dans le doute c'est pas possible
         return False

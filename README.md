@@ -14,12 +14,22 @@ Perfect Aim est composé :
 ### Le plateau
 
 Le plateau est une matrice bidimensionnelle.
-Il se compose :
 
--   De sol, les cases vides dans lesquelles les joueurs peuvent aller
--   De murs, les cases dans lesquelles les joueurs ne peuvent pas aller
--   De lave, les cases qui tuent tout joueur qui s'y rend
--   De sol endommagé, le sol qui va devenir de la lave dans les 5 secondes
+![Sol](./assets/background/floor.png) **Le sol**
+
+Les cases vides dans lesquelles les joueurs peuvent aller.
+
+![Mur](./assets/background/wall.png) **Les murs**
+
+Les cases dans lesquelles les joueurs ne peuvent pas aller.
+
+![Lave](./assets/background/lava.png) **La lave**
+
+Les cases qui tuent tout joueur qui s'y rend.
+
+![Sol endommagé](./assets/background/damaged-floor.png) **Le sol endommagé**
+
+Le sol qui va devenir de la lave dans les 5 secondes.
 
 Voici un plateau de jeu avec tous ces éléments, ainsi que des objets et des joueurs :
 

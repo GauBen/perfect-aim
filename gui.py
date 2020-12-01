@@ -1,34 +1,16 @@
 """Gestion de l'affichage du jeu."""
 
-import time
 import tkinter
 import tkinter.ttk as ttk
 from copy import deepcopy
+from time import perf_counter
 from typing import List, Optional, Type
 
 import entities
 import game
+import players
 from game import Action
 from gamegrid import Tile
-import players
-
-
-class Delta:
-    """Temp."""
-
-    def __init__(self):
-        """Temp."""
-        self.last = time.perf_counter()
-
-    def delta(self) -> float:
-        """Temp."""
-        t = time.perf_counter()
-        out = t - self.last
-        self.last = t
-        return out
-
-
-delta = Delta().delta
 
 
 class AssetsManager:
@@ -368,19 +350,26 @@ class GameInterface:
 
     def start(self):
         """Lance la boucle du jeu."""
+        t = perf_counter()
+        last = t
 
         def update():
-            """Temp."""
-            u = delta()
-            # print(u)
-            dt = u * self.time_scale_var.get()
-            if dt > 0:
-                self.game.update(dt)
-            self.update()
-            if not self.game.over:
-                self.master.after(10, update)
+            """Provoque la mise à jour du jeu et de la fenêtre."""
+            nonlocal t, last
+            t = perf_counter()
+            dt = t - last
+            last = t
+            print(1 / dt)
 
-        delta()
+            if self.time_scale_var.get() > 0:
+                self.game.update(dt * self.time_scale_var.get())
+            self.update()
+
+            if not self.game.over:
+                self.master.after(
+                    max(1, int(1000 / 60 - 1000 * (perf_counter() - last))), update
+                )
+
         update()
 
     def update(self):

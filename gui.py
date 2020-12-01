@@ -314,7 +314,7 @@ class GameInterface:
         # Canvas
         size = self.assets_manager.TILE_SIZE * self.game.size
         self.canvas = tkinter.Canvas(
-            self.window, background="#f00", width=size, height=size
+            self.window, background="#eee", width=size, height=size
         )
         self.canvas.grid(column=0, row=0, columnspan=3, padx=8, pady=8)
 

@@ -3,8 +3,9 @@
 import tkinter
 import tkinter.ttk as ttk
 from copy import deepcopy
+from multiprocessing import Pool, TimeoutError
 from time import perf_counter
-from typing import Callable, List, Optional, Type
+from typing import Callable, List, Optional, Tuple, Type
 
 import entities
 import game
@@ -364,51 +365,6 @@ class GameInterface:
         self.restart_button.grid(column=0, row=3, padx=4, sticky=tkinter.E)
         self.settings_button.grid(column=1, row=3, padx=4, sticky=tkinter.W)
 
-    def start(self, restart_callback: Callable, settings_callback: Callable):
-        """Lance la boucle du jeu."""
-        t = perf_counter()
-        last = t
-        stop = False
-
-        def restart():
-            nonlocal stop
-            stop = True
-            self.window.destroy()
-            restart_callback()
-
-        def settings():
-            nonlocal stop
-            stop = True
-            self.window.destroy()
-            settings_callback()
-
-        self.restart_button.config(command=restart)
-        self.settings_button.config(command=settings)
-
-        def update():
-            """Provoque la mise à jour du jeu et de la fenêtre."""
-            if stop:
-                return
-
-            nonlocal t, last
-            t = perf_counter()
-            dt = t - last
-            last = t
-
-            if self.time_scale_var.get() > 0:
-                self.game.update(dt * self.time_scale_var.get())
-            self.update()
-
-            if not self.game.over:
-                self.master.after(
-                    max(1, int(1000 / 60 - 1000 * (perf_counter() - last))), update
-                )
-
-            elif self.game.over:
-                self.game_over()
-
-        update()
-
     def update(self):
         """Met à jour la fenêtre."""
         # Le timer
@@ -479,9 +435,335 @@ class GameInterface:
         self.time_scale.config(state=tkinter.DISABLED)
         self.checkbox.config(state=tkinter.DISABLED)
 
+    def start(self, restart_callback: Callable, settings_callback: Callable):
+        """Lance la boucle du jeu."""
+        t = perf_counter()
+        last = t
+        stop = False
+
+        def restart():
+            nonlocal stop
+            stop = True
+            self.window.destroy()
+            restart_callback()
+
+        def settings():
+            nonlocal stop
+            stop = True
+            self.window.destroy()
+            settings_callback()
+
+        self.restart_button.config(command=restart)
+        self.settings_button.config(command=settings)
+
+        def update():
+            """Provoque la mise à jour du jeu et de la fenêtre."""
+            if stop:
+                return
+
+            nonlocal t, last
+            t = perf_counter()
+            dt = t - last
+            last = t
+
+            if self.time_scale_var.get() > 0:
+                self.game.update(dt * self.time_scale_var.get())
+            self.update()
+
+            if not self.game.over:
+                self.master.after(
+                    max(1, int(1000 / 60 - 1000 * (perf_counter() - last))), update
+                )
+
+            elif self.game.over:
+                self.game_over()
+
+        update()
+
+
+def play_one_game(args: Tuple[int, List[Optional[Type[game.Player]]]]):
+    """Fonction parallélisable qui joue une partie."""
+    i, player_constructors = args
+    players = [cls() if cls is not None else None for cls in player_constructors]
+
+    # Pour que le placement soit équitable on mélange les joueurs
+    shuffled = [p for p in players] + [None] * (game.Game.MAX_PLAYERS - len(players))
+    shuffled[1], shuffled[i % 3 + 1] = shuffled[i % 3 + 1], shuffled[1]
+    shuffled[2], shuffled[i % 2 + 2] = shuffled[i % 2 + 2], shuffled[2]
+
+    # On joue une partie jusqu'au bout
+    g = game.Game(shuffled)
+    g.update(g.MAX_DURATION)
+    coins = [player.coins if player is not None else 0 for player in players]
+
+    # On renvoie l'indice du vainqueur et le nombre de pièces des joueurs
+    if g.winner is not None:
+        return players.index(g.winner), coins
+    return -1, coins
+
+
+class TournamentInterface:
+    """Affiche l'avancement d'un grand nombre de parties."""
+
+    NUMBER_OF_GAMES = 50
+
+    LARGE_MARGIN = 16  # pixels
+    SMALL_MARGIN = 8
+    FONT_SIZE = 16
+    BAR_MARGIN = 200
+    WIDTH = 800
+
+    def __init__(
+        self,
+        master: tkinter.Tk,
+        assets_manager: AssetsManager,
+        players: List[Optional[Type[game.Player]]],
+    ):
+        """Initialise la fenêtre Tk."""
+        self.master = master
+        self.assets_manager = assets_manager
+        self.players = players
+
+        n = sum(1 if p is not None else 0 for p in self.players)
+        assert (
+            game.Game.MIN_PLAYERS <= n <= game.Game.MAX_PLAYERS
+        ), f"Il faut entre {game.Game.MIN_PLAYERS} et {game.Game.MAX_PLAYERS} joueurs."
+
+        self.BAR_HEIGHT = self.SMALL_MARGIN * 3 + self.assets_manager.TILE_SIZE * 2
+        self.WIN_WIDTH = (self.WIDTH - 2 * self.BAR_MARGIN) / self.NUMBER_OF_GAMES
+
+        # Ouverture de la fenêtre
+        self.window = tkinter.Toplevel(self.master)
+        self.window.title("Perfect Aim")
+        self.window.protocol("WM_DELETE_WINDOW", lambda: self.master.destroy())
+
+        # Statistiques
+        self.wins = [0] * (len(self.players) + 1)  # On compte le nombre de matches nul
+        self.coins = [0] * (len(self.players))
+
+        # Widgets
+        self.canvas = tkinter.Canvas(
+            self.window,
+            width=self.WIDTH,
+            height=self.LARGE_MARGIN * (n + 1) + self.BAR_HEIGHT * n,
+        )
+        self.canvas.grid(column=0, row=0, columnspan=3)
+
+        self.counter_label = ttk.Label(
+            self.window, text="0 partie jouée", font=("", 10, "bold")
+        )
+        self.restart_button = ttk.Button(self.window, text="Recommencer")
+        self.settings_button = ttk.Button(self.window, text="Retour")
+        self.counter_label.grid(column=0, row=1, padx=4)
+        self.restart_button.grid(column=1, row=1, padx=4, pady=(8, 16))
+        self.settings_button.grid(column=2, row=1, padx=4, pady=(8, 16))
+
+        # On dessine l'état initial sur le canvas
+        self.draw()
+
+    def draw(self):
+        """Initialise le canvas."""
+        self.canvas_bars = []
+        self.canvas_wins = []
+        self.canvas_coins = []
+
+        self.colors = {
+            Tile.PLAYER_RED: "#faa",
+            Tile.PLAYER_BLUE: "#aaf",
+            Tile.PLAYER_YELLOW: "#ffa",
+            Tile.PLAYER_GREEN: "#afa",
+        }
+
+        row = 0
+        for player, color in zip(self.players, self.colors):
+            if player is None:
+                continue
+
+            # Barre horizontale
+            self.canvas_bars.append(
+                self.canvas.create_rectangle(
+                    self.BAR_MARGIN,
+                    self.LARGE_MARGIN + (self.BAR_HEIGHT + self.LARGE_MARGIN) * row,
+                    self.BAR_MARGIN,
+                    (self.BAR_HEIGHT + self.LARGE_MARGIN) * (row + 1),
+                    fill=self.colors[color],
+                )
+            )
+            # Nombre de victoires
+            self.canvas_wins.append(
+                self.canvas.create_text(
+                    self.BAR_MARGIN + self.LARGE_MARGIN + 1,
+                    self.LARGE_MARGIN
+                    + self.BAR_HEIGHT // 2
+                    + (self.BAR_HEIGHT + self.LARGE_MARGIN) * row
+                    + 1,
+                    text="0",
+                    anchor=tkinter.W,
+                )
+            )
+            # Icône du joueur
+            self.canvas.create_image(
+                self.LARGE_MARGIN + 1,
+                self.LARGE_MARGIN
+                + self.SMALL_MARGIN
+                + (self.BAR_HEIGHT + self.LARGE_MARGIN) * row
+                + 1,
+                image=self.assets_manager.players[color][Action.WAIT][1],
+                anchor=tkinter.NW,
+            )
+            # Icône de pièce
+            self.canvas.create_image(
+                self.LARGE_MARGIN + 1,
+                self.LARGE_MARGIN
+                + self.assets_manager.TILE_SIZE
+                + self.SMALL_MARGIN * 2
+                + (self.BAR_HEIGHT + self.LARGE_MARGIN) * row
+                + 1,
+                image=self.assets_manager.coin,
+                anchor=tkinter.NW,
+            )
+            # Nom du joueur
+            self.canvas.create_text(
+                self.LARGE_MARGIN + self.SMALL_MARGIN + self.assets_manager.TILE_SIZE,
+                self.LARGE_MARGIN
+                + self.SMALL_MARGIN
+                + self.assets_manager.TILE_SIZE // 2
+                + (self.BAR_HEIGHT + self.LARGE_MARGIN) * row
+                + 1,
+                text=player.NAME,
+                anchor=tkinter.W,
+            )
+            # Nombre de pièces
+            self.canvas_coins.append(
+                self.canvas.create_text(
+                    self.LARGE_MARGIN
+                    + self.SMALL_MARGIN
+                    + self.assets_manager.TILE_SIZE,
+                    self.LARGE_MARGIN
+                    + self.assets_manager.TILE_SIZE * 3 // 2
+                    + self.SMALL_MARGIN * 2
+                    + (self.BAR_HEIGHT + self.LARGE_MARGIN) * row
+                    + 1,
+                    text="0",
+                    anchor=tkinter.W,
+                )
+            )
+            row += 1
+
+    def update(self):
+        """Met à jour le canvas."""
+        # Nombre de parties jouées
+        played = sum(self.wins)
+        if played == self.NUMBER_OF_GAMES:
+            wins = 0
+            coins = 0
+            winner: Optional[Tile] = None
+            for i, color in zip(range(len(self.players)), self.colors):
+                if (self.wins[i], self.coins[i]) == (wins, coins):
+                    winner = None
+                elif (self.wins[i], self.coins[i]) > (wins, coins):
+                    wins = self.wins[i]
+                    coins = self.coins[i]
+                    winner = color
+            if winner is None:
+                self.counter_label.config(text=f"Match nul")
+            else:
+                self.counter_label.config(
+                    text=f"Victoire de",
+                    image=self.assets_manager.players[winner][Action.WAIT][1],
+                    compound=tkinter.RIGHT,
+                )
+        else:
+            s = "" if played <= 1 else "s"
+            self.counter_label.config(text=f"{played} partie{s} jouée{s}")
+
+        # Diagramme
+        row = 0
+        for i in range(len(self.players)):
+            if self.players[i] is None:
+                continue
+            self.canvas.coords(
+                self.canvas_bars[row],
+                self.BAR_MARGIN,
+                self.LARGE_MARGIN + (self.BAR_HEIGHT + self.LARGE_MARGIN) * row,
+                self.BAR_MARGIN + int(self.wins[i] * self.WIN_WIDTH),
+                (self.BAR_HEIGHT + self.LARGE_MARGIN) * (row + 1),
+            )
+            self.canvas.itemconfigure(self.canvas_wins[row], text=self.wins[i])
+            self.canvas.coords(
+                self.canvas_wins[row],
+                self.BAR_MARGIN
+                + self.LARGE_MARGIN
+                + int(self.wins[i] * self.WIN_WIDTH)
+                + 1,
+                self.LARGE_MARGIN
+                + self.BAR_HEIGHT // 2
+                + (self.BAR_HEIGHT + self.LARGE_MARGIN) * row
+                + 1,
+            )
+            self.canvas.itemconfigure(self.canvas_coins[row], text=self.coins[i])
+            row += 1
+
+    def start(self, restart_callback: Callable, settings_callback: Callable):
+        """Lance les parties simultanées."""
+        stop = False
+        pool = Pool()
+
+        # Callbacks des boutons
+        def restart():
+            nonlocal stop
+            stop = True
+            pool.close()
+            self.window.destroy()
+            restart_callback()
+
+        def settings():
+            nonlocal stop
+            stop = True
+            pool.close()
+            self.window.destroy()
+            settings_callback()
+
+        def close():
+            pool.terminate()
+            self.master.destroy()
+
+        self.restart_button.config(command=restart)
+        self.settings_button.config(command=settings)
+        self.window.protocol("WM_DELETE_WINDOW", close)
+
+        # On laisse à la fenêtre le temps de s'afficher
+        self.master.update()
+        self.master.after(500)
+
+        # On joue les parties en parallèle
+        games = pool.imap_unordered(
+            play_one_game, [(i, self.players) for i in range(self.NUMBER_OF_GAMES)]
+        )
+
+        def update():
+            """Met à jour l'interface avec les données du backend."""
+            if stop:
+                return
+
+            try:
+                while True:
+                    winner, coins = games.next(0.0)
+                    self.wins[winner] += 1
+                    self.coins = [a + b for a, b in zip(self.coins, coins)]
+
+            except TimeoutError:
+                self.update()
+                self.master.after(16, update)
+            except StopIteration:
+                self.update()
+                pool.close()
+
+        update()
+
 
 class PlayerSelector:
-    """Une icone et une combobox de choix de joueur."""
+    """Une icône et une combobox de choix de joueur."""
 
     def __init__(
         self,
@@ -558,11 +840,13 @@ class GameLauncher:
         button_play_1 = ttk.Button(
             frame, text="Jouer une partie", command=self.play_1_callback
         )
-        button_play_2020 = ttk.Button(
-            frame, text="Jouer 2020 parties", command=self.play_2020_callback
+        button_play_many = ttk.Button(
+            frame,
+            text=f"Jouer {TournamentInterface.NUMBER_OF_GAMES} parties",
+            command=self.play_many_callback,
         )
         button_play_1.grid(row=2, column=0, padx=8)
-        button_play_2020.grid(row=2, column=1, padx=8)
+        button_play_many.grid(row=2, column=1, padx=8)
 
         # Sélecteur
         self.selectors = []
@@ -580,8 +864,8 @@ class GameLauncher:
             return
         self.launch_one_game(players)
 
-    def play_2020_callback(self):
-        """Quand le bouton 2020 est appuyé."""
+    def play_many_callback(self):
+        """Quand le bouton many est appuyé."""
         players = [s.selected_constructor for s in self.selectors]
         n = sum(int(c is not None) for c in players)
         if not (game.Game.MIN_PLAYERS <= n <= game.Game.MAX_PLAYERS):
@@ -595,7 +879,6 @@ class GameLauncher:
         self.game_launched = True
 
         self.master.withdraw()
-        g = game.Game(players)
 
         def settings():
             self.game_launched = False
@@ -605,13 +888,28 @@ class GameLauncher:
             self.game_launched = False
             self.launch_one_game(players)
 
+        g = game.Game([p() if p is not None else None for p in players])
         GameInterface(self.master, self.assets_manager, g).start(restart, settings)
 
     def launch_many_games(self, players: List[Optional[Type[game.Player]]]):
-        """Lance 2020 parties simultanées."""
+        """Lance plusieurs parties simultanées."""
         if self.game_launched:
             return
         self.game_launched = True
+
+        self.master.withdraw()
+
+        def settings():
+            self.game_launched = False
+            self.master.deiconify()
+
+        def restart():
+            self.game_launched = False
+            self.launch_many_games(players)
+
+        TournamentInterface(self.master, self.assets_manager, players).start(
+            restart, settings
+        )
 
 
 if __name__ == "__main__":

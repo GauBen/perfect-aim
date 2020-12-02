@@ -5,7 +5,7 @@ from __future__ import annotations
 from copy import copy, deepcopy
 from random import shuffle
 from time import perf_counter
-from typing import Dict, List, Optional, Set, Type
+from typing import Dict, List, Optional, Set
 
 import entities
 from gamegrid import Grid, Tile
@@ -109,11 +109,16 @@ class Game:
     DEFAULT_GRID_SIZE = 21
     LAVA_FLOOD_START_TIME = 65.0
     LAVA_STEP_DURATION = 5.0
+    MAX_DURATION = 150.0
 
-    def __init__(
-        self, player_constructors: List[Optional[Type[entities.PlayerEntity]]]
-    ):
+    def __init__(self, players: List[Optional[Player]]):
         """Initialise une partie et crée une carte."""
+        assert (
+            self.MIN_PLAYERS
+            <= sum(1 if p is not None else 0 for p in players)
+            <= self.MAX_PLAYERS
+        ), f"Il faut entre {self.MIN_PLAYERS} et {self.MAX_PLAYERS} joueurs."
+
         # Initialisation de la grille
         self.size = self.DEFAULT_GRID_SIZE
         self.tile_grid = Grid.create_grid(self.size)
@@ -121,7 +126,7 @@ class Game:
         # L'état du jeu
         self.t = 0.0
         self.over = False
-        self.winner: Optional[entities.PlayerEntity] = None
+        self.winner: Optional[Player] = None
 
         # Les entités du jeu
         self.entities: Set[entities.Entity] = set()
@@ -134,7 +139,7 @@ class Game:
         ]
 
         # Crée les joueurs et des objets
-        self._create_entities(player_constructors)
+        self._create_entities(players)
 
     def update(self, elapsed_time: float):
         """Calcule toutes les updates qui ont eu lieu en `elapsed_time` secondes."""
@@ -176,7 +181,7 @@ class Game:
             if len(player_entities) == 1:
                 winner = player_entities[0]
                 self.over = True
-                self.winner = winner
+                self.winner = self.players[winner.color]
             elif len(player_entities) == 0:
                 self.over = True
 
@@ -310,11 +315,11 @@ class Game:
         else:
             self.tile_grid[y][x] = max(entity.TILE for entity in self.entity_grid[y][x])
 
-    def _create_entities(self, player_constructors: List[Optional[Type[Player]]]):
+    def _create_entities(self, players: List[Optional[Player]]):
         """Ajoute les joueurs et les entitiés sur les grilles."""
         # Les joueurs
-        for player_constructor, entity_constructor, coords in zip(
-            player_constructors,
+        for player, entity_constructor, coords in zip(
+            players,
             entities.players,
             [
                 (1, 1),
@@ -324,10 +329,10 @@ class Game:
             ],
         ):
             x, y = coords
-            if player_constructor is not None:
+            if player is not None:
                 p = entity_constructor(x, y)
                 self.entities.add(p)
-                self.players[p.color] = player_constructor()
+                self.players[p.color] = player
                 # On initialise le joueur, mais on ignore son action
                 self.next_action(p)
 
@@ -421,10 +426,10 @@ class Game:
         clone.over = self.over
         clone.size = self.size
         clone.t = self.t
-        clone.winner = None
+        clone.winner = self.winner
 
         # Objets profonds
-        clone.players = self.players
+        clone.players = {}
         clone.background = [[tile for tile in row] for row in self.background]
         clone.tile_grid = [[tile for tile in row] for row in self.tile_grid]
         clone.entity_grid = [
@@ -435,8 +440,6 @@ class Game:
             e = copy(entity)
             clone.entities.add(e)
             clone.entity_grid[e.y][e.x].add(e)
-            if entity == self.winner:
-                clone.winner = e
 
         return clone
 

@@ -488,6 +488,7 @@ def play_one_game(args: Tuple[int, List[Optional[Type[game.Player]]]]):
 
     # Pour que le placement soit équitable on mélange les joueurs
     shuffled = [p for p in players] + [None] * (game.Game.MAX_PLAYERS - len(players))
+    shuffled[0], shuffled[i % 4] = shuffled[i % 4], shuffled[0]
     shuffled[1], shuffled[i % 3 + 1] = shuffled[i % 3 + 1], shuffled[1]
     shuffled[2], shuffled[i % 2 + 2] = shuffled[i % 2 + 2], shuffled[2]
 

@@ -369,6 +369,19 @@ while game.background[y][x] != Tile.WALL:
     x, y = Action.MOVE_RIGHT.apply((x, y))
 ```
 
+Enfin, il est possible de parcourir l'ensemble de toutes les entités du jeu avec `game.intities (Set[Entity])` :
+
+```python
+p = 0
+b = 0
+for entity in game.entities:
+    if isinstance(entity, entities.PlayerEntity):
+        p += 1
+    elif entity.TILE.is_bonus():
+        b += 1
+print(f"Il reste {p} joueurs et {b} bonus en jeu.")
+```
+
 ### Stratégies d'exemple
 
 Avec cette doc vous savez tout ce qu'il faut pour gagner ! Vous pouvez lire le code des stratégie d'exemple, comme `IndianaJones`, qui est une bonne base pour commencer si vous ne savez pas où aller.

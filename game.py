@@ -505,7 +505,11 @@ class GameReplay(Game):
         self, entity: entities.PlayerEntity, ignore: bool = False
     ) -> Action:
         """Renvoie la prochaine action du joueur."""
-        action = self.history[entity.color].pop(0)
+        action = Action.WAIT
+        try:
+            action = self.history[entity.color].pop(0)
+        except IndexError:
+            pass
         self.past_actions[entity.color].append(action)
         return action
 

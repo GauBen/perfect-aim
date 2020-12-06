@@ -486,14 +486,8 @@ def play_one_game(args: Tuple[int, List[Optional[Type[game.Player]]]]):
     i, player_constructors = args
     players = [cls() if cls is not None else None for cls in player_constructors]
 
-    # Pour que le placement soit équitable on mélange les joueurs
-    shuffled = [p for p in players] + [None] * (game.Game.MAX_PLAYERS - len(players))
-    shuffled[0], shuffled[i % 4] = shuffled[i % 4], shuffled[0]
-    shuffled[1], shuffled[i % 3 + 1] = shuffled[i % 3 + 1], shuffled[1]
-    shuffled[2], shuffled[i % 2 + 2] = shuffled[i % 2 + 2], shuffled[2]
-
     # On joue une partie jusqu'au bout
-    g = game.Game(shuffled)
+    g = game.Game(players, permutation=i)
     g.update(g.MAX_DURATION)
     coins = [player.coins if player is not None else 0 for player in players]
 
@@ -709,16 +703,18 @@ class TournamentInterface:
                 coins = self.coins[i]
                 self.winner = color
 
-    def game_over(self, restart_callback: Callable):
+    def game_over(self):
         """À la fin du calcul, on lance un replay du vainqueur."""
         replay = None
         for i, color in zip(range(len(self.players)), self.colors):
             if self.winner == color:
                 replay = self.replays[i]
         if replay is not None:
-            GameInterface(
+            gi = GameInterface(
                 self.master, self.assets_manager, game.GameReplay(*replay)
-            ).start(restart_callback, lambda: self.update())
+            )
+            gi.window.grab_set()
+            gi.start(self.game_over, lambda: self.update())
         else:
             self.update()
 
@@ -774,7 +770,7 @@ class TournamentInterface:
                 self.master.after(16, update)
             except StopIteration:
                 self.compute_winner()
-                self.game_over(restart)
+                self.game_over()
                 pool.close()
 
         update()

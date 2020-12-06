@@ -108,7 +108,9 @@ class Game:
     LAVA_STEP_DURATION = 5.0
     MAX_DURATION = 150.0
 
-    def __init__(self, players: List[Optional[Player]], seed=None):
+    def __init__(
+        self, players: List[Optional[Player]], seed: int = None, permutation: int = 0
+    ):
         """Initialise une partie et crée une carte."""
         assert (
             self.MIN_PLAYERS
@@ -120,6 +122,7 @@ class Game:
         self.size = self.DEFAULT_GRID_SIZE
         self._grid = Grid(self.size, seed)
         self.tile_grid = self._grid.grid
+        self.permutation = permutation
 
         # L'état du jeu
         self.t = 0.0
@@ -316,7 +319,7 @@ class Game:
             else:
                 names.append(None)
                 past_actions.append(None)
-        return (self._grid.seed, names, past_actions)
+        return (self._grid.seed, names, past_actions, self.permutation)
 
     @property
     def player_entities(self) -> List[entities.PlayerEntity]:
@@ -335,16 +338,21 @@ class Game:
 
     def _create_entities(self, players: List[Optional[Player]]):
         """Ajoute les joueurs et les entitiés sur les grilles."""
-        # Les joueurs
+        # Les joueurs, avec une potentielle permutation des points de départ
+        coords = [
+            (1, 1),
+            (self.size - 2, self.size - 2),
+            (self.size - 2, 1),
+            (1, self.size - 2),
+        ]
+        i = self.permutation
+        coords[0], coords[i % 4] = coords[i % 4], coords[0]
+        coords[1], coords[i % 3 + 1] = (coords[i % 3 + 1], coords[1])
+        coords[2], coords[i % 2 + 2] = (coords[i % 2 + 2], coords[2])
         for player, entity_constructor, coords in zip(
             players,
             entities.players,
-            [
-                (1, 1),
-                (self.size - 2, self.size - 2),
-                (self.size - 2, 1),
-                (1, self.size - 2),
-            ],
+            coords,
         ):
             x, y = coords
             if player is not None:
@@ -482,7 +490,13 @@ class PlayerReplay(Player):
 class GameReplay(Game):
     """Un replay d'une partie."""
 
-    def __init__(self, seed: int, names: List[str], past_actions: List[List[Action]]):
+    def __init__(
+        self,
+        seed: int,
+        names: List[str],
+        past_actions: List[List[Action]],
+        permutation: int = 0,
+    ):
         """Initialise un replay à partir d'une graine, des noms et des actions."""
         players = []
         colors = (
@@ -496,10 +510,10 @@ class GameReplay(Game):
             color = colors[i]
             if names[i] is not None:
                 players.append(PlayerReplay(names[i]))
-                self.history[color] = past_actions[i]
+                self.history[color] = past_actions[i][:]
             else:
                 players.append(None)
-        super().__init__(players, seed)
+        super().__init__(players, seed, permutation)
 
     def next_action(
         self, entity: entities.PlayerEntity, ignore: bool = False

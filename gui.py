@@ -361,9 +361,9 @@ class GameInterface:
         self.checkbox.grid(column=0, row=2, columnspan=2, pady=4)
 
         self.restart_button = ttk.Button(self.control_frame, text="Recommencer")
-        self.settings_button = ttk.Button(self.control_frame, text="Retour")
+        self.back_button = ttk.Button(self.control_frame, text="Retour")
         self.restart_button.grid(column=0, row=3, padx=4, sticky=tkinter.E)
-        self.settings_button.grid(column=1, row=3, padx=4, sticky=tkinter.W)
+        self.back_button.grid(column=1, row=3, padx=4, sticky=tkinter.W)
 
     def update(self):
         """Met à jour la fenêtre."""
@@ -435,7 +435,7 @@ class GameInterface:
         self.time_scale.config(state=tkinter.DISABLED)
         self.checkbox.config(state=tkinter.DISABLED)
 
-    def start(self, restart_callback: Callable, settings_callback: Callable):
+    def start(self, restart_callback: Callable, back_callback: Callable):
         """Lance la boucle du jeu."""
         t = perf_counter()
         last = t
@@ -451,10 +451,10 @@ class GameInterface:
             nonlocal stop
             stop = True
             self.window.destroy()
-            settings_callback()
+            back_callback()
 
         self.restart_button.config(command=restart)
-        self.settings_button.config(command=settings)
+        self.back_button.config(command=settings)
 
         def update():
             """Provoque la mise à jour du jeu et de la fenêtre."""
@@ -499,8 +499,8 @@ def play_one_game(args: Tuple[int, List[Optional[Type[game.Player]]]]):
 
     # On renvoie l'indice du vainqueur et le nombre de pièces des joueurs
     if g.winner is not None:
-        return players.index(g.winner), coins
-    return -1, coins
+        return players.index(g.winner), coins, g.replay()
+    return -1, coins, g.replay()
 
 
 class TournamentInterface:
@@ -540,7 +540,9 @@ class TournamentInterface:
 
         # Statistiques
         self.wins = [0] * (len(self.players) + 1)  # On compte le nombre de matches nul
-        self.coins = [0] * (len(self.players))
+        self.coins = [0] * len(self.players)
+        self.replays = [None] * len(self.players)
+        self.winner: Optional[Tile] = None
 
         # Widgets
         self.canvas = tkinter.Canvas(
@@ -554,10 +556,10 @@ class TournamentInterface:
             self.window, text="0 partie jouée", font=("", 10, "bold")
         )
         self.restart_button = ttk.Button(self.window, text="Recommencer")
-        self.settings_button = ttk.Button(self.window, text="Retour")
+        self.back_button = ttk.Button(self.window, text="Retour")
         self.counter_label.grid(column=0, row=1, padx=4)
         self.restart_button.grid(column=1, row=1, padx=4, pady=(8, 16))
-        self.settings_button.grid(column=2, row=1, padx=4, pady=(8, 16))
+        self.back_button.grid(column=2, row=1, padx=4, pady=(8, 16))
 
         # On dessine l'état initial sur le canvas
         self.draw()
@@ -656,22 +658,12 @@ class TournamentInterface:
         # Nombre de parties jouées
         played = sum(self.wins)
         if played == self.NUMBER_OF_GAMES:
-            wins = 0
-            coins = 0
-            winner: Optional[Tile] = None
-            for i, color in zip(range(len(self.players)), self.colors):
-                if (self.wins[i], self.coins[i]) == (wins, coins):
-                    winner = None
-                elif (self.wins[i], self.coins[i]) > (wins, coins):
-                    wins = self.wins[i]
-                    coins = self.coins[i]
-                    winner = color
-            if winner is None:
+            if self.winner is None:
                 self.counter_label.config(text=f"Match nul")
             else:
                 self.counter_label.config(
                     text=f"Victoire de",
-                    image=self.assets_manager.players[winner][Action.WAIT][1],
+                    image=self.assets_manager.players[self.winner][Action.WAIT][1],
                     compound=tkinter.RIGHT,
                 )
         else:
@@ -705,7 +697,32 @@ class TournamentInterface:
             self.canvas.itemconfigure(self.canvas_coins[row], text=self.coins[i])
             row += 1
 
-    def start(self, restart_callback: Callable, settings_callback: Callable):
+    def compute_winner(self):
+        """Détermine le vainqueur des parties jouées."""
+        wins = 0
+        coins = 0
+        for i, color in zip(range(len(self.players)), self.colors):
+            if (self.wins[i], self.coins[i]) == (wins, coins):
+                self.winner = None
+            elif (self.wins[i], self.coins[i]) > (wins, coins):
+                wins = self.wins[i]
+                coins = self.coins[i]
+                self.winner = color
+
+    def game_over(self, restart_callback: Callable):
+        """À la fin du calcul, on lance un replay du vainqueur."""
+        replay = None
+        for i, color in zip(range(len(self.players)), self.colors):
+            if self.winner == color:
+                replay = self.replays[i]
+        if replay is not None:
+            GameInterface(
+                self.master, self.assets_manager, game.GameReplay(*replay)
+            ).start(restart_callback, lambda: self.update())
+        else:
+            self.update()
+
+    def start(self, restart_callback: Callable, back_callback: Callable):
         """Lance les parties simultanées."""
         stop = False
         pool = Pool()
@@ -723,19 +740,15 @@ class TournamentInterface:
             stop = True
             pool.close()
             self.window.destroy()
-            settings_callback()
+            back_callback()
 
         def close():
             pool.terminate()
             self.master.destroy()
 
         self.restart_button.config(command=restart)
-        self.settings_button.config(command=settings)
+        self.back_button.config(command=settings)
         self.window.protocol("WM_DELETE_WINDOW", close)
-
-        # On laisse à la fenêtre le temps de s'afficher
-        self.master.update()
-        self.master.after(500)
 
         # On joue les parties en parallèle
         games = pool.imap_unordered(
@@ -749,15 +762,19 @@ class TournamentInterface:
 
             try:
                 while True:
-                    winner, coins = games.next(0.0)
+                    winner, coins, replay = games.next(0.0)
                     self.wins[winner] += 1
                     self.coins = [a + b for a, b in zip(self.coins, coins)]
+                    self.replays[winner] = replay
 
             except TimeoutError:
-                self.update()
+                played = sum(self.wins)
+                s = "" if played <= 1 else "s"
+                self.counter_label.config(text=f"{played} partie{s} jouée{s}")
                 self.master.after(16, update)
             except StopIteration:
-                self.update()
+                self.compute_winner()
+                self.game_over(restart)
                 pool.close()
 
         update()

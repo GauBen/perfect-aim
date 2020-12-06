@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from copy import copy, deepcopy
-from random import shuffle
 from time import perf_counter
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 import entities
 from gamegrid import Grid, Tile
@@ -27,15 +26,13 @@ class Player:
         self.game: Optional[Game] = None
         self.player_entity: Optional[entities.PlayerEntity] = None
 
-    def next_action(self, game: Game, player_entity: entities.PlayerEntity):
+    def next_action(self):
         """Renvoie l'action suivante du joueur."""
-        self.game = game
-        self.player_entity = player_entity
         t = perf_counter()
-        action = self.play(game)
+        action = self.play(self.game)
         dt = perf_counter() - t
-        if dt >= 0.010:
-            print(f"/!\\ Temps de 10 ms dépassé pour {self.NAME} : {dt} s")
+        if dt >= 0.100:
+            print(f"/!\\ Temps de 100 ms dépassé pour {self.NAME} : {dt} s")
         return action
 
     def play(self, game: Game) -> Action:
@@ -111,7 +108,7 @@ class Game:
     LAVA_STEP_DURATION = 5.0
     MAX_DURATION = 150.0
 
-    def __init__(self, players: List[Optional[Player]]):
+    def __init__(self, players: List[Optional[Player]], seed=None):
         """Initialise une partie et crée une carte."""
         assert (
             self.MIN_PLAYERS
@@ -121,7 +118,8 @@ class Game:
 
         # Initialisation de la grille
         self.size = self.DEFAULT_GRID_SIZE
-        self.tile_grid = Grid.create_grid(self.size)
+        self._grid = Grid(self.size, seed)
+        self.tile_grid = self._grid.grid
 
         # L'état du jeu
         self.t = 0.0
@@ -137,6 +135,9 @@ class Game:
         self.entity_grid: List[List[Set[entities.Entity]]] = [
             [set() for x in range(self.size)] for y in range(self.size)
         ]
+
+        # Les actions passées
+        self.past_actions = {p.TILE: [] for p in entities.players}
 
         # Crée les joueurs et des objets
         self._create_entities(players)
@@ -203,10 +204,9 @@ class Game:
 
     def next_action(self, entity: entities.PlayerEntity) -> Action:
         """Renvoie la prochaine action du joueur."""
-        clone = deepcopy(self)
-        return self.players[entity.color].next_action(
-            clone, clone.player_entity_from_color(entity.color)
-        )
+        action = self._update_player_clone(entity.color).next_action()
+        self.past_actions[entity.color].append(action)
+        return action
 
     def collect(self, player: Player, collectible: entities.CollectableEntity):
         """Ramasse l'object `collectible` pour le joueur `player`."""
@@ -300,6 +300,24 @@ class Game:
         except StopIteration:
             raise KeyError("Le joueur n'est plus dans le jeu.")
 
+    def replay(self) -> Tuple[int, List[Optional[str]], List[Optional[List[Action]]]]:
+        """Renvoie les informations nécessaires pour faire un replay de la partie."""
+        names = []
+        past_actions = []
+        for c in (
+            Tile.PLAYER_RED,
+            Tile.PLAYER_BLUE,
+            Tile.PLAYER_YELLOW,
+            Tile.PLAYER_GREEN,
+        ):
+            if c in self.players:
+                names.append(self.players[c].NAME)
+                past_actions.append(self.past_actions[c])
+            else:
+                names.append(None)
+                past_actions.append(None)
+        return (self._grid.seed, names, past_actions)
+
     @property
     def player_entities(self) -> List[entities.PlayerEntity]:
         """Les `PlayerEntities` encore en vie."""
@@ -334,7 +352,7 @@ class Game:
                 self.entities.add(p)
                 self.players[p.color] = player
                 # On initialise le joueur, mais on ignore son action
-                self.next_action(p)
+                self._update_player_clone(p.color)
 
         # Les objets
         d = {
@@ -407,7 +425,7 @@ class Game:
             coords = [
                 (x, y) for x in range(1, self.size - 1) for y in range(1, self.size - 1)
             ]
-            shuffle(coords)
+            self._grid.random.shuffle(coords)
             while len(coords) > 0:
                 x, y = coords.pop()
                 if self.tile_grid[y][x].is_floor():
@@ -417,6 +435,14 @@ class Game:
                     self._update_grid(x, y)
                 if len(c) == 0:
                     break
+
+    def _update_player_clone(self, color: Tile) -> Player:
+        """Met à jour le clone du jeu offert au joueur."""
+        clone = deepcopy(self)
+        player = self.players[color]
+        player.game = clone
+        player.player_entity = clone.player_entity_from_color(color)
+        return player
 
     def __deepcopy__(self, memo: Dict[int, object]):
         """Assure une copie profonde efficace de l'objet."""
@@ -442,6 +468,46 @@ class Game:
             clone.entity_grid[e.y][e.x].add(e)
 
         return clone
+
+
+class PlayerReplay(Player):
+    """Un joueur d'un replay."""
+
+    def __init__(self, name: str):
+        """Initialise un joueur rejouant une stratégie enregistrée."""
+        super().__init__()
+        self.NAME = name
+
+
+class GameReplay(Game):
+    """Un replay d'une partie."""
+
+    def __init__(self, seed: int, names: List[str], past_actions: List[List[Action]]):
+        """Initialise un replay à partir d'une graine, des noms et des actions."""
+        players = []
+        colors = (
+            Tile.PLAYER_RED,
+            Tile.PLAYER_BLUE,
+            Tile.PLAYER_YELLOW,
+            Tile.PLAYER_GREEN,
+        )
+        self.history = {}
+        for i in range(len(colors)):
+            color = colors[i]
+            if names[i] is not None:
+                players.append(PlayerReplay(names[i]))
+                self.history[color] = past_actions[i]
+            else:
+                players.append(None)
+        super().__init__(players, seed)
+
+    def next_action(
+        self, entity: entities.PlayerEntity, ignore: bool = False
+    ) -> Action:
+        """Renvoie la prochaine action du joueur."""
+        action = self.history[entity.color].pop(0)
+        self.past_actions[entity.color].append(action)
+        return action
 
 
 if __name__ == "__main__":

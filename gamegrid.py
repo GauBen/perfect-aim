@@ -1,7 +1,8 @@
 """Le générateur de cartes de Perfect Aim."""
 
+import sys
 from enum import IntEnum
-from random import shuffle, random
+from random import Random, randrange
 from typing import List, Tuple
 
 
@@ -72,6 +73,10 @@ class Tile(IntEnum):
             Tile.FIREBALL,
         )
 
+    def __repr__(self) -> str:
+        """REMOVE."""
+        return "Tile." + self.name
+
 
 class Matrix:
     """Opérations matricielles basiques."""
@@ -110,12 +115,19 @@ class Matrix:
 class Grid:
     """Générateur des cartes du jeu."""
 
-    @staticmethod
-    def create_grid(size: int) -> List[List[Tile]]:
-        """Génération d'une carte labyrinthe."""
+    def __init__(self, size, seed=None):
+        """Génère une carte à partir de sa taille et d'une graine."""
         assert size % 4 == 1, "La grille doit respecter un critère de taille."
+        self.size = size
+        if seed is None:
+            seed = randrange(sys.maxsize)
+        self.seed = seed
+        self.random = Random(seed)
+        self._create_grid()
 
-        size = (size - 1) // 2 + 1
+    def _create_grid(self) -> List[List[Tile]]:
+        """Génération d'une carte labyrinthe."""
+        size = (self.size - 1) // 2 + 1
 
         # == Génération du labyrinthe ==
 
@@ -125,7 +137,7 @@ class Grid:
         # ##########
         # ##  ##  ##
         # ##########
-        grid: List[List[Tile]] = [
+        self.grid: List[List[Tile]] = [
             [Tile.GENERATING if x % 2 == y % 2 == 1 else Tile.WALL for x in range(size)]
             for y in range(size)
         ]
@@ -137,17 +149,17 @@ class Grid:
             (x, y) = path[-1]
 
             # On remplace GENERATING par FLOOR
-            grid[y][x] = Tile.FLOOR
+            self.grid[y][x] = Tile.FLOOR
 
             # On fait la liste des directions possibles pour continuer l'exploration
             possible_directions = []
-            if y >= 3 and grid[y - 2][x] == Tile.GENERATING:
+            if y >= 3 and self.grid[y - 2][x] == Tile.GENERATING:
                 possible_directions.append((x, y - 2))
-            if y <= size - 3 and grid[y + 2][x] == Tile.GENERATING:
+            if y <= size - 3 and self.grid[y + 2][x] == Tile.GENERATING:
                 possible_directions.append((x, y + 2))
-            if x >= 3 and grid[y][x - 2] == Tile.GENERATING:
+            if x >= 3 and self.grid[y][x - 2] == Tile.GENERATING:
                 possible_directions.append((x - 2, y))
-            if x <= size - 3 and grid[y][x + 2] == Tile.GENERATING:
+            if x <= size - 3 and self.grid[y][x + 2] == Tile.GENERATING:
                 possible_directions.append((x + 2, y))
 
             # Si on est dans un cul de sac, on dépile
@@ -156,36 +168,36 @@ class Grid:
                 continue
 
             # Sinon on va dans une des directions possible
-            shuffle(possible_directions)
+            self.random.shuffle(possible_directions)
             new_x, new_y = possible_directions.pop()
             path.append((new_x, new_y))
 
             # On perce le mur entre ici et la prochaine case
-            grid[(y + new_y) // 2][(x + new_x) // 2] = Tile.FLOOR
+            self.grid[(y + new_y) // 2][(x + new_x) // 2] = Tile.FLOOR
 
             # On ajoute quelques chemins de traverse
-            if len(possible_directions) > 0 and random() < 0.2:
+            if len(possible_directions) > 0 and self.random.random() < 0.2:
                 other_x, other_y = possible_directions.pop()
-                grid[(y + other_y) // 2][(x + other_x) // 2] = Tile.FLOOR
+                self.grid[(y + other_y) // 2][(x + other_x) // 2] = Tile.FLOOR
 
         # == Génération d'une grille symétrique avec des objets ==
 
         # On ajoute des items
-        Grid.add_collectibles(grid, size)
+        self._add_collectibles()
 
         # On fait une belle grille symétrique
-        return Grid.add_symetry(grid, size)
+        self._add_symetry()
 
-    @staticmethod
-    def add_collectibles(grid: List[List[Tile]], size: int):
+    def _add_collectibles(self):
         """Ajoute tous les objets possibles sur la grille."""
+        size = (self.size - 1) // 2 + 1
         coords = [
             (x, y)
             for x in range(1, size, 2)
             for y in range(1, size, 2)
             if (x, y) != (1, 1)
         ]
-        shuffle(coords)
+        self.random.shuffle(coords)
         items = [
             Tile.SPEEDBOOST,
             Tile.SPEEDPENALTY,
@@ -195,23 +207,23 @@ class Grid:
         ]
         while len(coords) > 0:
             x, y = coords.pop()
-            if grid[y][x] == Tile.FLOOR:
-                grid[y][x] = items.pop()
+            if self.grid[y][x] == Tile.FLOOR:
+                self.grid[y][x] = items.pop()
             if len(items) == 0:
                 break
 
-    @staticmethod
-    def add_symetry(grid: List[List[Tile]], size: int) -> List[List[Tile]]:
+    def _add_symetry(self):
         """Rend la grille symétrique en la répétant 3 fois."""
+        size = (self.size - 1) // 2 + 1
         # On enlève les murs bas et droit
-        grid.pop()
-        for row in grid:
+        self.grid.pop()
+        for row in self.grid:
             row.pop()
 
         # On va mettre ce mur percé à la place
         wall = [
             [
-                Tile.FLOOR if i % 2 == 1 and random() < 0.5 else Tile.WALL
+                Tile.FLOOR if i % 2 == 1 and self.random.random() < 0.5 else Tile.WALL
                 for i in range(size - 3)
             ]
             + [Tile.WALL, Tile.FLOOR]
@@ -223,15 +235,15 @@ class Grid:
         op2 = Matrix.rotate2
 
         # Et l'autre qu'elle soit axiale
-        if random() < 0.5:
+        if self.random.random() < 0.5:
             op1 = Matrix.hmirror
             op2 = Matrix.vmirror
 
         # Assemblage du haut (laby + mur + laby symétrique)
-        top = Matrix.hstack(grid, Matrix.hstack(wallr, op1(grid)))
+        top = Matrix.hstack(self.grid, Matrix.hstack(wallr, op1(self.grid)))
 
         # Assemblage final
-        return Matrix.vstack(
+        self.grid = Matrix.vstack(
             top,
             Matrix.vstack(
                 Matrix.hstack(
@@ -245,7 +257,8 @@ class Grid:
 
 # Si on lance ce fichier, un petit easter egg
 if __name__ == "__main__":
-    for row in Grid.create_grid(21):
+    g = Grid(21, seed=None)
+    for row in g.grid:
         for cell in row:
             print(
                 {
@@ -254,11 +267,11 @@ if __name__ == "__main__":
                     Tile.COIN: " o ",
                     Tile.SPEEDBOOST: " ^ ",
                     Tile.SHIELD: " D ",
-                    Tile.SUPER_FIREBALL: " X ",
+                    Tile.SUPER_FIREBALL: " + ",
                     Tile.SPEEDPENALTY: " v ",
                 }[cell],
                 end="",
             )
         print()
-    print("o Coin          D Shield          X Super fireball")
-    print("^ Speed boost   v Speed penalty")
+    print("o Coin          D Shield          + Super fireball")
+    print(f"^ Speed boost   v Speed penalty     (seed: {g.seed})")

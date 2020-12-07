@@ -705,18 +705,13 @@ class TournamentInterface:
 
     def game_over(self):
         """À la fin du calcul, on lance un replay du vainqueur."""
-        replay = None
+        replay = self.replays[-1]
         for i, color in zip(range(len(self.players)), self.colors):
             if self.winner == color:
                 replay = self.replays[i]
-        if replay is not None:
-            gi = GameInterface(
-                self.master, self.assets_manager, game.GameReplay(*replay)
-            )
-            gi.window.grab_set()
-            gi.start(self.game_over, lambda: self.update())
-        else:
-            self.update()
+        gi = GameInterface(self.master, self.assets_manager, game.GameReplay(*replay))
+        gi.window.grab_set()
+        gi.start(self.game_over, lambda: self.update())
 
     def start(self, restart_callback: Callable, back_callback: Callable):
         """Lance les parties simultanées."""
@@ -769,6 +764,9 @@ class TournamentInterface:
                 self.counter_label.config(text=f"{played} partie{s} jouée{s}")
                 self.master.after(16, update)
             except StopIteration:
+                played = sum(self.wins)
+                s = "" if played <= 1 else "s"
+                self.counter_label.config(text=f"{played} partie{s} jouée{s}")
                 self.compute_winner()
                 self.game_over()
                 pool.close()

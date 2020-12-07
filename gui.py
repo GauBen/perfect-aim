@@ -713,9 +713,14 @@ class TournamentInterface:
         for i, color in zip(range(len(self.players)), self.colors):
             if self.winner == color:
                 replay = self.replays[i]
-        gi = GameInterface(self.master, self.assets_manager, game.GameReplay(*replay))
-        gi.window.grab_set()
-        gi.start(self.game_over, lambda: self.update())
+        if replay is not None:
+            gi = GameInterface(
+                self.master, self.assets_manager, game.GameReplay(*replay)
+            )
+            gi.window.grab_set()
+            gi.start(self.game_over, lambda: self.update())
+        else:
+            self.update()
 
     def start(self, restart_callback: Callable, back_callback: Callable):
         """Lance les parties simultanées."""

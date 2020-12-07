@@ -173,7 +173,7 @@ class Game:
             self.t += dt
 
             # Mise à jour des entités
-            for entity in self.entities.copy():
+            for entity in sorted(self.entities, key=lambda e: e.TILE):
                 if entity in self.entities and isinstance(
                     entity, entities.MovingEntity
                 ):

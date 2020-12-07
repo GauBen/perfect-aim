@@ -8,7 +8,7 @@ from game import Action, Game, Player, Tile
 class Zidane(Player):
     """Parfois appelé Numéro 10."""
 
-    NAME = "Zidane"
+    NAME = "1 - Zidane"
 
     def play(self, game: Game) -> Action:
         """Cherche le joueur le plus proche pour l'attaquer."""

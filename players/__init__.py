@@ -20,4 +20,4 @@ def list_player_constructors() -> List[Type[Player]]:
             and constructor is not Player,
         ):
             constructors.append(constructor)
-    return constructors
+    return sorted(constructors, key=lambda c: c.NAME)

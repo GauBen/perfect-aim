@@ -8,7 +8,7 @@ from game import Action, Game, Player
 class RandomPlayer(Player):
     """Joueur qui joue au hasard."""
 
-    NAME = "Joueur aléatoire"
+    NAME = "1 - Joueur aléatoire"
 
     def play(self, game: Game) -> Action:
         """Choisit une action aléatoirement parmi toutes les actions possibles."""

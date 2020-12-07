@@ -518,9 +518,7 @@ class GameReplay(Game):
                 players.append(None)
         super().__init__(players, seed, permutation)
 
-    def next_action(
-        self, entity: entities.PlayerEntity, ignore: bool = False
-    ) -> Action:
+    def next_action(self, entity: entities.PlayerEntity) -> Action:
         """Renvoie la prochaine action du joueur."""
         action = Action.WAIT
         try:

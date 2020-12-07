@@ -535,7 +535,7 @@ class TournamentInterface:
         # Statistiques
         self.wins = [0] * (len(self.players) + 1)  # On compte le nombre de matches nul
         self.coins = [0] * len(self.players)
-        self.replays = [None] * len(self.players)
+        self.replays = [None] * (len(self.players) + 1)
         self.winner: Optional[Tile] = None
 
         # Widgets

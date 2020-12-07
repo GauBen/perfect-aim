@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from fractions import Fraction
 from typing import TYPE_CHECKING, List, Tuple, Type
 
 from gamegrid import Tile
@@ -123,54 +124,64 @@ class Entity:
 class MovingEntity(Entity):
     """Une entité mobile de la zone de jeu."""
 
-    def __init__(self, x: int, y: int, speed: float):
+    def __init__(self, x: int, y: int, speed: Fraction):
         """L'entité réalise `speed` actions par seconde."""
         super().__init__(x, y)
         self.speed = speed
         self.action = Action.WAIT
-        self.action_progress = 0.0
+        self.action_progress = Fraction(0)
 
     @property
-    def time_before_next_update(self) -> float:
+    def time_before_next_update(self) -> Fraction:
         """Temps en seconde avant la prochaine update pour cette entité."""
         # Update à la moitié de l'action
-        if self.action.is_movement() and self.action_progress < 0.5:
-            return (0.5 - self.action_progress) / self.speed
+        if self.action.is_movement() and self.action_progress < Fraction(1, 2):
+            return Fraction(Fraction(1, 2) - self.action_progress, self.speed)
 
-        return (1 - self.action_progress) / self.speed
+        return Fraction(1 - self.action_progress, self.speed)
 
     @property
     def visual_x(self) -> float:
         """Position x affichée de l'entité, utilisée pour les animations."""
         if self.action == Action.MOVE_LEFT:
-            return self.x + int(self.action_progress >= 0.5) - self.action_progress
+            return float(
+                self.x + int(self.action_progress >= 0.5) - self.action_progress
+            )
         if self.action == Action.MOVE_RIGHT:
-            return self.x - int(self.action_progress >= 0.5) + self.action_progress
+            return float(
+                self.x - int(self.action_progress >= 0.5) + self.action_progress
+            )
         return float(self.x)
 
     @property
     def visual_y(self) -> float:
         """Position y affichée de l'entité, utilisée pour les animations."""
         if self.action == Action.MOVE_UP:
-            return self.y + int(self.action_progress >= 0.5) - self.action_progress
+            return float(
+                self.y + int(self.action_progress >= 0.5) - self.action_progress
+            )
         if self.action == Action.MOVE_DOWN:
-            return self.y - int(self.action_progress >= 0.5) + self.action_progress
+            return float(
+                self.y - int(self.action_progress >= 0.5) + self.action_progress
+            )
         return float(self.y)
 
-    def update(self, game: Game, dt: float):
+    def update(self, game: Game, dt: Fraction):
         """Met à jour l'entité."""
         # À la fin de l'action, on la recommence
-        if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
-            self.action_progress = 0.0
+        if self.action_progress < 1 <= self.action_progress + dt * self.speed:
+            self.action_progress = Fraction(0)
 
         # À la moitié de l'action on déplace l'entité
         elif (
             self.action.is_movement()
-            and self.action_progress < 0.5 <= self.action_progress + dt * self.speed
+            and self.action_progress
+            < Fraction(1, 2)
+            <= self.action_progress + dt * self.speed
         ):
             old_x, old_y = self.x, self.y
             self.x, self.y = self.action.apply((self.x, self.y))
-            self.action_progress = 0.5
+            self.action_progress = Fraction(1, 2)
 
             game.move_entity(self, old_x, old_y)
 
@@ -187,7 +198,7 @@ class PlayerEntity(MovingEntity):
     d'action.
     """
 
-    INITIAL_SPEED = 1.0
+    INITIAL_SPEED = Fraction(1)
 
     def __init__(self, x: int, y: int):
         """Initialise un joueur."""
@@ -201,14 +212,14 @@ class PlayerEntity(MovingEntity):
         """La couleur du joueur."""
         return self.TILE
 
-    def update(self, game: Game, dt: float):
+    def update(self, game: Game, dt: Fraction):
         """Met à jour la position du joueur et choisit sa prochaine action."""
         # Fin d'une action, choix de la prochaine action
-        if self.action_progress < 1.0 <= self.action_progress + dt * self.speed:
+        if self.action_progress < 1 <= self.action_progress + dt * self.speed:
 
             # Choix de la prochaine action
             action = game.next_action(self)
-            self.action_progress = 0.0
+            self.action_progress = Fraction(0)
 
             # Si l'action est valide, on la joue
             if isinstance(action, Action) and game.is_action_valid(self, action):
@@ -224,9 +235,11 @@ class PlayerEntity(MovingEntity):
         # À la moitié du déplacement on met à jour les coordonnées du joueur
         elif (
             self.action.is_movement()
-            and self.action_progress < 0.5 <= self.action_progress + dt * self.speed
+            and self.action_progress
+            < Fraction(1, 2)
+            <= self.action_progress + dt * self.speed
         ):
-            self.action_progress = 0.5
+            self.action_progress = Fraction(1, 2)
 
             # Si le déplacement est toujours valide, il est effectué
             if game.is_action_valid(self, self.action):
@@ -292,7 +305,7 @@ class Fireball(MovingEntity):
     """Une boule de feu, qui tue les joueurs qu'elle traverse."""
 
     TILE = Tile.FIREBALL
-    INITIAL_SPEED = 4.0
+    INITIAL_SPEED = Fraction(4)
 
     def __init__(self, x: int, y: int, direction: Action, sender: Tile):
         """Initialise une boule de feu."""
@@ -300,12 +313,12 @@ class Fireball(MovingEntity):
         self.action = direction
         self.sender = sender
 
-    def update(self, game: Game, dt: float):
+    def update(self, game: Game, dt: Fraction):
         """Met à jour les coordonnées de la boule de feu."""
         super().update(game, dt)
 
         # La boule de feu vient de changer de coordonnées
-        if self.action_progress == 0.5:
+        if self.action_progress == Fraction(1, 2):
             # Suppression de la boule de feu si elle tape un mur
             if game.background[self.y][self.x] == Tile.WALL:
                 game.remove_entity(self)
@@ -340,7 +353,7 @@ class SpeedBoost(CollectableEntity):
 
     def collect(self, player: PlayerEntity):
         """Ajoute 25pts% de vitesse au joueur."""
-        player.speed += 0.25
+        player.speed += Fraction(1, 4)
 
 
 class SpeedPenalty(CollectableEntity):
@@ -350,8 +363,8 @@ class SpeedPenalty(CollectableEntity):
 
     def collect(self, player: PlayerEntity):
         """Retire 25pts% de vitesse au joueur."""
-        if player.speed >= 0.75:
-            player.speed -= 0.25
+        if player.speed >= Fraction(3, 4):
+            player.speed -= Fraction(1, 4)
 
 
 class SuperFireball(CollectableEntity):

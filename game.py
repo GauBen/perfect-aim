@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import copy, deepcopy
+from fractions import Fraction
 from time import perf_counter
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -58,7 +59,7 @@ class Player:
         return self.player_entity.y
 
     @property
-    def speed(self) -> float:
+    def speed(self) -> Fraction:
         """Vitesse du joueur."""
         return self.player_entity.speed
 
@@ -83,7 +84,7 @@ class Player:
         return self.player_entity.action
 
     @property
-    def action_progress(self) -> float:
+    def action_progress(self) -> Fraction:
         """Avancement de l'action en cours."""
         return self.player_entity.action_progress
 
@@ -104,9 +105,9 @@ class Game:
     MAX_PLAYERS = 4
 
     DEFAULT_GRID_SIZE = 21
-    LAVA_FLOOD_START_TIME = 65.0
-    LAVA_STEP_DURATION = 5.0
-    MAX_DURATION = 150.0
+    LAVA_FLOOD_START_TIME = Fraction(35)
+    LAVA_STEP_DURATION = Fraction(5)
+    MAX_DURATION = Fraction(120)
 
     def __init__(
         self, players: List[Optional[Player]], seed: int = None, permutation: int = 0
@@ -125,7 +126,7 @@ class Game:
         self.permutation = permutation
 
         # L'état du jeu
-        self.t = 0.0
+        self.t = Fraction(0)
         self.over = False
         self.winner: Optional[Player] = None
 
@@ -147,8 +148,10 @@ class Game:
 
     def update(self, elapsed_time: float):
         """Calcule toutes les updates qui ont eu lieu en `elapsed_time` secondes."""
+        # On arrondit au 120ème le plus proche, pour avoir des fractions petites
+        elapsed_time = Fraction(int(elapsed_time * 120), 120)
         # On applique les updates itérativement, car on a discrétisé le temps
-        while elapsed_time > 0.0:
+        while elapsed_time > 0:
 
             # Si la partie est finie, pas besoin d'update
             if self.over:
@@ -161,7 +164,7 @@ class Game:
                     for entity in self.entities
                     if isinstance(entity, entities.MovingEntity)
                 ]
-                + [elapsed_time, int(self.t + 1.0) - self.t]
+                + [elapsed_time, int(self.t + 1) - self.t]
             )
             # dt vaut la plus petite durée avant un évènement
             # (changement de case par exemple)
@@ -380,7 +383,7 @@ class Game:
             self.entity_grid[entity.y][entity.x].add(entity)
             self._update_grid(entity.x, entity.y)
 
-    def _add_lava(self, dt: float):
+    def _add_lava(self, dt: Fraction):
         """Ajoute de la lave après un certain temps."""
         if self.t + dt >= self.LAVA_FLOOD_START_TIME and int(
             self.t / self.LAVA_STEP_DURATION

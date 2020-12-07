@@ -217,7 +217,9 @@ class PlayerPanel:
             frame, text=self.game.players[self.player_entity.color].NAME
         )
         self.speed_icon = ttk.Label(frame, image=self.assets_manager.speedboost)
-        self.speed_label = ttk.Label(frame, text=f"{self.player_entity.speed:.2f}")
+        self.speed_label = ttk.Label(
+            frame, text=f"{float(self.player_entity.speed):.2f}"
+        )
         self.super_fireball_icon = ttk.Label(
             frame, image=self.assets_manager.super_fireball
         )
@@ -227,7 +229,9 @@ class PlayerPanel:
         self.coin_icon = ttk.Label(frame, image=self.assets_manager.coin)
         self.coin_label = ttk.Label(frame, text=f"{self.player_entity.coins}")
         self.action_label = ttk.Label(frame, text=self.player_entity.action.value)
-        self.action_bar = ttk.Progressbar(frame, length=1, max=1.0, value=0.0)
+        self.action_bar = ttk.Progressbar(
+            frame, length=1, max=1.0, value=float(self.player_entity.action_progress)
+        )
 
         # Offset vertical
         n = i * 4
@@ -260,13 +264,13 @@ class PlayerPanel:
         self.player_icon.configure(
             image=self.assets_manager.player_icon(self.game, self.player_entity.color)
         )
-        self.speed_label.configure(text=f"{self.player_entity.speed:.2f}")
+        self.speed_label.configure(text=f"{float(self.player_entity.speed):.2f}")
         self.super_fireball_label.configure(
             text=f"{self.player_entity.super_fireballs}"
         )
         self.coin_label.configure(text=f"{self.player_entity.coins}")
         self.action_label.configure(text=self.player_entity.action.value)
-        self.action_bar.configure(value=self.player_entity.action_progress)
+        self.action_bar.configure(value=float(self.player_entity.action_progress))
 
 
 class GameInterface:
@@ -368,7 +372,7 @@ class GameInterface:
     def update(self):
         """Met à jour la fenêtre."""
         # Le timer
-        self.time_label.config(text=f"{self.game.t:.1f} s")
+        self.time_label.config(text=f"{float(self.game.t):.1f} s")
 
         # Les stats
         for p in self.player_panels:
@@ -802,7 +806,7 @@ class PlayerSelector:
             values=tuple(c.NAME for c in self.player_constructors) + ("<aucun>",),
             state="readonly",
         )
-        self.combobox.current(i % len(self.player_constructors))
+        self.combobox.current(min(i, len(self.player_constructors) - 1))
         self.icon.grid(row=i + 1, column=0, padx=8, pady=4)
         self.combobox.grid(row=i + 1, column=1, padx=8, pady=4)
 

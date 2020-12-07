@@ -35,7 +35,7 @@ Voici un plateau de jeu avec tous ces éléments, ainsi que des objets et des jo
 
 ![Une partie assez avancée](./doc/background.png)
 
-Le sol commence à s'endommager par l'extérieur à partir de 65 secondes de jeu. Toutes les 10 secondes la zone de jeu est réduite d'une case depuis tous les côtés. Tout le terrain est recouvert de lave au bout de 2 min 30.
+Le sol commence à s'endommager par l'extérieur à partir de 35 secondes de jeu. Toutes les 10 secondes la zone de jeu est réduite d'une case depuis tous les côtés. Tout le terrain est recouvert de lave au bout de 2 min.
 
 Au début de la partie, le plateau est parfaitement symétrique.
 
@@ -119,7 +119,7 @@ Les valeurs de retour possibles sont `WAIT`, `MOVE_UP`, `MOVE_DOWN`, `MOVE_LEFT`
 Les informations disponibles sont les suivantes :
 
 -   `x` et `y (int)` les coordonnées du joueur, respectivement horizontale et verticale. `(0, 0)` est le mur en haut à gauche.
--   `speed (float)` la vitesse du joueur, qui correspond au nombre d'actions que votre joueur effectue par seconde (`1.0` au début du jeu). Cette valeur est incrémentée de `0.25` à chaque bonus de vitesse collecté. (Et `-0.25` par malus.)
+-   `speed (Fraction)` la vitesse du joueur, qui correspond au nombre d'actions que votre joueur effectue par seconde (`1.0` au début du jeu). Cette valeur est incrémentée de `0.25` à chaque bonus de vitesse collecté. (Et `-0.25` par malus.)
 -   `coins (int)` le nombre de pièces du joueur.
 -   `super_fireballs (int)` le nombre de super boules de feu collectées. La prochaine attaque en consommera une s'il y en a une disponible.
 -   `shield (bool)` la présence d'un bouclier. Vrai si le joueur est protégé de la prochaine boule de feu qu'il reçoit.
@@ -185,7 +185,7 @@ Le paramètre `game` est un object complexe qui représente l'état du jeu.
 
 Valeurs simples :
 
--   `t (float)` le temps de jeu écoulé depuis le début de la partie, en secondes.
+-   `t (Fraction)` le temps de jeu écoulé depuis le début de la partie, en secondes.
 -   `size (int)` la dimension de la grille.
 
 On a `game.size == 21`.
@@ -328,7 +328,7 @@ Les attributs des instances de ces classes sont les suivants :
 
 -   Toutes les entités possèdent des coordonnées `x` et `y (int)`.
 -   Toutes les entités possèdent une constante `TILE (Tile)`, ce qui permet d'utiliser `TILE.is_*()` par exemple.
--   Les entités mobiles ont en plus `speed (float)`, `action (Action)` et `action_progress (float)`, respectivement la vitesse, l'action en cours et l'avancement de l'action en cours (entre 0 et 1).
+-   Les entités mobiles ont en plus `speed (Fraction)`, `action (Action)` et `action_progress (Fraction)`, respectivement la vitesse, l'action en cours et l'avancement de l'action en cours (entre 0 et 1).
 -   Les joueurs ont en plus une couleur `color (Tile)`, une constante parmi `Tile.PLAYER_RED`, `_BLUE`, `_YELLOW`, `_GREEN`.
 
 Par exemple, regardons à droite jusqu'au bout du couloir :

@@ -293,7 +293,7 @@ def play(self, game: Game) -> Action:
 
 Pour avoir une représentation complète du jeu, il faut utiliser conjointement `background (List[List[Tile]])` et `entity_grid (List[List[Set[Entity]]])`. Ce sont deux matrices bidimensionnelles, comme `tile_grid`, mais elles permettent de connaître les éléments superposés, ainsi que des détails sur eux.
 
-`background` est une matrice que ne contient que des éléments du fond : `FLOOR`, `WALL`, `LAVA`, `DAMAGED_FLOOR`.
+`background` est une matrice qui ne contient que des éléments du fond : `FLOOR`, `WALL`, `LAVA`, `DAMAGED_FLOOR`.
 
 Cela permet par exemple de savoir quelle est la case sous son joueur :
 
@@ -369,7 +369,7 @@ while game.background[y][x] != Tile.WALL:
     x, y = Action.MOVE_RIGHT.apply((x, y))
 ```
 
-Enfin, il est possible de parcourir l'ensemble de toutes les entités du jeu avec `game.intities (Set[Entity])` :
+Enfin, il est possible de parcourir l'ensemble de toutes les entités du jeu avec `game.entities (Set[Entity])` :
 
 ```python
 p = 0

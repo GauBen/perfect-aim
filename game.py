@@ -148,8 +148,8 @@ class Game:
 
     def update(self, elapsed_time: float):
         """Calcule toutes les updates qui ont eu lieu en `elapsed_time` secondes."""
-        # On arrondit au 120ème le plus proche, pour avoir des fractions petites
-        elapsed_time = Fraction(int(elapsed_time * 120), 120)
+        # On arrondit à la ms la plus proche, pour avoir des fractions petites
+        elapsed_time = Fraction(round(elapsed_time * 1000), 1000)
         # On applique les updates itérativement, car on a discrétisé le temps
         while elapsed_time > 0:
 

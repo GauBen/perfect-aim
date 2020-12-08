@@ -715,7 +715,7 @@ class TournamentInterface:
                 replay = self.replays[i]
         if replay is not None:
             gi = GameInterface(
-                self.master, self.assets_manager, game.GameReplay(*replay)
+                self.master, self.assets_manager, game.GameReplay(replay)
             )
             gi.window.grab_set()
             gi.start(self.game_over, lambda: self.update())

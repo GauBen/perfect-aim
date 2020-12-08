@@ -306,7 +306,9 @@ class Game:
         except StopIteration:
             raise KeyError("Le joueur n'est plus dans le jeu.")
 
-    def replay(self) -> Tuple[int, List[Optional[str]], List[Optional[List[Action]]]]:
+    def replay(
+        self,
+    ) -> Tuple[int, int, List[Optional[str]], List[Optional[List[Action]]]]:
         """Renvoie les informations nécessaires pour faire un replay de la partie."""
         names = []
         past_actions = []
@@ -322,7 +324,7 @@ class Game:
             else:
                 names.append(None)
                 past_actions.append(None)
-        return (self._grid.seed, names, past_actions, self.permutation)
+        return (self._grid.seed, self.permutation, names, past_actions)
 
     @property
     def player_entities(self) -> List[entities.PlayerEntity]:
@@ -494,13 +496,10 @@ class GameReplay(Game):
     """Un replay d'une partie."""
 
     def __init__(
-        self,
-        seed: int,
-        names: List[str],
-        past_actions: List[List[Action]],
-        permutation: int = 0,
+        self, replay: Tuple[int, int, List[Optional[str]], List[Optional[List[Action]]]]
     ):
         """Initialise un replay à partir d'une graine, des noms et des actions."""
+        seed, permutation, names, past_actions = replay
         players = []
         colors = (
             Tile.PLAYER_RED,

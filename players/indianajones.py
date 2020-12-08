@@ -11,7 +11,10 @@ class IndianaJones(Player):
     def play(self, game: Game) -> Action:
         """Cherche les objets les plus proches et se mettre en sécurité."""
         # Renvoie `True` si la destination est acceptable
-        accept_target = lambda x, y: game.tile_grid[y][x].is_bonus()
+        accept_target = (
+            lambda x, y: game.background[y][x] == Tile.FLOOR
+            and game.tile_grid[y][x].is_bonus()
+        )
 
         # Renvoie `True` si le chemin est sûr
         is_safe = (

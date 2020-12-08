@@ -14,5 +14,5 @@ if __name__ == "__main__":
     launcher = GameLauncher()
     # Pour lancer automatiquement une partie configurée :
     # from players.indianajones import IndianaJones
-    # launcher.launch_one_game([IndianaJones, IndianaJones])
+    # launcher.launch_one_game([IndianaJones(), IndianaJones()])
     launcher.start()

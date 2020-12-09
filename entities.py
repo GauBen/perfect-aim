@@ -230,7 +230,7 @@ class PlayerEntity(MovingEntity):
 
             else:
                 self.action = Action.WAIT
-                print(f"Action invalide pour le joueur {self.TILE.name}")
+                print(f"/!\\ Action invalide pour le joueur {self.TILE.name}")
 
         # À la moitié du déplacement on met à jour les coordonnées du joueur
         elif (

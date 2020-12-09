@@ -348,7 +348,9 @@ class GameInterface:
             orient=tkinter.HORIZONTAL,
             variable=self.time_scale_var,
             command=lambda _: self.time_scale_label.config(
-                text=f"Pause" if (x := self.time_scale_var.get()) == 0 else f"x {x:.1f}"
+                text=f"Pause"
+                if self.time_scale_var.get() == 0
+                else f"x {self.time_scale_var.get():.1f}"
             ),
         )
         self.time_scale.grid(column=0, row=1, padx=4, sticky=tkinter.E)

@@ -494,7 +494,7 @@ def play_one_game(args: Tuple[int, List[Optional[Type[game.Player]]]]):
 
     # On joue une partie jusqu'au bout
     g = game.Game(players, permutation=i)
-    g.update(g.MAX_DURATION)
+    g.update(float(g.MAX_DURATION))
     coins = [player.coins if player is not None else 0 for player in players]
 
     # On renvoie l'indice du vainqueur et le nombre de pièces des joueurs

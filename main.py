@@ -9,7 +9,11 @@ Votre objectif ? Créer un joueur ordinateur meilleur que celui des autres.
 """
 
 if __name__ == "__main__":
+    import os
+
     from gui import GameLauncher
+
+    os.chdir(os.path.dirname(__file__))
 
     launcher = GameLauncher()
     # Pour lancer automatiquement une partie configurée :

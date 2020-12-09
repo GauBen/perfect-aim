@@ -218,19 +218,11 @@ class PlayerEntity(MovingEntity):
         if self.action_progress < 1 <= self.action_progress + dt * self.speed:
 
             # Choix de la prochaine action
-            action = game.next_action(self)
+            self.action = game.next_action(self)
             self.action_progress = Fraction(0)
 
-            # Si l'action est valide, on la joue
-            if isinstance(action, Action) and game.is_action_valid(self, action):
-                self.action = action
-
-                if self.action.is_attack():
-                    game.player_attacks(self, self.action)
-
-            else:
-                self.action = Action.WAIT
-                print(f"/!\\ Action invalide pour le joueur {self.TILE.name}")
+            if self.action.is_attack():
+                game.player_attacks(self, self.action)
 
         # À la moitié du déplacement on met à jour les coordonnées du joueur
         elif (

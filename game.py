@@ -210,7 +210,11 @@ class Game:
 
     def next_action(self, entity: entities.PlayerEntity) -> Action:
         """Renvoie la prochaine action du joueur."""
-        action = self._update_player_clone(entity.color).next_action()
+        player = self._update_player_clone(entity.color)
+        action = player.next_action()
+        if not isinstance(action, Action) or not self.is_action_valid(entity, action):
+            action = Action.WAIT
+            print(f"/!\\ Action invalide pour le joueur {player.NAME}")
         self.past_actions[entity.color].append(action)
         return action
 

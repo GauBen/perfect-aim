@@ -12,7 +12,7 @@ theme: uncover
 
 ---
 
-![height:600px](./doc/window.png)
+![bg 70%](./doc/window.png)
 
 ---
 
@@ -58,7 +58,7 @@ theme: uncover
 
 ```python
 import random
-from game import Game, Action
+from game import Action, Game, Player
 
 class BestPlayer(Player):
 
@@ -87,7 +87,9 @@ class BestPlayer(Player):
 
 1. Un n7ien par équipe
 2. Vous restez propriétaire du code, et vous pouvez choisir une licence
-3. Uniquement les bibliothèques `collections`, `numbers`, `math`, `cmath`, `decimal`, `fractions`, `random`, `statistics`, `itertools`, `functools`, `operator`, `typing`
+3. Uniquement certaines bibliothèques de la bibliothèque standard
+
+_Consulter le fichier reglement.txt_
 
 ---
 
@@ -104,9 +106,20 @@ Offerts par notre partenaire **Capgemini** ![width:32px](./doc/capgemini.png)
 # Rendu du code
 
 -   Testez avec 50 parties
+-   Pas d'erreurs, pas de warning
 -   Pas de `print`
 -   Pas de boucles infinies
--   Mettre un unique fichier `.py` dans le canal texte de votre équipe, de moins de 30 kio.
+-   Mettre un unique fichier `.py` dans le canal texte de votre équipe, de moins de 30 kio, avant 18h40
+
+---
+
+# Programme du live
+
+-   14h30 : Début du hackathon
+-   18h40 : Interview de Philippe Becane,
+    Directeur des Opérations à Capgemini
+-   19h00 : Tournoi entre les équipes
+-   20h00 : Fin de l'évènement (au plus tard)
 
 ---
 
@@ -114,4 +127,4 @@ Offerts par notre partenaire **Capgemini** ![width:32px](./doc/capgemini.png)
 
 git clone https://github.com/GauBen/perfect-aim.git
 
-(vous avez 4 heures)
+_(vous avez 4 heures)_

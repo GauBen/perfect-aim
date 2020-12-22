@@ -31,7 +31,7 @@ from game import Action, Game, Player, Tile
 class BobMorane(Player):
     """Le Véritable aventurier."""
 
-    NAME = "58 - Bob Morane"
+    NAME = "Bob Morane"
 
     def play(self, game: Game) -> Action:
         """Cherche les autres joueurs pour attaquer et les boules de feu à éviter."""

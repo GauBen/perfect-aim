@@ -6,7 +6,7 @@ from game import Action, Game, Player, Tile
 class IndianaJones(Player):
     """Le célèbre aventurier."""
 
-    NAME = "1 - Indiana Jones"
+    NAME = "Indiana Jones"
 
     def play(self, game: Game) -> Action:
         """Cherche les objets les plus proches et se mettre en sécurité."""

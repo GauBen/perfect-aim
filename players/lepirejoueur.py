@@ -23,43 +23,8 @@ class LePireJoueur(Player):
 
     def play(self, game: Game) -> Action:
         """Choisit la meilleure action possible dans la situation donnée en paramètre."""
-        time_grid = self.time_grid(game)
-        attack_grid = self.attack_grid(game)
-        danger_grid = self.danger_grid(game)
-
-        best_action = Action.WAIT
-        best_value = self.compute_value(
-            Action.WAIT, time_grid, attack_grid, danger_grid
-        )
-        for a in list(Action):
-            if a == Action.WAIT:
-                continue
-            if self.is_action_valid(a):
-                value = self.compute_value(a, time_grid, attack_grid, danger_grid)
-                if value > best_value:
-                    best_value = value
-                    best_action = a
-
-        return best_action
-
-    def compute_value(
-        self,
-        a: Action,
-        time_grid: List[List[Optional[Tuple[Fraction, List[Action]]]]],
-        attack_grid: List[List[Optional[Tuple[Action, Fraction]]]],
-        danger_grid: List[List[Optional[Fraction]]],
-    ) -> float:
-        """Calcule la valeur d'une action."""
-        value = 1.0
-        if a.is_attack():
-            if attack_grid[self.y][self.x] is not None:
-                value *= 100 * 1 / attack_grid[self.y][self.x]
-        return value
-
-    def nothing(self, game):
-        """Todo."""
-        attack_matrix = self.attack_grid(game)
-        danger_matrix = self.danger_grid(game)
+        attack_matrix = self.attack_matrix(game)
+        danger_matrix = self.danger_matrix(game)
 
         if danger_matrix[self.y][self.x] is not None:
             danger = danger_matrix[self.y][self.x]
@@ -80,7 +45,7 @@ class LePireJoueur(Player):
         ):
             return attack_matrix[self.y][self.x][0]
 
-        interesting_paths = self.time_grid(game)
+        interesting_paths = self.list_interesting_paths(game)
 
         if len(interesting_paths) == 0:
             return Action.WAIT
@@ -97,7 +62,9 @@ class LePireJoueur(Player):
 
         return Action.WAIT
 
-    def attack_grid(self, game: Game) -> List[List[Optional[Tuple[Action, Fraction]]]]:
+    def attack_matrix(
+        self, game: Game
+    ) -> List[List[Optional[Tuple[Action, Fraction]]]]:
         """Renvoie une liste des directions d'attaque."""
         matrix = [[None for _ in range(game.size)] for _ in range(game.size)]
 
@@ -115,7 +82,7 @@ class LePireJoueur(Player):
 
         return matrix
 
-    def danger_grid(self, game: Game) -> List[List[Optional[Fraction]]]:
+    def danger_matrix(self, game: Game) -> List[List[Optional[Fraction]]]:
         """Renvoie une liste des directions d'attaque."""
         matrix = [[None for _ in range(game.size)] for _ in range(game.size)]
 
@@ -132,14 +99,13 @@ class LePireJoueur(Player):
 
         return matrix
 
-    def time_grid(
-        self, game: Game
-    ) -> List[List[Optional[Tuple[Fraction, List[Action]]]]]:
+    def list_interesting_paths(self, game: Game) -> list:
         """Renvoie la liste des chemins se terminant par un item."""
         time_grid = [[None for _ in range(game.size)] for _ in range(game.size)]
         time_grid[self.y][self.x] = (Fraction(0), [])
 
         paths = [(self.x, self.y, [], Fraction(0), self.speed)]
+        interesting_paths = []
 
         def is_valid(x, y, a: Action):
             x, y = a.apply((x, y))
@@ -160,6 +126,12 @@ class LePireJoueur(Player):
                 e.TILE == Tile.SPEEDPENALTY for e in game.entity_grid[y][x]
             ) and speed >= Fraction(3, 4):
                 speed = Fraction(speed) - Fraction(1, 4)
+
+            # Si la case est intéressante, on garde la liste des mouvements
+            if game.tile_grid[y][x].is_bonus() or (
+                game.tile_grid[y][x].is_player() and game.tile_grid[y][x] != self.color
+            ):
+                interesting_paths.append((game.tile_grid[y][x], x, y, moves, t))
 
             # On regarde les 4 noeuds adjacents pour savoir :
             #  - Si on peut s'y rendre
@@ -184,4 +156,4 @@ class LePireJoueur(Player):
                         time_grid[next_y][next_x] = (next_t, next_moves)
                         paths.append((next_x, next_y, next_moves, next_t, speed))
 
-        return time_grid
+        return interesting_paths
